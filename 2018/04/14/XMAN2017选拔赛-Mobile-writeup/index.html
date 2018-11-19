@@ -15,13 +15,13 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="0x01 mobile1（First_Mobile）apk下载地址：https://github.com/xuanyonghao/CTF-Android-Writeup/xman2017选拔赛/mobile1（First_Mobile）/07bfacf2-82df-4eab-8b41-a34aa7486c5a.apk  提取dex 这里推荐使用Androidlxzs ，这个工具集成得很好，基本把J">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://p76cw7ct5.bkt.clouddn.com/xman2017mobile1-1.JPG">
-<meta property="og:image" content="http://p76cw7ct5.bkt.clouddn.com/xman2017mobile1-2.JPG">
-<meta property="og:updated_time" content="2018-10-24T10:52:47.562Z">
+<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-1.JPG">
+<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-2.JPG">
+<meta property="og:updated_time" content="2018-11-19T07:09:14.068Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="XMAN2017选拔赛(Mobile)writeup">
 <meta name="twitter:description" content="0x01 mobile1（First_Mobile）apk下载地址：https://github.com/xuanyonghao/CTF-Android-Writeup/xman2017选拔赛/mobile1（First_Mobile）/07bfacf2-82df-4eab-8b41-a34aa7486c5a.apk  提取dex 这里推荐使用Androidlxzs ，这个工具集成得很好，基本把J">
-<meta name="twitter:image" content="http://p76cw7ct5.bkt.clouddn.com/xman2017mobile1-1.JPG">
+<meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-1.JPG">
   
     <link rel="alternate" href="/atom.xml" title="大彩笔threedr3am" type="application/atom+xml">
   
@@ -101,7 +101,7 @@
 </ol>
 </li>
 <li>Dex2jar把dex文件转jar文件</li>
-<li><p>jd-gui查看源码<br><img src="http://p76cw7ct5.bkt.clouddn.com/xman2017mobile1-1.JPG" alt="image"><br>看程序主入口onCreate方法代码逻辑，可以清晰地看到输入内容作为参数调用encode的check方法，返回true时输出current，然后再看看encode类<br><img src="http://p76cw7ct5.bkt.clouddn.com/xman2017mobile1-2.JPG" alt="image"><br>此处分析check逻辑可以得到一条公式((input[i]+b[i])%61)*2-i=input[i]</p>
+<li><p>jd-gui查看源码<br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-1.JPG" alt="image"><br>看程序主入口onCreate方法代码逻辑，可以清晰地看到输入内容作为参数调用encode的check方法，返回true时输出current，然后再看看encode类<br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-2.JPG" alt="image"><br>此处分析check逻辑可以得到一条公式((input[i]+b[i])%61)*2-i=input[i]</p>
 </li>
 <li><p>那么我们使用爆破泡一下就行了</p>
 </li>
@@ -141,7 +141,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/04/14/XMAN2017选拔赛-Mobile-writeup/" data-id="cjonylccs00010exy406quvsj" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/04/14/XMAN2017选拔赛-Mobile-writeup/" data-id="cjonyz1jd00003cxy2toepgs7" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/writeup/">writeup</a></li></ul>
