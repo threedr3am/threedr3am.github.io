@@ -96,9 +96,9 @@
 <p>修改请求头，伪造请求源ip</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
 <p>再次请求页面，可以看到已经通过，成功加载页面</p>
-<p><img src="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.1.png" alt="首页"></p>
+<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png" alt="首页"></p>
 <p>查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入</p>
-<p><img src="http://p76cw7ct5.bkt.clouddn.com/ddctf_web1.2.png" alt="waf"></p>
+<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png" alt="waf"></p>
 <p>经过尝试发现可以使用布尔盲注，最后发现使用以下这种布尔盲注的方式，可以畅通无阻，直通罗马</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">author=&apos;&apos;=((select (某返回数字的函数) from xxx)=变量)=&apos;&apos;</span><br></pre></td></tr></table></figure>
 <p>上面这种方式，基本可以绕过了and、or等等拦截，并且可以闭合前面的单引号和后面的单引号</p>
@@ -128,7 +128,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/04/17/DDCTF2018-Web-writeup/" data-id="cjonxwwt90000v1xybjg1sa5b" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/04/17/DDCTF2018-Web-writeup/" data-id="cjonylccn00000exyf1z20i52" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/writeup/">writeup</a></li></ul>
@@ -213,7 +213,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/04/14/XMAN2017选拔赛-Mobile-writeup/" data-id="cjonxwwti0001v1xytvw66er8" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/04/14/XMAN2017选拔赛-Mobile-writeup/" data-id="cjonylccs00010exy406quvsj" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/writeup/">writeup</a></li></ul>
