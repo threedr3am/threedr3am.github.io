@@ -79,20 +79,20 @@
 
 
 
-<meta name="description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta name="description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面">
 <meta name="keywords" content="writeup">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DDCTF2018某Web题之布尔盲注实践">
 <meta property="og:url" content="http://yoursite.com/2018/04/17/DDCTF2018某Web题之布尔盲注实践/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta property="og:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png">
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png">
-<meta property="og:updated_time" content="2019-01-03T03:01:47.282Z">
+<meta property="og:updated_time" content="2019-04-25T09:14:34.084Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DDCTF2018某Web题之布尔盲注实践">
-<meta name="twitter:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面  查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入">
+<meta name="twitter:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面">
 <meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png">
 
 
@@ -369,6 +369,7 @@
 <p>修改请求头，伪造请求源ip</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
 <p>再次请求页面，可以看到已经通过，成功加载页面</p>
+<a id="more"></a>
 <p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png" alt="首页"></p>
 <p>查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入</p>
 <p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png" alt="waf"></p>

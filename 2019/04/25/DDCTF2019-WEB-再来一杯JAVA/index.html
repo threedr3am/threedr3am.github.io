@@ -79,13 +79,13 @@
 
 
 
-<meta name="description" content="最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。 0x01 padding oracle &amp;amp; cbc翻转点开题目之后，发现tis是 123绑定Host访问：116.85.48.104 c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2">
+<meta name="description" content="最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。">
 <meta name="keywords" content="writeup">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DDCTF2019-WEB-再来一杯JAVA">
 <meta property="og:url" content="http://yoursite.com/2019/04/25/DDCTF2019-WEB-再来一杯JAVA/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。 0x01 padding oracle &amp;amp; cbc翻转点开题目之后，发现tis是 123绑定Host访问：116.85.48.104 c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2">
+<meta property="og:description" content="最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/1.png">
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/2.png">
@@ -113,10 +113,10 @@
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/24.png">
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/25.png">
 <meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/26.png">
-<meta property="og:updated_time" content="2019-04-25T06:26:46.135Z">
+<meta property="og:updated_time" content="2019-04-25T09:13:57.980Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DDCTF2019-WEB-再来一杯JAVA">
-<meta name="twitter:description" content="最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。 0x01 padding oracle &amp;amp; cbc翻转点开题目之后，发现tis是 123绑定Host访问：116.85.48.104 c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2">
+<meta name="twitter:description" content="最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。">
 <meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2019-web-writeup/1.png">
 
 
@@ -390,6 +390,7 @@
 
       
         <p>最近有好一段时间没有写blog了,并且很长时间没打CTF了，甚是怀念，然而又一次被DDCTF折磨了一周，嗯，还是JAVA题有意思，并且题目质量非常不错，故写一下解题过程以作纪念。</p>
+<a id="more"></a>
 <h3 id="0x01-padding-oracle-amp-cbc翻转"><a href="#0x01-padding-oracle-amp-cbc翻转" class="headerlink" title="0x01 padding oracle &amp; cbc翻转"></a>0x01 padding oracle &amp; cbc翻转</h3><p>点开题目之后，发现tis是</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">绑定Host访问：</span><br><span class="line"></span><br><span class="line">116.85.48.104 c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com</span><br></pre></td></tr></table></figure>
 <p>不管它，直接浏览器访问，但是发现是404的，好吧，那么把hosts改一下，让这个域名<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">c1n0h7ku1yw24husxkxxgn3pcbqu56zj.ddctf2019.com</span><br></pre></td></tr></table></figure></p>
