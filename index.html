@@ -273,6 +273,171 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/17/ARTS打卡-第一周/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/17/ARTS打卡-第一周/" itemprop="url">ARTS打卡-第一周</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-17T11:28:20+08:00">
+                2019-05-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ARTS打卡/" itemprop="url" rel="index">
+                    <span itemprop="name">ARTS打卡</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Algorithm：每周至少做一个-leetcode-的算法题"><a href="#Algorithm：每周至少做一个-leetcode-的算法题" class="headerlink" title="Algorithm：每周至少做一个 leetcode 的算法题"></a>Algorithm：每周至少做一个 leetcode 的算法题</h2><h2 id="Review：阅读并点评至少一篇英文技术文章"><a href="#Review：阅读并点评至少一篇英文技术文章" class="headerlink" title="Review：阅读并点评至少一篇英文技术文章"></a>Review：阅读并点评至少一篇英文技术文章</h2><ul>
+<li><a href="https://github.com/seata/seata/blob/develop/README.md" target="_blank" rel="noopener"><strong>seata分布式事务架构原理</strong></a></li>
+</ul>
+<p>Seata是一个分布式事务解决框架，在传统的单数据库系统演变为微服务多数据库系统时，由于一个业务的调用链可能涉及到多个微服务系统，从而对多个数据库的数据CURD时，一旦出现异常等原因导致需要数据rollback，这时候，我们就需要对每一个开启了transaction进行rollback。</p>
+<p>当调用链中涉及的数据库数量很少的时候，这样逐个手动rollback当然也没什么问题，但是一旦数量多的时候，这样必然导致大量的代码侵入，而seata分布式事务框架则解决了这个问题。</p>
+<p>Seata分为3个模块：</p>
+<ol>
+<li>Transaction Coordinator(TC)：维护全局事务状态，并驱动全局事务的提交和回滚</li>
+<li>Transaction Manager(TM)：定义全局事务的作用域，管理全局事务的生命周期，全局事务开启、提交、回滚的管理者</li>
+<li>Resource Manager(RM)：管理资源本地分支事务的工作，并把分支事务注册至TC的全局事务中，在TC驱动全局事务的提交、回滚等时，对全局事务关联下的分支事务做出相应的操作</li>
+</ol>
+<p>Seata具体流程：</p>
+<ol>
+<li>TM要求TC开启一个新的全局事务，TC创建全局事务的XID</li>
+<li>XID跟着微服务执行链流动</li>
+<li>RM根据XID把本地分支事务注册关联到TC的全局事务中</li>
+<li>TM根据XID要求TC提交或者回滚全局事务</li>
+<li>TC根据XID找到所有本地分支事务，驱动RM对事务进行提交或者回滚</li>
+</ol>
+<p>Seata使用思考：</p>
+<ol>
+<li>减少了分布式事务实现的代码侵入</li>
+<li>使用全局事务并且生成全局事务XID关联每一个本地事务，使事务间具有关联性</li>
+</ol>
+<h2 id="Tip：学习至少一个技术技巧"><a href="#Tip：学习至少一个技术技巧" class="headerlink" title="Tip：学习至少一个技术技巧"></a>Tip：学习至少一个技术技巧</h2><h2 id="Share：分享一篇有观点和思考的技术文章"><a href="#Share：分享一篇有观点和思考的技术文章" class="headerlink" title="Share：分享一篇有观点和思考的技术文章"></a>Share：分享一篇有观点和思考的技术文章</h2>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/25/DDCTF2019-WEB-再来一杯JAVA/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -849,155 +1014,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/17/DDCTF2018某Web题之布尔盲注实践/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/04/17/DDCTF2018某Web题之布尔盲注实践/" itemprop="url">DDCTF2018某Web题之布尔盲注实践</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-17T19:57:27+08:00">
-                2018-04-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/web/" itemprop="url" rel="index">
-                    <span itemprop="name">web</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="0x01-web1-数据库的秘密"><a href="#0x01-web1-数据库的秘密" class="headerlink" title="0x01 web1 数据库的秘密"></a>0x01 web1 数据库的秘密</h3><p>访问题目给出的页面，tis -&gt; 非法链接，只允许来自 <strong>123.232.23.245</strong> 的访问</p>
-<p>修改请求头，伪造请求源ip</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
-<p>再次请求页面，可以看到已经通过，成功加载页面</p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/04/17/DDCTF2018某Web题之布尔盲注实践/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1050,7 +1066,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1061,7 +1077,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -1072,7 +1088,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
