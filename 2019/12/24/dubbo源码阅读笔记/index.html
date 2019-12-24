@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="dubbo,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy 123org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactoryo">
+<meta name="keywords" content="dubbo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dubbo源码阅读笔记">
+<meta property="og:url" content="http://yoursite.com/2019/12/24/dubbo源码阅读笔记/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy 123org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactoryo">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-12-24T10:23:54.540Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dubbo源码阅读笔记">
+<meta name="twitter:description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy 123org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactoryo">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/12/24/dubbo源码阅读笔记/">
+
+
+
+
+
+  <title>dubbo源码阅读笔记 | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/24/dubbo源码阅读笔记/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">dubbo源码阅读笔记</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-24T18:22:41+08:00">
+                2019-12-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性</p>
+<h3 id="从调试的角度去看待源码"><a href="#从调试的角度去看待源码" class="headerlink" title="从调试的角度去看待源码"></a>从调试的角度去看待源码</h3><ul>
+<li>代理工厂</li>
+</ul>
+<p>无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactory</span><br><span class="line"></span><br><span class="line">org.apache.dubbo.rpc.proxy.jdk.JdkProxyFactory</span><br></pre></td></tr></table></figure>
+<p>其中它们都具有<strong>getProxy、getInvoker</strong>方法实现</p>
+<p><strong>getProxy</strong>：主要用于服务消费者对interface进行代理，生成实例提供程序调用。而InvokerInvocationHandler是实际调用对象，其对上层程序代码隐藏了远程调用的细节<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public &lt;T&gt; T getProxy(Invoker&lt;T&gt; invoker, Class&lt;?&gt;[] interfaces) &#123;</span><br><span class="line">    return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces, new InvokerInvocationHandler(invoker));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>getInvoker</strong>：主要用于服务提供者对实际被调用实例进行代理包装，以实现实际对象方法被调用后，进行结果、异常的CompletableFuture的封装</p>
+<a id="more"></a>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public &lt;T&gt; Invoker&lt;T&gt; getInvoker(T proxy, Class&lt;T&gt; type, URL url) &#123;</span><br><span class="line">    return new AbstractProxyInvoker&lt;T&gt;(proxy, type, url) &#123;</span><br><span class="line">        @Override</span><br><span class="line">        protected Object doInvoke(T proxy, String methodName,</span><br><span class="line">                                  Class&lt;?&gt;[] parameterTypes,</span><br><span class="line">                                  Object[] arguments) throws Throwable &#123;</span><br><span class="line">            Method method = proxy.getClass().getMethod(methodName, parameterTypes);</span><br><span class="line">            return method.invoke(proxy, arguments);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>InvokerInvocationHandler：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">    String methodName = method.getName();</span><br><span class="line">    Class&lt;?&gt;[] parameterTypes = method.getParameterTypes();</span><br><span class="line">    if (method.getDeclaringClass() == Object.class) &#123;</span><br><span class="line">        return method.invoke(invoker, args);</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;toString&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 0) &#123;</span><br><span class="line">        return invoker.toString();</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;hashCode&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 0) &#123;</span><br><span class="line">        return invoker.hashCode();</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;equals&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 1) &#123;</span><br><span class="line">        return invoker.equals(args[0]);</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;$destroy&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 0) &#123;</span><br><span class="line">        invoker.destroy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    RpcInvocation rpcInvocation = new RpcInvocation(method, invoker.getInterface().getName(), args);</span><br><span class="line">    rpcInvocation.setTargetServiceUniqueName(invoker.getUrl().getServiceKey());</span><br><span class="line"></span><br><span class="line">    return invoker.invoke(rpcInvocation).recreate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>AbstractProxyInvoker：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">public Result invoke(Invocation invocation) throws RpcException &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        Object value = doInvoke(proxy, invocation.getMethodName(), invocation.getParameterTypes(), invocation.getArguments());</span><br><span class="line">        CompletableFuture&lt;Object&gt; future = wrapWithFuture(value, invocation);</span><br><span class="line">        CompletableFuture&lt;AppResponse&gt; appResponseFuture = future.handle((obj, t) -&gt; &#123;</span><br><span class="line">            AppResponse result = new AppResponse();</span><br><span class="line">            if (t != null) &#123;</span><br><span class="line">                if (t instanceof CompletionException) &#123;</span><br><span class="line">                    result.setException(t.getCause());</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    result.setException(t);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                result.setValue(obj);</span><br><span class="line">            &#125;</span><br><span class="line">            return result;</span><br><span class="line">        &#125;);</span><br><span class="line">        return new AsyncRpcResult(appResponseFuture, invocation);</span><br><span class="line">    &#125; catch (InvocationTargetException e) &#123;</span><br><span class="line">        if (RpcContext.getContext().isAsyncStarted() &amp;&amp; !RpcContext.getContext().stopAsync()) &#123;</span><br><span class="line">            logger.error(&quot;Provider async started, but got an exception from the original method, cannot write the exception back to consumer because an async result may have returned the new thread.&quot;, e);</span><br><span class="line">        &#125;</span><br><span class="line">        return AsyncRpcResult.newDefaultAsyncResult(null, e.getTargetException(), invocation);</span><br><span class="line">    &#125; catch (Throwable e) &#123;</span><br><span class="line">        throw new RpcException(&quot;Failed to invoke remote proxy method &quot; + invocation.getMethodName() + &quot; to &quot; + getUrl() + &quot;, cause: &quot; + e.getMessage(), e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>服务提供者启动时，先创建相应选择的协议对象（Protocol），然后通过代理工厂创建Invoker对象，接着使用协议对象对Invoker进行服务注册至注册中心。</li>
+<li>服务消费者启动时，先创建相应选择的协议对象（Protocol），然后通过协议对象引用到服务提供者，得到Invoker对象，接着通过代理工厂创建proxy对象。</li>
+<li>服务消费者spring配置了dubbo:reference，在spring容器创建bean时，先创建FactoryBean（ReferenceBean extends ReferenceConfig），在getObject时调用ReferenceConfig的get方法，在get方法中init初始化，接着调用createProxy并传入相应参数创建代理对象，紧接着使用SPI方式得到代理工厂适配器、注册协议对象，默认获得javassist代理工厂创建代理，然后使用协议对象（ProtocolFilterWrapper-ProtocolListenerWrapper-QosProtocolWrapper-RegisterProtocol）调用doRefer，并且根据protocol得到spring配置的dubbo:registry使用的是zookeeper协议，通过SPI得到ZookeeperRegister的注册中心去注册订阅，接着生成RegisterDirectory封装服务相关数据，然后通过SPI加载FailoverCluster，生成Invoker对象，得到服务引用（MockClusterInvoker包装着FailoverCluster），最后通过代理工厂创建代理实例，个人认为Cluster是对服务提供者集群的高可用设计，在某个服务不可用时可以故障转移。</li>
+<li>服务消费者调用代理对象时，先判断是否一些Object方法，若是Object方法，则直接本地调用，否则创建RpcInvocation封装调用目标方法、接口、参数等信息，然后调用Invoker的invoke方法，一般情况下，invoker对象是一系列invoker的包装（默认MockClusterInvoker-FailoverClusterInvoker-InvokerWrapper-ListenerInvokerWrapper-ProtocolFilterWrapper-DubboInvoker）。</li>
+<li>服务集群，当使用服务集群时，在invoker执行远程调用时，会进行负载均衡选择集群中的某个invoker进行远程调用</li>
+<li>FailoverClusterInvoker，故障转移集群invoker中会根据配置中的失败重试次数进行失败重试</li>
+</ul>
+<h3 id="从简单阅读的角度去看待源码"><a href="#从简单阅读的角度去看待源码" class="headerlink" title="从简单阅读的角度去看待源码"></a>从简单阅读的角度去看待源码</h3><h4 id="dubbo-container容器"><a href="#dubbo-container容器" class="headerlink" title="dubbo-container容器"></a>dubbo-container容器</h4><ul>
+<li>dubbo-container：dubbo容器实现，它的容器并不是沙盒形式的容器。从dubbo-container-api可以看出，其具有main启动方法，根据系统变量dubbo.container或java启动参数读取配置指定需要启动的容器（英文逗号分隔），并使用系统变量dubbo.shutdown.hook去配置是否对启动的容器进行jvm shutdown的hook，以实现shutdown时对容器进行关停</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line">public class Main &#123;</span><br><span class="line"></span><br><span class="line">    public static final String CONTAINER_KEY = &quot;dubbo.container&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String SHUTDOWN_HOOK_KEY = &quot;dubbo.shutdown.hook&quot;;</span><br><span class="line"></span><br><span class="line">    private static final Logger logger = LoggerFactory.getLogger(Main.class);</span><br><span class="line"></span><br><span class="line">    private static final ExtensionLoader&lt;Container&gt; loader = ExtensionLoader.getExtensionLoader(Container.class);</span><br><span class="line"></span><br><span class="line">    private static final ReentrantLock LOCK = new ReentrantLock();</span><br><span class="line"></span><br><span class="line">    private static final Condition STOP = LOCK.newCondition();</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (ArrayUtils.isEmpty(args)) &#123;</span><br><span class="line">                String config = ConfigUtils.getProperty(CONTAINER_KEY, loader.getDefaultExtensionName());</span><br><span class="line">                args = COMMA_SPLIT_PATTERN.split(config);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            final List&lt;Container&gt; containers = new ArrayList&lt;Container&gt;();</span><br><span class="line">            for (int i = 0; i &lt; args.length; i++) &#123;</span><br><span class="line">                containers.add(loader.getExtension(args[i]));</span><br><span class="line">            &#125;</span><br><span class="line">            logger.info(&quot;Use container type(&quot; + Arrays.toString(args) + &quot;) to run dubbo serivce.&quot;);</span><br><span class="line"></span><br><span class="line">            if (&quot;true&quot;.equals(System.getProperty(SHUTDOWN_HOOK_KEY))) &#123;</span><br><span class="line">                Runtime.getRuntime().addShutdownHook(new Thread(&quot;dubbo-container-shutdown-hook&quot;) &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public void run() &#123;</span><br><span class="line">                        for (Container container : containers) &#123;</span><br><span class="line">                            try &#123;</span><br><span class="line">                                container.stop();</span><br><span class="line">                                logger.info(&quot;Dubbo &quot; + container.getClass().getSimpleName() + &quot; stopped!&quot;);</span><br><span class="line">                            &#125; catch (Throwable t) &#123;</span><br><span class="line">                                logger.error(t.getMessage(), t);</span><br><span class="line">                            &#125;</span><br><span class="line">                            try &#123;</span><br><span class="line">                                LOCK.lock();</span><br><span class="line">                                STOP.signal();</span><br><span class="line">                            &#125; finally &#123;</span><br><span class="line">                                LOCK.unlock();</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            for (Container container : containers) &#123;</span><br><span class="line">                container.start();</span><br><span class="line">                logger.info(&quot;Dubbo &quot; + container.getClass().getSimpleName() + &quot; started!&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(new SimpleDateFormat(&quot;[yyyy-MM-dd HH:mm:ss]&quot;).format(new Date()) + &quot; Dubbo service server started!&quot;);</span><br><span class="line">        &#125; catch (RuntimeException e) &#123;</span><br><span class="line">            logger.error(e.getMessage(), e);</span><br><span class="line">            System.exit(1);</span><br><span class="line">        &#125;</span><br><span class="line">        try &#123;</span><br><span class="line">            LOCK.lock();</span><br><span class="line">            STOP.await();</span><br><span class="line">        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            logger.warn(&quot;Dubbo service server stopped, interrupted by other thread!&quot;, e);</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            LOCK.unlock();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>dubbo-container-spring：spring容器实现包，系统变量dubbo.spring.config读取spring配置文件位置或使用默认位置<strong>classpath<em>:META-INF/spring/</em>.xml</strong>读取，主要是读取spring文件并启动spring容器</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">public class SpringContainer implements Container &#123;</span><br><span class="line"></span><br><span class="line">    public static final String SPRING_CONFIG = &quot;dubbo.spring.config&quot;;</span><br><span class="line">    public static final String DEFAULT_SPRING_CONFIG = &quot;classpath*:META-INF/spring/*.xml&quot;;</span><br><span class="line">    private static final Logger logger = LoggerFactory.getLogger(SpringContainer.class);</span><br><span class="line">    static ClassPathXmlApplicationContext context;</span><br><span class="line"></span><br><span class="line">    public static ClassPathXmlApplicationContext getContext() &#123;</span><br><span class="line">        return context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void start() &#123;</span><br><span class="line">        String configPath = ConfigUtils.getProperty(SPRING_CONFIG);</span><br><span class="line">        if (StringUtils.isEmpty(configPath)) &#123;</span><br><span class="line">            configPath = DEFAULT_SPRING_CONFIG;</span><br><span class="line">        &#125;</span><br><span class="line">        context = new ClassPathXmlApplicationContext(configPath.split(&quot;[,\\s]+&quot;), false);</span><br><span class="line">        context.refresh();</span><br><span class="line">        context.start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void stop() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (context != null) &#123;</span><br><span class="line">                context.stop();</span><br><span class="line">                context.close();</span><br><span class="line">                context = null;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Throwable e) &#123;</span><br><span class="line">            logger.error(e.getMessage(), e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>dubbo-container-log4j：log4j容器，主要是使用dubbo容器时，可以独立加入使用log4j打印日志，系统变量dubbo.log4j.file配置日志输出文件，系统变量dubbo.log4j.level配置日志输出level，系统变量dubbo.log4j.subdirectory设置日志输出目录其会修改当前所以logger appender的输出目录为此目录</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">public class Log4jContainer implements Container &#123;</span><br><span class="line"></span><br><span class="line">    public static final String LOG4J_FILE = &quot;dubbo.log4j.file&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String LOG4J_LEVEL = &quot;dubbo.log4j.level&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String LOG4J_SUBDIRECTORY = &quot;dubbo.log4j.subdirectory&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String DEFAULT_LOG4J_LEVEL = &quot;ERROR&quot;;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">    public void start() &#123;</span><br><span class="line">        String file = ConfigurationUtils.getProperty(LOG4J_FILE);</span><br><span class="line">        if (file != null &amp;&amp; file.length() &gt; 0) &#123;</span><br><span class="line">            String level = ConfigurationUtils.getProperty(LOG4J_LEVEL);</span><br><span class="line">            if (StringUtils.isEmpty(level)) &#123;</span><br><span class="line">                level = DEFAULT_LOG4J_LEVEL;</span><br><span class="line">            &#125;</span><br><span class="line">            Properties properties = new Properties();</span><br><span class="line">            properties.setProperty(&quot;log4j.rootLogger&quot;, level + &quot;,application&quot;);</span><br><span class="line">            properties.setProperty(&quot;log4j.appender.application&quot;, &quot;org.apache.log4j.DailyRollingFileAppender&quot;);</span><br><span class="line">            properties.setProperty(&quot;log4j.appender.application.File&quot;, file);</span><br><span class="line">            properties.setProperty(&quot;log4j.appender.application.Append&quot;, &quot;true&quot;);</span><br><span class="line">            properties.setProperty(&quot;log4j.appender.application.DatePattern&quot;, &quot;&apos;.&apos;yyyy-MM-dd&quot;);</span><br><span class="line">            properties.setProperty(&quot;log4j.appender.application.layout&quot;, &quot;org.apache.log4j.PatternLayout&quot;);</span><br><span class="line">            properties.setProperty(&quot;log4j.appender.application.layout.ConversionPattern&quot;, &quot;%d [%t] %-5p %C&#123;6&#125; (%F:%L) - %m%n&quot;);</span><br><span class="line">            PropertyConfigurator.configure(properties);</span><br><span class="line">        &#125;</span><br><span class="line">        String subdirectory = ConfigurationUtils.getProperty(LOG4J_SUBDIRECTORY);</span><br><span class="line">        if (subdirectory != null &amp;&amp; subdirectory.length() &gt; 0) &#123;</span><br><span class="line">            Enumeration&lt;org.apache.log4j.Logger&gt; ls = LogManager.getCurrentLoggers();</span><br><span class="line">            while (ls.hasMoreElements()) &#123;</span><br><span class="line">                org.apache.log4j.Logger l = ls.nextElement();</span><br><span class="line">                if (l != null) &#123;</span><br><span class="line">                    Enumeration&lt;Appender&gt; as = l.getAllAppenders();</span><br><span class="line">                    while (as.hasMoreElements()) &#123;</span><br><span class="line">                        Appender a = as.nextElement();</span><br><span class="line">                        if (a instanceof FileAppender) &#123;</span><br><span class="line">                            FileAppender fa = (FileAppender) a;</span><br><span class="line">                            String f = fa.getFile();</span><br><span class="line">                            if (f != null &amp;&amp; f.length() &gt; 0) &#123;</span><br><span class="line">                                int i = f.replace(&apos;\\&apos;, &apos;/&apos;).lastIndexOf(&apos;/&apos;);</span><br><span class="line">                                String path;</span><br><span class="line">                                if (i == -1) &#123;</span><br><span class="line">                                    path = subdirectory;</span><br><span class="line">                                &#125; else &#123;</span><br><span class="line">                                    path = f.substring(0, i);</span><br><span class="line">                                    if (!path.endsWith(subdirectory)) &#123;</span><br><span class="line">                                        path = path + &quot;/&quot; + subdirectory;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                    f = f.substring(i + 1);</span><br><span class="line">                                &#125;</span><br><span class="line">                                fa.setFile(path + &quot;/&quot; + f);</span><br><span class="line">                                fa.activateOptions();</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void stop() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>dubbo-container-logback：logback容器，与log4j容器差不多，系统变量dubbo.logback.file、dubbo.logback.level都分别是对输出文件、输出level的配置，而系统变量dubbo.logback.maxhistory配置log文件最大保存历史（文件以”.%d{yyyy-MM-dd}”结尾）</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">public class LogbackContainer implements Container &#123;</span><br><span class="line"></span><br><span class="line">    public static final String LOGBACK_FILE = &quot;dubbo.logback.file&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String LOGBACK_LEVEL = &quot;dubbo.logback.level&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String LOGBACK_MAX_HISTORY = &quot;dubbo.logback.maxhistory&quot;;</span><br><span class="line"></span><br><span class="line">    public static final String DEFAULT_LOGBACK_LEVEL = &quot;ERROR&quot;;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void start() &#123;</span><br><span class="line">        String file = ConfigUtils.getProperty(LOGBACK_FILE);</span><br><span class="line">        if (file != null &amp;&amp; file.length() &gt; 0) &#123;</span><br><span class="line">            String level = ConfigUtils.getProperty(LOGBACK_LEVEL);</span><br><span class="line">            if (StringUtils.isEmpty(level)) &#123;</span><br><span class="line">                level = DEFAULT_LOGBACK_LEVEL;</span><br><span class="line">            &#125;</span><br><span class="line">            // maxHistory=0 Infinite history</span><br><span class="line">            int maxHistory = StringUtils.parseInteger(ConfigUtils.getProperty(LOGBACK_MAX_HISTORY));</span><br><span class="line"></span><br><span class="line">            doInitializer(file, level, maxHistory);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void stop() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Initializer logback</span><br><span class="line">     *</span><br><span class="line">     * @param file</span><br><span class="line">     * @param level</span><br><span class="line">     * @param maxHistory</span><br><span class="line">     */</span><br><span class="line">    private void doInitializer(String file, String level, int maxHistory) &#123;</span><br><span class="line">        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();</span><br><span class="line">        Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);</span><br><span class="line">        rootLogger.detachAndStopAllAppenders();</span><br><span class="line"></span><br><span class="line">        // appender</span><br><span class="line">        RollingFileAppender&lt;ILoggingEvent&gt; fileAppender = new RollingFileAppender&lt;ILoggingEvent&gt;();</span><br><span class="line">        fileAppender.setContext(loggerContext);</span><br><span class="line">        fileAppender.setName(&quot;application&quot;);</span><br><span class="line">        fileAppender.setFile(file);</span><br><span class="line">        fileAppender.setAppend(true);</span><br><span class="line"></span><br><span class="line">        // policy</span><br><span class="line">        TimeBasedRollingPolicy&lt;ILoggingEvent&gt; policy = new TimeBasedRollingPolicy&lt;ILoggingEvent&gt;();</span><br><span class="line">        policy.setContext(loggerContext);</span><br><span class="line">        policy.setMaxHistory(maxHistory);</span><br><span class="line">        policy.setFileNamePattern(file + &quot;.%d&#123;yyyy-MM-dd&#125;&quot;);</span><br><span class="line">        policy.setParent(fileAppender);</span><br><span class="line">        policy.start();</span><br><span class="line">        fileAppender.setRollingPolicy(policy);</span><br><span class="line"></span><br><span class="line">        // encoder</span><br><span class="line">        PatternLayoutEncoder encoder = new PatternLayoutEncoder();</span><br><span class="line">        encoder.setContext(loggerContext);</span><br><span class="line">        encoder.setPattern(&quot;%date [%thread] %-5level %logger (%file:%line\\) - %msg%n&quot;);</span><br><span class="line">        encoder.start();</span><br><span class="line">        fileAppender.setEncoder(encoder);</span><br><span class="line"></span><br><span class="line">        fileAppender.start();</span><br><span class="line"></span><br><span class="line">        rootLogger.addAppender(fileAppender);</span><br><span class="line">        rootLogger.setLevel(Level.toLevel(level));</span><br><span class="line">        rootLogger.setAdditive(false);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="dubbo-registry注册中心"><a href="#dubbo-registry注册中心" class="headerlink" title="dubbo-registry注册中心"></a>dubbo-registry注册中心</h4><ul>
+<li>registry注册中心：在dubbo中主要负责服务暴露、引用，服务暴露主要是服务提供者启动时，告诉注册中心其要对外暴露一个服务，服务消费者可通过注册中心获取到所有服务提供者的信息（并实时监听数据变动），然后通过得到的信息完成远程调用。</li>
+<li>RegistryProtocol：在服务提供端或服务消费端启动时，都会通过其进行暴露或引用服务。若使用了registry=zookeeper&amp;protocol=dubbo，则在启动时，提供者会先使用ZookeeperRegistry把当前服务的信息注册至zookeeper，然后使用DubboProtocol对其服务进行暴露处理（若使用remoting实现为netty，则会建立端口监听）得到ExchangeServer，而消费者则先使用ZookeeperRegistry通过zookeeper订阅并获取提供者服务信息，然后使用DubboProtocol对其服务进行引用得到一个或多个ExchangeClient，接着用cluster进行包装，对外层隐藏细节，从而实现集群、故障转移等特性</li>
+</ul>
+<h4 id="dubbo-remoting远程通讯包"><a href="#dubbo-remoting远程通讯包" class="headerlink" title="dubbo-remoting远程通讯包"></a>dubbo-remoting远程通讯包</h4><ul>
+<li>remoting远程通讯包：其封装了buffer、exchange、telnet、transport层，对上层隐藏细节，默认使用netty实现远程通讯</li>
+<li>Exchanger：交换层，隐藏下一层传输层的细节，对下层包装Request、Response，下层仅需关心是请求还是响应。bind方法为服务提供者在Protocol中对服务的bind，得到ExchangeServer。connect方法为服务消费者在Protocol中对服务的connect，得到ExchangeClient。而无论是服务的提供者还是消费者，在bind、connect时，都需要提供ExchangeHandler，其被用于解码请求，对于提供者，其为请求接收处理，其在Protocol层，不关心remoting实现细节，只管接收到Request对象，然后invoke服务实现并返回Result。</li>
+<li>ExchangeServer：服务提供者对服务暴露时，使用Protocol对象进行export，export中对其进行Exchangers.bind得到ExchangeServer，其重点为第二个参数ExchangeHandler，其被多个handler进行包装，进行了多层的处理，其为最外层，进行实际实例方法的调用invoke，然后返回Result</li>
+<li>ExchangeClient：服务消费者对服务引用时，使用Protocol对象进行refer，refer中中对其进行Exchangers.connect得到ExchangeClient，然后把其封装在Invoker中，接着Invoker被proxy，当消费者执行Proxy对象方法时，其会通过InvokeInvocationHandler对Invoker进行invoke，然后Invoker调用ExchangeClient进行request，其重点为第二个参数ExchangeHandler，其被多个handler进行包装，进行了多层的处理，其为最外层，对响应进行处理DefaultFuture.received</li>
+<li>DefaultFuture：在消费者Invoker对ExchangeClient进行request时，都会创建DefaultFuture并放置在其内部static集合FUTURES中以表示正在进行的请求，然后立即返回，当有响应Response返回时调用received，会将其在FUTURES集合中删除，然后把相应结果放到CompletableFuture</li>
+<li>Transporters：交换层Exchangers的bind、connect最终都交由传输层Transporters处理</li>
+<li>HeaderExchanger：无论是bind还是connect都传入了多层handler，DecodeHandler-HeaderExchangeHandler-ExchangeHandler，对于服务双方来讲，都是Handler都是对接收消息的处理。DecodeHandler对接收消息进行判断，若是请求（即提供方），则对Data进行decode，若是响应（即消费者），则对Result进行decode。HeaderExchangeHandler对请求进行实际方法调用，此时区分request.isEvent、request.isTwoWay等，最终调用最外层的ExchangeHandler。</li>
+<li>HeaderExchangeClient：默认ExchangeClient的实现，其由HeaderExchanger创建，构造方法中创建HeaderExchangeChannel，而其Client由Transporters（SPI可选，NettyTransporter）创建，当Invoker进行invoke时，通过其进行request并传入RpcInvocation，然后由HeaderExchangeChannel对其包装成Request对象，接着通过client进行send</li>
+<li>HeaderExchangeServer：默认ExchangeServer的实现，请求经过DecodeHandler-HeaderExchangeHandler-ExchangeHandler多层处理后调用实际实例方法，然后调用其bind时由Transporters（SPI可选，NettyTransporter）创建的server的send方法进行发送响应结果。</li>
+</ul>
+<h4 id="dubbo-rpc"><a href="#dubbo-rpc" class="headerlink" title="dubbo-rpc"></a>dubbo-rpc</h4><ul>
+<li>rpc上进行功能扩展的module</li>
+<li>filter、interceptors、listener：功能扩展</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/dubbo/" rel="tag"># dubbo</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/20/ARTS打卡-第二周/" rel="next" title="ARTS打卡-第二周">
+                <i class="fa fa-chevron-left"></i> ARTS打卡-第二周
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/12/24/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/" rel="prev" title="dubbo框架-默认dubbo协议和hessian2反序列化的简单总结">
+                dubbo框架-默认dubbo协议和hessian2反序列化的简单总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#从调试的角度去看待源码"><span class="nav-number">1.</span> <span class="nav-text">从调试的角度去看待源码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#从简单阅读的角度去看待源码"><span class="nav-number">2.</span> <span class="nav-text">从简单阅读的角度去看待源码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#dubbo-container容器"><span class="nav-number">2.1.</span> <span class="nav-text">dubbo-container容器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#dubbo-registry注册中心"><span class="nav-number">2.2.</span> <span class="nav-text">dubbo-registry注册中心</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#dubbo-remoting远程通讯包"><span class="nav-number">2.3.</span> <span class="nav-text">dubbo-remoting远程通讯包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#dubbo-rpc"><span class="nav-number">2.4.</span> <span class="nav-text">dubbo-rpc</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

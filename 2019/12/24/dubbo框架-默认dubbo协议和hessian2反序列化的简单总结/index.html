@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="ARTS,">
+  <meta name="keywords" content="dubbo,">
 
 
 
@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="Algorithm：每周至少做一个 leetcode 的算法题36. 有效的数独 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253public boolean isValidSudoku(char[][] board) &amp;#123;    for (in">
-<meta name="keywords" content="ARTS">
+<meta name="description" content="dubbo协议header：1234567890-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字16位：Req/Res：请求还是响应标识。17位：2way：单向还是双向18位：Event：是否是事件19-23位：Serialization 编号24-31位：status状态32-95位：id编号9">
+<meta name="keywords" content="dubbo">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ARTS打卡-第一周">
-<meta property="og:url" content="http://yoursite.com/2019/05/17/ARTS打卡-第一周/index.html">
+<meta property="og:title" content="dubbo框架-默认dubbo协议和hessian2反序列化的简单总结">
+<meta property="og:url" content="http://yoursite.com/2019/12/24/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="Algorithm：每周至少做一个 leetcode 的算法题36. 有效的数独 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253public boolean isValidSudoku(char[][] board) &amp;#123;    for (in">
+<meta property="og:description" content="dubbo协议header：1234567890-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字16位：Req/Res：请求还是响应标识。17位：2way：单向还是双向18位：Event：是否是事件19-23位：Serialization 编号24-31位：status状态32-95位：id编号9">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-05-25T05:06:36.207Z">
+<meta property="og:updated_time" content="2019-12-24T10:29:33.825Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ARTS打卡-第一周">
-<meta name="twitter:description" content="Algorithm：每周至少做一个 leetcode 的算法题36. 有效的数独 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253public boolean isValidSudoku(char[][] board) &amp;#123;    for (in">
+<meta name="twitter:title" content="dubbo框架-默认dubbo协议和hessian2反序列化的简单总结">
+<meta name="twitter:description" content="dubbo协议header：1234567890-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字16位：Req/Res：请求还是响应标识。17位：2way：单向还是双向18位：Event：是否是事件19-23位：Serialization 编号24-31位：status状态32-95位：id编号9">
 
 
 
@@ -120,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/05/17/ARTS打卡-第一周/">
+  <link rel="canonical" href="http://yoursite.com/2019/12/24/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/">
 
 
 
 
 
-  <title>ARTS打卡-第一周 | 大彩笔threedr3am</title>
+  <title>dubbo框架-默认dubbo协议和hessian2反序列化的简单总结 | 大彩笔threedr3am</title>
   
 
 
@@ -273,7 +273,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/17/ARTS打卡-第一周/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/24/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="threedr3am">
@@ -290,7 +290,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">ARTS打卡-第一周</h1>
+          <h1 class="post-title" itemprop="name headline">dubbo框架-默认dubbo协议和hessian2反序列化的简单总结</h1>
         
 
         <div class="post-meta">
@@ -302,8 +302,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-17T11:28:20+08:00">
-                2019-05-17
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-24T18:22:41+08:00">
+                2019-12-24
               </time>
             
 
@@ -325,8 +325,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/ARTS打卡/" itemprop="url" rel="index">
-                    <span itemprop="name">ARTS打卡</span>
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
                   </a>
                 </span>
 
@@ -362,35 +362,26 @@
       
 
       
-        <h2 id="Algorithm：每周至少做一个-leetcode-的算法题"><a href="#Algorithm：每周至少做一个-leetcode-的算法题" class="headerlink" title="Algorithm：每周至少做一个 leetcode 的算法题"></a>Algorithm：每周至少做一个 leetcode 的算法题</h2><p><a href="https://leetcode-cn.com/problems/valid-sudoku/" target="_blank" rel="noopener">36. 有效的数独</a></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isValidSudoku</span><span class="params">(<span class="keyword">char</span>[][] board)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> x = <span class="number">0</span>; x &lt; board.length; x++) &#123;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> y = <span class="number">0</span>; y &lt; board[<span class="number">0</span>].length; y++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!(checkColumn(board, x) &amp;&amp; checkRow(board, y) &amp;&amp; checkTable(board, x, y))) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">checkTable</span><span class="params">(<span class="keyword">char</span>[][] board, <span class="keyword">int</span> x, <span class="keyword">int</span> y)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">byte</span>[] tmp = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">9</span>];</span><br><span class="line">    <span class="keyword">int</span> beginX = x / <span class="number">3</span> * <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">int</span> beginY = y / <span class="number">3</span> * <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = beginX; i &lt; beginX + <span class="number">3</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> j = beginY; j &lt; beginY + <span class="number">3</span>; j++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (board[i][j] != <span class="string">'.'</span>) &#123;</span><br><span class="line">          tmp[board[i][j] - <span class="string">'1'</span>] += <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> checkHasZero(tmp);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">checkColumn</span><span class="params">(<span class="keyword">char</span>[][] board, <span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">byte</span>[] tmp = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">9</span>];</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">9</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">if</span> (board[i][x] != <span class="string">'.'</span>) &#123;</span><br><span class="line">        tmp[board[i][x] - <span class="string">'1'</span>] += <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> checkHasZero(tmp);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">checkRow</span><span class="params">(<span class="keyword">char</span>[][] board, <span class="keyword">int</span> y)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">byte</span>[] tmp = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">9</span>];</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">9</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">if</span> (board[y][i] != <span class="string">'.'</span>) &#123;</span><br><span class="line">        tmp[board[y][i] - <span class="string">'1'</span>] += <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> checkHasZero(tmp);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">checkHasZero</span><span class="params">(<span class="keyword">byte</span>[] tmp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">9</span>; i++) &#123;</span><br><span class="line">      <span class="keyword">if</span> (tmp[i] &gt; <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+        <h3 id="dubbo协议"><a href="#dubbo协议" class="headerlink" title="dubbo协议"></a>dubbo协议</h3><p>header：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">0-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字</span><br><span class="line">16位：Req/Res：请求还是响应标识。</span><br><span class="line">17位：2way：单向还是双向</span><br><span class="line">18位：Event：是否是事件</span><br><span class="line">19-23位：Serialization 编号</span><br><span class="line">24-31位：status状态</span><br><span class="line">32-95位：id编号</span><br><span class="line">96-127位：body数据长度</span><br><span class="line">128-…位：body</span><br></pre></td></tr></table></figure></p>
 <a id="more"></a>
-<h2 id="Review：阅读并点评至少一篇英文技术文章"><a href="#Review：阅读并点评至少一篇英文技术文章" class="headerlink" title="Review：阅读并点评至少一篇英文技术文章"></a>Review：阅读并点评至少一篇英文技术文章</h2><ul>
-<li><a href="https://github.com/seata/seata/blob/develop/README.md" target="_blank" rel="noopener"><strong>seata分布式事务架构原理</strong></a></li>
-</ul>
-<p>Seata是一个分布式事务解决框架，在传统的单数据库系统演变为微服务多数据库系统时，由于一个业务的调用链可能涉及到多个微服务系统，从而对多个数据库的数据CURD时，一旦出现异常等原因导致需要数据rollback，这时候，我们就需要对每一个开启了transaction进行rollback。</p>
-<p>当调用链中涉及的数据库数量很少的时候，这样逐个手动rollback当然也没什么问题，但是一旦数量多的时候，这样必然导致大量的代码侵入，而seata分布式事务框架则解决了这个问题。</p>
-<p>Seata分为3个模块：</p>
-<ol>
-<li>Transaction Coordinator(TC)：维护全局事务状态，并驱动全局事务的提交和回滚</li>
-<li>Transaction Manager(TM)：定义全局事务的作用域，管理全局事务的生命周期，全局事务开启、提交、回滚的管理者</li>
-<li>Resource Manager(RM)：管理资源本地分支事务的工作，并把分支事务注册至TC的全局事务中，在TC驱动全局事务的提交、回滚等时，对全局事务关联下的分支事务做出相应的操作</li>
+<p>body：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1.dubboVersion</span><br><span class="line">2.path</span><br><span class="line">3.version</span><br><span class="line">4.methodName</span><br><span class="line">5.methodDesc</span><br><span class="line">6.paramsObject</span><br><span class="line">7.map</span><br></pre></td></tr></table></figure>
+<p>rpc tcp报文（ascii）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...           .G.2.0.20,com.threedr3am.learn.server.boot.DemoService.1.0.hello0$Lcom/threedr3am/learn/server/boot/A;C0&quot;com.threedr3am.learn.server.boot.A..name`.xxxxH.path0,com.threedr3am.learn.server.boot.DemoService.activelimit_filter_start_time 1577081623564 interface0,com.threedr3am.learn.server.boot.DemoService.version.1.0.timeout.3000Z</span><br></pre></td></tr></table></figure></p>
+<p>rpc tcp报文（hex）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">dabb c200 0000 0000 0000 0000 0000 0149</span><br><span class="line">0532 2e30 2e32 302c 636f 6d2e 7468 7265</span><br><span class="line">6564 7233 616d 2e6c 6561 726e 2e73 6572</span><br><span class="line">7665 722e 626f 6f74 2e44 656d 6f53 6572</span><br><span class="line">7669 6365 0331 2e30 0568 656c 6c6f 3024</span><br><span class="line">4c63 6f6d 2f74 6872 6565 6472 3361 6d2f</span><br><span class="line">6c65 6172 6e2f 7365 7276 6572 2f62 6f6f</span><br><span class="line">742f 413b 4330 2263 6f6d 2e74 6872 6565</span><br><span class="line">6472 3361 6d2e 6c65 6172 6e2e 7365 7276</span><br><span class="line">6572 2e62 6f6f 742e 4191 046e 616d 6560</span><br><span class="line">0678 7561 6e79 6848 0470 6174 6830 2c63</span><br><span class="line">6f6d 2e74 6872 6565 6472 3361 6d2e 6c65</span><br><span class="line">6172 6e2e 7365 7276 6572 2e62 6f6f 742e</span><br><span class="line">4465 6d6f 5365 7276 6963 651d 6163 7469</span><br><span class="line">7665 6c69 6d69 745f 6669 6c74 6572 5f73</span><br><span class="line">7461 7274 5f74 696d 650d 3135 3737 3038</span><br><span class="line">3332 3138 3432 3209 696e 7465 7266 6163</span><br><span class="line">6530 2c63 6f6d 2e74 6872 6565 6472 3361</span><br><span class="line">6d2e 6c65 6172 6e2e 7365 7276 6572 2e62</span><br><span class="line">6f6f 742e 4465 6d6f 5365 7276 6963 6507</span><br><span class="line">7665 7273 696f 6e03 312e 3007 7469 6d65</span><br><span class="line">6f75 7404 3330 3030 5a</span><br></pre></td></tr></table></figure>
+<h3 id="hessian2序列化"><a href="#hessian2序列化" class="headerlink" title="hessian2序列化"></a>hessian2序列化</h3><ol>
+<li>默认dubbo协议+hessian2序列化方式</li>
+<li>序列化tcp包可随意修改方法参数反序列化的class</li>
+<li>反序列化时先通过构造方法实例化，然后在反射设置字段值</li>
+<li>构造方法的选择，只选择花销最小并且只有基本类型传入的构造方法</li>
 </ol>
-<p>Seata具体流程：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">Constructor[] constructors = cl.getDeclaredConstructors();</span><br><span class="line">long bestCost = Long.MAX_VALUE;</span><br><span class="line"></span><br><span class="line">for (int i = 0; i &lt; constructors.length; i++) &#123;</span><br><span class="line">    Class[] param = constructors[i].getParameterTypes();</span><br><span class="line">    long cost = 0;</span><br><span class="line"></span><br><span class="line">    for (int j = 0; j &lt; param.length; j++) &#123;</span><br><span class="line">        cost = 4 * cost;</span><br><span class="line"></span><br><span class="line">        if (Object.class.equals(param[j]))</span><br><span class="line">            cost += 1;</span><br><span class="line">        else if (String.class.equals(param[j]))</span><br><span class="line">            cost += 2;</span><br><span class="line">        else if (int.class.equals(param[j]))</span><br><span class="line">            cost += 3;</span><br><span class="line">        else if (long.class.equals(param[j]))</span><br><span class="line">            cost += 4;</span><br><span class="line">        else if (param[j].isPrimitive())</span><br><span class="line">            cost += 5;</span><br><span class="line">        else</span><br><span class="line">            cost += 6;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (cost &lt; 0 || cost &gt; (1 &lt;&lt; 48))</span><br><span class="line">        cost = 1 &lt;&lt; 48;</span><br><span class="line"></span><br><span class="line">    cost += (long) param.length &lt;&lt; 48;</span><br><span class="line"></span><br><span class="line">    if (cost &lt; bestCost) &#123;</span><br><span class="line">        _constructor = constructors[i];</span><br><span class="line">        bestCost = cost;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (_constructor != null) &#123;</span><br><span class="line">    _constructor.setAccessible(true);</span><br><span class="line">    Class[] params = _constructor.getParameterTypes();</span><br><span class="line">    _constructorArgs = new Object[params.length];</span><br><span class="line">    for (int i = 0; i &lt; params.length; i++) &#123;</span><br><span class="line">        _constructorArgs[i] = getParamArg(params[i]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>总结：想要rce，估计得找到以下条件的exp clain</p>
 <ol>
-<li>TM要求TC开启一个新的全局事务，TC创建全局事务的XID</li>
-<li>XID跟着微服务执行链流动</li>
-<li>RM根据XID把本地分支事务注册关联到TC的全局事务中</li>
-<li>TM根据XID要求TC提交或者回滚全局事务</li>
-<li>TC根据XID找到所有本地分支事务，驱动RM对事务进行提交或者回滚</li>
+<li>有参构造方法</li>
+<li>参数不包含非基本类型</li>
+<li>cost最小</li>
 </ol>
-<p>Seata使用思考：</p>
-<ol>
-<li>减少了分布式事务实现的代码侵入</li>
-<li>使用全局事务并且生成全局事务XID关联每一个本地事务，使事务间具有关联性</li>
-</ol>
-<h2 id="Tip：学习至少一个技术技巧"><a href="#Tip：学习至少一个技术技巧" class="headerlink" title="Tip：学习至少一个技术技巧"></a>Tip：学习至少一个技术技巧</h2><h2 id="Share：分享一篇有观点和思考的技术文章"><a href="#Share：分享一篇有观点和思考的技术文章" class="headerlink" title="Share：分享一篇有观点和思考的技术文章"></a>Share：分享一篇有观点和思考的技术文章</h2><p><a href="https://www.cnkirito.moe/Re-DDD/" target="_blank" rel="noopener">Re：从零开始的领域驱动设计</a></p>
-<p>文中对Repository和包结构的观点和思考，我觉得非常有意义，很多时候，我们对Repository的编写以及包结构的设计往往都是按照习惯思维来做，却对其合理性缺乏一个思考。</p>
 
       
     </div>
@@ -408,7 +399,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/ARTS/" rel="tag"># ARTS</a>
+            <a href="/tags/dubbo/" rel="tag"># dubbo</a>
           
         </div>
       
@@ -421,8 +412,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/04/25/DDCTF2019-WEB-再来一杯JAVA/" rel="next" title="DDCTF2019-WEB-再来一杯JAVA">
-                <i class="fa fa-chevron-left"></i> DDCTF2019-WEB-再来一杯JAVA
+              <a href="/2019/12/24/dubbo源码阅读笔记/" rel="next" title="dubbo源码阅读笔记">
+                <i class="fa fa-chevron-left"></i> dubbo源码阅读笔记
               </a>
             
           </div>
@@ -430,10 +421,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/05/20/ARTS打卡-第二周/" rel="prev" title="ARTS打卡-第二周">
-                ARTS打卡-第二周 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -607,7 +594,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Algorithm：每周至少做一个-leetcode-的算法题"><span class="nav-number">1.</span> <span class="nav-text">Algorithm：每周至少做一个 leetcode 的算法题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Review：阅读并点评至少一篇英文技术文章"><span class="nav-number">2.</span> <span class="nav-text">Review：阅读并点评至少一篇英文技术文章</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tip：学习至少一个技术技巧"><span class="nav-number">3.</span> <span class="nav-text">Tip：学习至少一个技术技巧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Share：分享一篇有观点和思考的技术文章"><span class="nav-number">4.</span> <span class="nav-text">Share：分享一篇有观点和思考的技术文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#dubbo协议"><span class="nav-number">1.</span> <span class="nav-text">dubbo协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hessian2序列化"><span class="nav-number">2.</span> <span class="nav-text">hessian2序列化</span></a></li></ol></div>
             
 
           </div>
