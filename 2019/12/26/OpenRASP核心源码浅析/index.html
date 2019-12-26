@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="OpenRASP,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 介绍https://github.com/baidu/openrasp IntroductionUnlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the application server by instrumentation. It">
+<meta name="keywords" content="OpenRASP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenRASP核心源码浅析">
+<meta property="og:url" content="http://yoursite.com/2019/12/26/OpenRASP核心源码浅析/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="0x01 介绍https://github.com/baidu/openrasp IntroductionUnlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the application server by instrumentation. It">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-12-26T08:50:34.719Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenRASP核心源码浅析">
+<meta name="twitter:description" content="0x01 介绍https://github.com/baidu/openrasp IntroductionUnlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the application server by instrumentation. It">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/12/26/OpenRASP核心源码浅析/">
+
+
+
+
+
+  <title>OpenRASP核心源码浅析 | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/26/OpenRASP核心源码浅析/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">OpenRASP核心源码浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-26T16:49:41+08:00">
+                2019-12-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="0x01-介绍"><a href="#0x01-介绍" class="headerlink" title="0x01 介绍"></a>0x01 介绍</h3><p><a href="https://github.com/baidu/openrasp" target="_blank" rel="noopener">https://github.com/baidu/openrasp</a></p>
+<h4 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h4><p>Unlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the application server by instrumentation. It can monitor various events including database queries, file operations and network requests etc.</p>
+<p>When an attack happens, WAF matches the malicious request with its signatures and blocks it. OpenRASP takes a different approach by hooking sensitive functions and examines/blocks the inputs fed into them. As a result, this examination is context-aware and in-place. It brings in the following benefits:</p>
+<ol>
+<li>Only successful attacks can trigger alarms, resulting in lower false positive and higher detection rate;</li>
+<li>Detailed stack trace is logged, which makes the forensic analysis easier;</li>
+<li>Insusceptible to malformed protocol.</li>
+</ol>
+<h4 id="我的理解"><a href="#我的理解" class="headerlink" title="我的理解"></a>我的理解</h4><p>在我阅读了OpenRASP的源码后，再次解读官方对其的介绍，我认为OpenRASP就是一个不同于WAF，它是通过JavaAgent，然后利用Instrumentation在class加载时，通过javassist的方式hook目标class的method，在其method插桩，以进行一系列的安全基准测试或运行时的安全检查，它相对于WAF来说，具有非常大的优势，但这是相对的，它的优点的存在恰恰也造成了一定的缺点。</p>
+<p>优点：</p>
+<ol>
+<li>WAF依靠特征检测攻击，但会造成一定的误报率，而OpenRASP不一样，必须是成功的攻击才会触发报警</li>
+<li>OpenRASP插桩到代码层面，可以记录详细的栈堆跟踪信息</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>因为侵入到代码层面，导致必然会造成一定的性能损耗，并且一个不合格的rasp更容易影响到业务代码</li>
+</ol>
+<a id="more"></a>
+<h4 id="重点阅读部分"><a href="#重点阅读部分" class="headerlink" title="重点阅读部分"></a>重点阅读部分</h4><p>从github clone下来项目之后，我们可以看到具体的目录大致构成是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LICENSE           build-cloud.sh    build-php7.sh     docker            plugins           rasp-vue          travis</span><br><span class="line">README.md         build-java.sh     cloud             openrasp-v8       rasp-2019-12-12   readme-zh_CN.md</span><br><span class="line">agent             build-php5.sh     contributors.md   package-lock.json rasp-install      siem</span><br></pre></td></tr></table></figure>
+<p>而我主要关心的是：</p>
+<ol>
+<li>agent/java/boot（OpenRASP JavaAgent源码）</li>
+<li>agent/java/engine（OpenRASP主要唯一的module）</li>
+<li>rasp-install/java（OpenRASP安装源码）</li>
+<li>plugins（js插件，OpenRASP检查攻击的主要源码，因为js的热部署性而采用）</li>
+</ol>
+<hr>
+<h3 id="0x02-OpenRASP的安装原理"><a href="#0x02-OpenRASP的安装原理" class="headerlink" title="0x02 OpenRASP的安装原理"></a>0x02 OpenRASP的安装原理</h3><p>java源码实现，位置rasp-install/java</p>
+<h4 id="宏观上的审视"><a href="#宏观上的审视" class="headerlink" title="宏观上的审视"></a>宏观上的审视</h4><p>查看源码工程，其具有两个package</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">-install</span><br><span class="line">++linux</span><br><span class="line">++windows</span><br><span class="line">-uninstall</span><br><span class="line">++linux</span><br><span class="line">++windows</span><br></pre></td></tr></table></figure>
+<p>其实就是对OpenRASP的安装和卸载做的封装，interfece Installer和interface Uninstaller分别是它们的抽象定义</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public interface Installer &#123;</span><br><span class="line">    void install() throws RaspError, IOException;</span><br><span class="line">&#125;</span><br><span class="line">public interface Uninstaller &#123;</span><br><span class="line">    void uninstall() throws RaspError, IOException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>包中都是对Installer、Uninstaller基于不同操作系统、web服务器的实现，并通过了工厂模式，根据参数、环境变量、目录信息特征等，选择对应的实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">public abstract class InstallerFactory</span><br><span class="line">public abstract class UninstallerFactory</span><br></pre></td></tr></table></figure>
+<p>OpenRASP的安装程序主要入口位于：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">package com.baidu.rasp</span><br><span class="line"></span><br><span class="line">com.baidu.rasp.App#main</span><br></pre></td></tr></table></figure>
+<h4 id="微观细节的跟踪"><a href="#微观细节的跟踪" class="headerlink" title="微观细节的跟踪"></a>微观细节的跟踪</h4><p>应用入口：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        operateServer(args);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        if (e instanceof RaspError || e instanceof UnrecognizedOptionException) &#123;</span><br><span class="line">            System.out.println(e.getMessage());</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        showNotice();</span><br><span class="line">        System.exit(1);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主要代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">public static void operateServer(String[] args) throws RaspError, ParseException, IOException &#123;</span><br><span class="line">    showBanner();</span><br><span class="line">    argsParser(args);</span><br><span class="line">    checkArgs();</span><br><span class="line">    if (&quot;install&quot;.equals(install)) &#123;</span><br><span class="line">        File serverRoot = new File(baseDir);</span><br><span class="line">        InstallerFactory factory = newInstallerFactory();</span><br><span class="line">        Installer installer = factory.getInstaller(serverRoot, noDetect);</span><br><span class="line">        if (installer != null) &#123;</span><br><span class="line">            installer.install();</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            throw new RaspError(E10007);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else if (&quot;uninstall&quot;.equals(install)) &#123;</span><br><span class="line">        File serverRoot = new File(baseDir);</span><br><span class="line">        UninstallerFactory factory = newUninstallerFactory();</span><br><span class="line">        Uninstaller uninstaller = factory.getUninstaller(serverRoot);</span><br><span class="line">        if (uninstaller != null) &#123;</span><br><span class="line">            uninstaller.uninstall();</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            throw new RaspError(E10007);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码跟进：</p>
+<ol>
+<li>showBanner()：通过该方法输出了OpenRASP安装程序的一些banner信息</li>
+<li>argsParser(args)：该方法主要是对程序启动参数的解析和校验，它通过commons-cli的功能，对启动参数进行一系列的解析和校验</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">install：指定该操作为安装</span><br><span class="line">uninstall：指定该操作为卸载</span><br><span class="line">appid：OpenRASP连接到RASP Cloud的认证appid</span><br><span class="line">appsecret：OpenRASP连接到RASP Cloud的认证appsecret</span><br><span class="line">heartbeat：OpenRASP连接到RASP Cloud的心跳检测时间间隔</span><br><span class="line">raspid：OpenRASP的id</span><br><span class="line">backendurl：RASP Cloud地址</span><br><span class="line">keepconf：</span><br><span class="line">h：帮助指令</span><br><span class="line">pid：若使用OpenRASP的web程序非容器化，而是类似SpringBoot独立jar运行的时候，需要通过pid指定其Java server通过attach模式去使用</span><br><span class="line">nodetect：指定为类似SpringBoot独立jar运行的安装</span><br><span class="line">prepend：是否使用JavaAgent的模式比web容器更早启动</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>checkArgs()：对程序启动参数格式、范围等校验</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">appId、appSecret、raspId、url、heartbeatInterval</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>根据参数判断是安装还是卸载，若是安装，则通过安装工厂newInstallerFactory获取安装实例进行执行安装，若是卸载，则通过卸载工厂newUninstallerFactory获取卸载实例进行执行卸载，安装、卸载工厂的不同操作系统实现，是根据系统变量os.name进行判断</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">private static InstallerFactory newInstallerFactory() &#123;</span><br><span class="line">    if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Windows&quot;)) &#123;</span><br><span class="line">        return new WindowsInstallerFactory();</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return new LinuxInstallerFactory();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private static UninstallerFactory newUninstallerFactory() &#123;</span><br><span class="line">    if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Windows&quot;)) &#123;</span><br><span class="line">        return new WindowsUninstallerFactory();</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return new LinuxUninstallerFactory();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取安装实例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> public Installer getInstaller(File serverRoot, boolean noDetect) throws RaspError &#123;</span><br><span class="line">    if (!serverRoot.exists()) &#123;</span><br><span class="line">        throw new RaspError(E10002 + serverRoot.getPath());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (noDetect) &#123;</span><br><span class="line">        return new GenericInstaller(GENERIC, serverRoot.getAbsolutePath());</span><br><span class="line">    &#125;</span><br><span class="line">    String serverName = detectServerName(serverRoot.getAbsolutePath());</span><br><span class="line">    if (serverName == null) &#123;</span><br><span class="line">        App.listServerSupport(serverRoot.getPath());</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(&quot;Detected JDK version: &quot; + System.getProperty(&quot;java.version&quot;));</span><br><span class="line">    System.out.println(&quot;Detected application server type: &quot; + serverName);</span><br><span class="line">    return getInstaller(serverName, serverRoot.getAbsolutePath());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，对于使用了启动参数nodetect的安装，选择的是GenericInstaller通用安装实例，否则会通过detectServerName(String serverRoot)方法进行web服务器的特征检测</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">public static String detectServerName(String serverRoot) throws RaspError &#123;</span><br><span class="line">    if (new File(serverRoot, &quot;bin/catalina.sh&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/catalina.bat&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;conf/catalina.properties&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;conf/catalina.policy&quot;).exists()) &#123;</span><br><span class="line">        return TOMCAT;</span><br><span class="line">    &#125;</span><br><span class="line">    if (new File(serverRoot, &quot;bin/probe.sh&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/probe.bat&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/twiddle.sh&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/twiddle.bat&quot;).exists()) &#123;</span><br><span class="line">        return JBOSS;</span><br><span class="line">    &#125;</span><br><span class="line">    if (new File(serverRoot, &quot;bin/httpd.sh&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/resin.sh&quot;).exists()) &#123;</span><br><span class="line">        return RESIN;</span><br><span class="line">    &#125;</span><br><span class="line">    if (new File(serverRoot, &quot;bin/startWebLogic.sh&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/startWebLogic.bat&quot;).exists()) &#123;</span><br><span class="line">        return WEBLOGIC;</span><br><span class="line">    &#125;</span><br><span class="line">    if (new File(serverRoot, &quot;bin/standalone.sh&quot;).exists()</span><br><span class="line">            || new File(serverRoot, &quot;bin/standalone.bat&quot;).exists()) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            return isWildfly(serverRoot) ? WILDFLY : JBOSSEAP;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>特征检测的方式，无一不是通过检测特定目录是否存在shell脚本实现</p>
+<p>执行安装：</p>
+<p>安装核心方法：install()</p>
+<ol>
+<li>GenericInstaller通用安装：</li>
+</ol>
+<p>先是根据当前jar的目录获取到其子目录rasp，若不存在则新建<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">String jarPath = getLocalJarPath();</span><br><span class="line">File srcDir = new File(new File(jarPath).getParent() + File.separator + &quot;rasp&quot;);</span><br><span class="line">if (!(srcDir.exists() &amp;&amp; srcDir.isDirectory())) &#123;</span><br><span class="line">    srcDir.mkdirs();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接着通过设定的安装目录，检测openrasp.yml是否存在，用以判断是否第一次安装，然后拷贝rasp文件夹至目标安装目录<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">File installDir = new File(getInstallPath(serverRoot));</span><br><span class="line"></span><br><span class="line">File configFile = new File(installDir.getCanonicalPath() + File.separator + &quot;conf&quot; + File.separator + &quot;openrasp.yml&quot;);</span><br><span class="line">if (!configFile.exists()) &#123;</span><br><span class="line">    firstInstall = true;</span><br><span class="line">&#125;</span><br><span class="line">if (!srcDir.getCanonicalPath().equals(installDir.getCanonicalPath())) &#123;</span><br><span class="line">    // 拷贝rasp文件夹</span><br><span class="line">    System.out.println(&quot;Duplicating \&quot;rasp\&quot; directory\n- &quot; + installDir.getCanonicalPath());</span><br><span class="line">    FileUtils.copyDirectory(srcDir, installDir);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>删除官方js插件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">//安装rasp开启云控，删除官方插件</span><br><span class="line">if (App.url != null &amp;&amp; App.appId != null &amp;&amp; App.appSecret != null) &#123;</span><br><span class="line">    File plugin = new File(installDir.getCanonicalPath() + File.separator + &quot;plugins&quot; + File.separator + &quot;official.js&quot;);</span><br><span class="line">    if (plugin.exists()) &#123;</span><br><span class="line">        plugin.delete();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>若不是第一次安装，则会把目标安装目录下原有配置文件修改名称为openrasp.yml.bak，然后拷贝当前jar目录下的openrasp.yml到目标安装目录的conf子目录<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 生成配置文件</span><br><span class="line">if (!generateConfig(installDir.getPath(), firstInstall)) &#123;</span><br><span class="line">    System.exit(1);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">private boolean generateConfig(String dir, boolean firstInstall) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        String sep = File.separator;</span><br><span class="line">        File target = new File(dir + sep + &quot;conf&quot; + sep + &quot;openrasp.yml&quot;);</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;Generating \&quot;openrasp.yml\&quot;\n- &quot; + target.getAbsolutePath());</span><br><span class="line">        if (target.exists() &amp;&amp; App.keepConfig) &#123;</span><br><span class="line">            System.out.println(&quot;- Already exists and reserved openrasp.yml, continuing ..&quot;);</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        if (target.exists() &amp;&amp; !firstInstall) &#123;</span><br><span class="line">            File reserve = new File(dir + sep + &quot;conf&quot; + sep + &quot;openrasp.yml.bak&quot;);</span><br><span class="line">            if (!reserve.exists()) &#123;</span><br><span class="line">                reserve.createNewFile();</span><br><span class="line">            &#125;</span><br><span class="line">            FileOutputStream outputStream = new FileOutputStream(reserve);</span><br><span class="line">            FileInputStream inputStream = new FileInputStream(target);</span><br><span class="line">            IOUtils.copy(inputStream, outputStream);</span><br><span class="line">            outputStream.close();</span><br><span class="line">            inputStream.close();</span><br><span class="line">            System.out.println(&quot;- Backed up openrasp.yml to openrasp.yml.bak&quot;);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            System.out.println(&quot;- Create &quot; + target.getAbsolutePath());</span><br><span class="line">            target.getParentFile().mkdir();</span><br><span class="line">            target.createNewFile();</span><br><span class="line">        &#125;</span><br><span class="line">        FileOutputStream outputStream = new FileOutputStream(target);</span><br><span class="line">        InputStream is = this.getClass().getResourceAsStream(&quot;/openrasp.yml&quot;);</span><br><span class="line">        IOUtils.copy(is, outputStream);</span><br><span class="line">        is.close();</span><br><span class="line">        outputStream.close();</span><br><span class="line"></span><br><span class="line">        // 配置云控</span><br><span class="line">        setCloudConf();</span><br><span class="line">        // 配置其它选项</span><br><span class="line">        Map&lt;String, Object&gt; ymlData = new HashMap&lt;String, Object&gt;();</span><br><span class="line">        if (App.raspId != null) &#123;</span><br><span class="line">            ymlData.put(&quot;rasp.id&quot;, App.raspId);</span><br><span class="line">        &#125;</span><br><span class="line">        if (!ymlData.isEmpty()) &#123;</span><br><span class="line">            setRaspConf(ymlData, &quot;# &lt;rasp id&gt;&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    return true;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中通过setCloudConf()方法，把云控所需的程序启动参数，写到配置文件openrasp.yml中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">appid：OpenRASP连接到RASP Cloud的认证appid</span><br><span class="line">appsecret：OpenRASP连接到RASP Cloud的认证appsecret</span><br><span class="line">backendurl：RASP Cloud地址</span><br><span class="line">heartbeat：OpenRASP连接到RASP Cloud的心跳检测时间间隔</span><br></pre></td></tr></table></figure>
+<p>写入的格式（yml）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cloud:</span><br><span class="line">    enable: true</span><br><span class="line">    backend_url: backendurl</span><br><span class="line">    app_id: appid</span><br><span class="line">    app_secret: appsecret</span><br><span class="line">    heartbeat_interval: heartbeat</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>TomcatInstaller</li>
+</ol>
+<p>相对于通用安装的主要流程，它们并没有什么区别，区别仅仅在于配置文件写完后，TomcatInstaller会tomcat的安装目录下的bin/catalina.sh脚本进行修改</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">位于：com.baidu.rasp.install.BaseStandardInstaller#generateStartScript</span><br><span class="line"></span><br><span class="line">com.baidu.rasp.install.linux.TomcatInstaller#getScript -&gt; foundScriptPath(String installDir)：查找bin/catalina.sh脚本路径</span><br><span class="line"></span><br><span class="line">com.baidu.rasp.install.BaseStandardInstaller#modifyStartScript(String content)：入参content即为脚本内容</span><br></pre></td></tr></table></figure>
+<p>在修改脚本时，会找到对应的位置写入或删除原有OpenRASP内容，写入新的脚本，然后根据程序启动参数prepend选择插入不同的rasp启动方式：</p>
+<p>比web容器bootstrap更先启动：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">private static String PREPEND_JAVA_AGENT_CONFIG = &quot;\tJAVA_OPTS=\&quot;$&#123;JAVA_OPTS&#125; -javaagent:$&#123;CATALINA_HOME&#125;/rasp/rasp.jar\&quot;\n&quot;;</span><br></pre></td></tr></table></figure></p>
+<p>较web容器bootstrap更后启动：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">private static String JAVA_AGENT_CONFIG = &quot;\tJAVA_OPTS=\&quot;-javaagent:$&#123;CATALINA_HOME&#125;/rasp/rasp.jar $&#123;JAVA_OPTS&#125;\&quot;\n&quot;;</span><br></pre></td></tr></table></figure>
+<h4 id="总结下来："><a href="#总结下来：" class="headerlink" title="总结下来："></a>总结下来：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 操作判断：</span><br><span class="line"> * 1.根据第一个参数判断是安装还是卸载</span><br><span class="line"> *</span><br><span class="line"> * 安装类型判断：</span><br><span class="line"> * 1.判断操作系统</span><br><span class="line"> * 2.判断服务器类型</span><br><span class="line"> * 3.创建相应的安装器</span><br><span class="line"> *</span><br><span class="line"> * 普通安装：</span><br><span class="line"> * 1.读启动参数</span><br><span class="line"> * 2.把rasp目录copy到target目录</span><br><span class="line"> * 3.若openrasp.yml存在则备份成openrasp.yml.bak，然后新写入openrasp.yml文件</span><br><span class="line"> * 4.写入部分启动参数到openrasp.yml文件，启动云控</span><br><span class="line"> * </span><br><span class="line"> * 非普通安装：</span><br><span class="line"> * 1. 修改启动shell脚本，插入agent启动信息</span><br><span class="line"> *</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="0x03-OpenRASP的启动工作"><a href="#0x03-OpenRASP的启动工作" class="headerlink" title="0x03 OpenRASP的启动工作"></a>0x03 OpenRASP的启动工作</h3><p>java源码实现，位置：agent/java/boot</p>
+<p>入口代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 启动时加载的agent入口方法</span><br><span class="line"> *</span><br><span class="line"> * 1. javaagent在JVMTI特定状态时调用premain</span><br><span class="line"> * 2. 把自身jar包放到java根目录，让启动类加载器能加载到（后续在这个javaagent会对启动类加载的class进行插桩，插桩代码点会调用rasp代码，因为启动类加载器加载的类是没办法去调用得到启动类加载器加载不到的类）</span><br><span class="line"> * 3. 在当前jar包所在目录找到rasp-engine.jar</span><br><span class="line"> * 4. 使用rasp-engine.jar初始化模块容器</span><br><span class="line"> * 5. 找到manifest文件制定的Rasp-Module-Class实例化成module，然后调用该module.start()</span><br><span class="line"> *</span><br><span class="line"> * @param agentArg 启动参数</span><br><span class="line"> * @param inst     &#123;@link Instrumentation&#125;</span><br><span class="line"> */</span><br><span class="line">public static void premain(String agentArg, Instrumentation inst) &#123;</span><br><span class="line">    init(START_MODE_NORMAL, START_ACTION_INSTALL, inst);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * attach 机制加载 agent</span><br><span class="line"> *</span><br><span class="line"> * @param agentArg 启动参数</span><br><span class="line"> * @param inst     &#123;@link Instrumentation&#125;</span><br><span class="line"> */</span><br><span class="line">public static void agentmain(String agentArg, Instrumentation inst) &#123;</span><br><span class="line">    init(Module.START_MODE_ATTACH, agentArg, inst);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具有两种方式的启动，一种是JVMTI调用premain方式，一种是attach机制加载agent的方式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String START_MODE_ATTACH = &quot;attach&quot;;</span><br><span class="line">String START_MODE_NORMAL = &quot;normal&quot;;</span><br></pre></td></tr></table></figure>
+<p>核心：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * attack 机制加载 agent</span><br><span class="line"> *</span><br><span class="line"> * @param mode 启动模式</span><br><span class="line"> * @param inst &#123;@link Instrumentation&#125;</span><br><span class="line"> */</span><br><span class="line">public static synchronized void init(String mode, String action, Instrumentation inst) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        JarFileHelper.addJarToBootstrap(inst);</span><br><span class="line">        readVersion();</span><br><span class="line">        ModuleLoader.load(mode, action, inst);</span><br><span class="line">    &#125; catch (Throwable e) &#123;</span><br><span class="line">        System.err.println(&quot;[OpenRASP] Failed to initialize, will continue without security protection.&quot;);</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ol>
+<li>JarFileHelper.addJarToBootstrap(inst)：添加当前执行的jar文件至jdk的跟路径下，启动类加载器能优先加载，后续在这个javaagent会对启动类加载的class进行插桩，插桩代码点会调用rasp代码，因为启动类加载器加载的类是没办法去调用得到启动类加载器加载不到的类，因为每个类加载器都有自己的类加载目录</li>
+<li>readVersion()：读取MANIFEST.MF相关信息</li>
+<li>ModuleLoader.load(mode, action, inst)：加载rasp-engine.jar中的module实现（目前为止，仅有这一个module实现）</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 加载所有 RASP 模块</span><br><span class="line"> *</span><br><span class="line"> * @param mode 启动模式</span><br><span class="line"> * @param inst &#123;@link java.lang.instrument.Instrumentation&#125;</span><br><span class="line"> */</span><br><span class="line">public static synchronized void load(String mode, String action, Instrumentation inst) throws Throwable &#123;</span><br><span class="line">    if (Module.START_ACTION_INSTALL.equals(action)) &#123;</span><br><span class="line">        if (instance == null) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                instance = new ModuleLoader(mode, inst);</span><br><span class="line">            &#125; catch (Throwable t) &#123;</span><br><span class="line">                instance = null;</span><br><span class="line">                throw t;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            System.out.println(&quot;[OpenRASP] The OpenRASP has bean initialized and cannot be initialized again&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else if (Module.START_ACTION_UNINSTALL.equals(action)) &#123;</span><br><span class="line">        release(mode);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        throw new IllegalStateException(&quot;[OpenRASP] Can not support the action: &quot; + action);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">/**</span><br><span class="line"> * 构造所有模块</span><br><span class="line"> *</span><br><span class="line"> * @param mode 启动模式</span><br><span class="line"> * @param inst &#123;@link java.lang.instrument.Instrumentation&#125;</span><br><span class="line"> */</span><br><span class="line">private ModuleLoader(String mode, Instrumentation inst) throws Throwable &#123;</span><br><span class="line"></span><br><span class="line">    if (Module.START_MODE_NORMAL == mode) &#123;</span><br><span class="line">        setStartupOptionForJboss();</span><br><span class="line">    &#125;</span><br><span class="line">    engineContainer = new ModuleContainer(ENGINE_JAR);</span><br><span class="line">    engineContainer.start(mode, inst);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static final String ENGINE_JAR = &quot;rasp-engine.jar&quot;;</span><br></pre></td></tr></table></figure>
+<p>可以看到，这里的实现是创建容器并启动，容器的实现是rasp-engine.jar，如果细看ModuleContainer的源码，可以发现，在其构造方法中，读取了rasp-engine.jar中MANIFEST.MF文件的Rasp-Module-Name、Rasp-Module-Class信息，此信息用于指定rasp-engine.jar中module容器的实现类，然后agent中的module加载器根据此信息加载module容器并调用start方法启动</p>
+<hr>
+<h3 id="0x04-OpenRASP-engine的启动"><a href="#0x04-OpenRASP-engine的启动" class="headerlink" title="0x04 OpenRASP engine的启动"></a>0x04 OpenRASP engine的启动</h3><p>java源码实现，位置：agent/java/engine</p>
+<p>入口代码（com.baidu.openrasp.EngineBoot）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void start(String mode, Instrumentation inst) throws Exception &#123;</span><br><span class="line">        System.out.println(&quot;\n\n&quot; +</span><br><span class="line">                &quot;   ____                   ____  ___   _____ ____ \n&quot; +</span><br><span class="line">                &quot;  / __ \\____  ___  ____  / __ \\/   | / ___// __ \\\n&quot; +</span><br><span class="line">                &quot; / / / / __ \\/ _ \\/ __ \\/ /_/ / /| | \\__ \\/ /_/ /\n&quot; +</span><br><span class="line">                &quot;/ /_/ / /_/ /  __/ / / / _, _/ ___ |___/ / ____/ \n&quot; +</span><br><span class="line">                &quot;\\____/ .___/\\___/_/ /_/_/ |_/_/  |_/____/_/      \n&quot; +</span><br><span class="line">                &quot;    /_/                                          \n\n&quot;);</span><br><span class="line">        try &#123;</span><br><span class="line">            V8.Load();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            System.out.println(&quot;[OpenRASP] Failed to load V8 library, please refer to https://rasp.baidu.com/doc/install/software.html#faq-v8-load for possible solutions.&quot;);</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        if (!loadConfig()) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        //缓存rasp的build信息</span><br><span class="line">        Agent.readVersion();</span><br><span class="line">        BuildRASPModel.initRaspInfo(Agent.projectVersion, Agent.buildTime, Agent.gitCommit);</span><br><span class="line">        // 初始化插件系统</span><br><span class="line">        if (!JS.Initialize()) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        CheckerManager.init();</span><br><span class="line">        initTransformer(inst);</span><br><span class="line">        String message = &quot;[OpenRASP] Engine Initialized [&quot; + Agent.projectVersion + &quot; (build: GitCommit=&quot;</span><br><span class="line">                + Agent.gitCommit + &quot; date=&quot; + Agent.buildTime + &quot;)]&quot;;</span><br><span class="line">        System.out.println(message);</span><br><span class="line">        Logger.getLogger(EngineBoot.class.getName()).info(message);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，一共就做了以下这些工作：</p>
+<ol>
+<li>输出banner信息</li>
+<li>V8引擎的加载，用于解释执行JavaScript</li>
+<li>loadConfig()：初始化配置</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">private boolean loadConfig() throws Exception &#123;</span><br><span class="line">    LogConfig.ConfigFileAppender();</span><br><span class="line">    //单机模式下动态添加获取删除syslog</span><br><span class="line">    if (!CloudUtils.checkCloudControlEnter()) &#123;</span><br><span class="line">        LogConfig.syslogManager();</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        System.out.println(&quot;[OpenRASP] RASP ID: &quot; + CloudCacheModel.getInstance().getRaspId());</span><br><span class="line">    &#125;</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>LogConfig.ConfigFileAppender()：初始化log4j<br>CloudUtils.checkCloudControlEnter()：检查云控配置信息<br>LogConfig.syslogManager()：读取配置信息，初始化syslog服务连接</p>
+<ol start="4">
+<li>JS.Initialize()：初始化插件系统</li>
+</ol>
+<p>为V8配置java的logger以及栈堆信息Getter（用于在js中获取当前栈堆信息）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">public synchronized static boolean Initialize() &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        V8.Load();</span><br><span class="line">        if (!V8.Initialize()) &#123;</span><br><span class="line">            throw new Exception(&quot;[OpenRASP] Failed to initialize V8 worker threads&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        V8.SetLogger(new com.baidu.openrasp.v8.Logger() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void log(String msg) &#123;</span><br><span class="line">                PLUGIN_LOGGER.info(msg);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        V8.SetStackGetter(new com.baidu.openrasp.v8.StackGetter() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public byte[] get() &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    ByteArrayOutputStream stack = new ByteArrayOutputStream();</span><br><span class="line">                    JsonStream.serialize(StackTrace.getParamStackTraceArray(), stack);</span><br><span class="line">                    stack.write(0);</span><br><span class="line">                    return stack.getByteArray();</span><br><span class="line">                &#125; catch (Exception e) &#123;</span><br><span class="line">                    return null;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        Context.setKeys();</span><br><span class="line">        if (!CloudUtils.checkCloudControlEnter()) &#123;</span><br><span class="line">            UpdatePlugin();</span><br><span class="line">            InitFileWatcher();</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        LOGGER.error(e);</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>UpdatePlugin()：读取plugins目录下的js文件，过滤掉大于10MB的js文件，然后全部读入，最后加载到V8引擎中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">public synchronized static boolean UpdatePlugin() &#123;</span><br><span class="line">    boolean oldValue = HookHandler.enableHook.getAndSet(false);</span><br><span class="line">    List&lt;String[]&gt; scripts = new ArrayList&lt;String[]&gt;();</span><br><span class="line">    File pluginDir = new File(Config.getConfig().getScriptDirectory());</span><br><span class="line">    LOGGER.debug(&quot;checker directory: &quot; + pluginDir.getAbsolutePath());</span><br><span class="line">    if (!pluginDir.isDirectory()) &#123;</span><br><span class="line">        pluginDir.mkdir();</span><br><span class="line">    &#125;</span><br><span class="line">    FileFilter filter = FileFilterUtils.and(FileFilterUtils.sizeFileFilter(10 * 1024 * 1024, false),</span><br><span class="line">            FileFilterUtils.suffixFileFilter(&quot;.js&quot;));</span><br><span class="line">    //过滤掉大于10MB的js文件</span><br><span class="line">    File[] pluginFiles = pluginDir.listFiles(filter);</span><br><span class="line">    if (pluginFiles != null) &#123;</span><br><span class="line">        for (File file : pluginFiles) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                String name = file.getName();</span><br><span class="line">                String source = FileUtils.readFileToString(file, &quot;UTF-8&quot;);</span><br><span class="line">                scripts.add(new String[]&#123;name, source&#125;);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                LogTool.error(ErrorType.PLUGIN_ERROR, e.getMessage(), e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    HookHandler.enableHook.set(oldValue);</span><br><span class="line">    return UpdatePlugin(scripts);</span><br><span class="line">&#125;</span><br><span class="line">public synchronized static boolean UpdatePlugin(List&lt;String[]&gt; scripts) &#123;</span><br><span class="line">    boolean rst = V8.CreateSnapshot(&quot;&#123;&#125;&quot;, scripts.toArray(), BuildRASPModel.getRaspVersion());</span><br><span class="line">    if (rst) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            String jsonString = V8.ExecuteScript(&quot;JSON.stringify(RASP.algorithmConfig || &#123;&#125;)&quot;, &quot;get-algorithm-config.js&quot;);</span><br><span class="line">            Config.getConfig().setConfig(&quot;algorithm.config&quot;, jsonString, true);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            LogTool.error(ErrorType.PLUGIN_ERROR, e.getMessage(), e);</span><br><span class="line">        &#125;</span><br><span class="line">        Config.commonLRUCache.clear();</span><br><span class="line">    &#125;</span><br><span class="line">    return rst;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有一个commonLRUCache，主要是用于在hook点去执行js check的时候，进行一个并发幂等（应该是这样。。。）。</p>
+<p>InitFileWatcher()：初始化一个js plugin监视器，在js文件有所变动的时候，重新去加载所有插件，实现热更新的特性</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">public synchronized static void InitFileWatcher() throws Exception &#123;</span><br><span class="line">    boolean oldValue = HookHandler.enableHook.getAndSet(false);</span><br><span class="line">    if (watchId != null) &#123;</span><br><span class="line">        FileScanMonitor.removeMonitor(watchId);</span><br><span class="line">        watchId = null;</span><br><span class="line">    &#125;</span><br><span class="line">    watchId = FileScanMonitor.addMonitor(Config.getConfig().getScriptDirectory(), new FileScanListener() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onFileCreate(File file) &#123;</span><br><span class="line">            if (file.getName().endsWith(&quot;.js&quot;)) &#123;</span><br><span class="line">                UpdatePlugin();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void onFileChange(File file) &#123;</span><br><span class="line">            if (file.getName().endsWith(&quot;.js&quot;)) &#123;</span><br><span class="line">                UpdatePlugin();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void onFileDelete(File file) &#123;</span><br><span class="line">            if (file.getName().endsWith(&quot;.js&quot;)) &#123;</span><br><span class="line">                UpdatePlugin();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    HookHandler.enableHook.set(oldValue);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>CheckerManager.init()：初始化所有的checker，从枚举类com.baidu.openrasp.plugin.checker.CheckParameter.Type中读取所有的checker，包含三种类型的checker，一是js插件检测，意味着这个checker会调用js plugin进行攻击检测，二是java本地检测，意味着是调用本地java代码进行攻击检测，三是安全基线检测，是用于检测一些高风险类的安全性基线检测，检测其配置是否有安全隐患。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">// js插件检测</span><br><span class="line">SQL(&quot;sql&quot;, new V8Checker(), 1),</span><br><span class="line">COMMAND(&quot;command&quot;, new V8Checker(), 1 &lt;&lt; 1),</span><br><span class="line">DIRECTORY(&quot;directory&quot;, new V8Checker(), 1 &lt;&lt; 2),</span><br><span class="line">REQUEST(&quot;request&quot;, new V8Checker(), 1 &lt;&lt; 3),</span><br><span class="line">DUBBOREQUEST(&quot;dubboRequest&quot;, new V8Checker(), 1 &lt;&lt; 4),</span><br><span class="line">READFILE(&quot;readFile&quot;, new V8Checker(), 1 &lt;&lt; 5),</span><br><span class="line">WRITEFILE(&quot;writeFile&quot;, new V8Checker(), 1 &lt;&lt; 6),</span><br><span class="line">FILEUPLOAD(&quot;fileUpload&quot;, new V8Checker(), 1 &lt;&lt; 7),</span><br><span class="line">RENAME(&quot;rename&quot;, new V8Checker(), 1 &lt;&lt; 8),</span><br><span class="line">XXE(&quot;xxe&quot;, new V8Checker(), 1 &lt;&lt; 9),</span><br><span class="line">OGNL(&quot;ognl&quot;, new V8Checker(), 1 &lt;&lt; 10),</span><br><span class="line">DESERIALIZATION(&quot;deserialization&quot;, new V8Checker(), 1 &lt;&lt; 11),</span><br><span class="line">WEBDAV(&quot;webdav&quot;, new V8Checker(), 1 &lt;&lt; 12),</span><br><span class="line">INCLUDE(&quot;include&quot;, new V8Checker(), 1 &lt;&lt; 13),</span><br><span class="line">SSRF(&quot;ssrf&quot;, new V8Checker(), 1 &lt;&lt; 14),</span><br><span class="line">SQL_EXCEPTION(&quot;sql_exception&quot;, new V8Checker(), 1 &lt;&lt; 15),</span><br><span class="line">REQUESTEND(&quot;requestEnd&quot;, new V8Checker(), 1 &lt;&lt; 17),</span><br><span class="line">LOADLIBRARY(&quot;loadLibrary&quot;, new V8Checker(), 1 &lt;&lt; 18),</span><br><span class="line"></span><br><span class="line">// java本地检测</span><br><span class="line">XSS_USERINPUT(&quot;xss_userinput&quot;, new XssChecker(), 1 &lt;&lt; 16),</span><br><span class="line">SQL_SLOW_QUERY(&quot;sqlSlowQuery&quot;, new SqlResultChecker(false), 0),</span><br><span class="line"></span><br><span class="line">// 安全基线检测</span><br><span class="line">POLICY_SQL_CONNECTION(&quot;sqlConnection&quot;, new SqlConnectionChecker(false), 0),</span><br><span class="line">POLICY_SERVER_TOMCAT(&quot;tomcatServer&quot;, new TomcatSecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_JBOSS(&quot;jbossServer&quot;, new JBossSecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_JBOSSEAP(&quot;jbossEAPServer&quot;, new JBossEAPSecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_JETTY(&quot;jettyServer&quot;, new JettySecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_RESIN(&quot;resinServer&quot;, new ResinSecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_WEBSPHERE(&quot;websphereServer&quot;, new WebsphereSecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_WEBLOGIC(&quot;weblogicServer&quot;, new WeblogicSecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_WILDFLY(&quot;wildflyServer&quot;, new WildflySecurityChecker(false), 0),</span><br><span class="line">POLICY_SERVER_TONGWEB(&quot;tongwebServer&quot;, new TongwebSecurityChecker(false), 0);</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>initTransformer(inst)：核心代码，通过加载class，在加载前使用javassist对其进行hook插桩，以实现rasp的攻击检测功能</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 初始化类字节码的转换器</span><br><span class="line"> *</span><br><span class="line"> * @param inst 用于管理字节码转换器</span><br><span class="line"> */</span><br><span class="line">private void initTransformer(Instrumentation inst) throws UnmodifiableClassException &#123;</span><br><span class="line">    transformer = new CustomClassTransformer(inst);</span><br><span class="line">    transformer.retransform();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public CustomClassTransformer(Instrumentation inst) &#123;</span><br><span class="line">    this.inst = inst;</span><br><span class="line">    inst.addTransformer(this, true);</span><br><span class="line">    addAnnotationHook();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void addAnnotationHook() &#123;</span><br><span class="line">    Set&lt;Class&gt; classesSet = AnnotationScanner.getClassWithAnnotation(SCAN_ANNOTATION_PACKAGE, HookAnnotation.class);</span><br><span class="line">    for (Class clazz : classesSet) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Object object = clazz.newInstance();</span><br><span class="line">            if (object instanceof AbstractClassHook) &#123;</span><br><span class="line">                addHook((AbstractClassHook) object, clazz.getName());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            LogTool.error(ErrorType.HOOK_ERROR, &quot;add hook failed: &quot; + e.getMessage(), e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，addAnnotationHook()读取了com.baidu.openrasp.hook包中所有被@HookAnnotation注解的class，然后缓存到集合hooks中，以提供在后续类加载通过com.baidu.openrasp.transformer.CustomClassTransformer#transform的时候，对其进行匹配，判断是否需要hook</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">public byte[] transform(ClassLoader loader, String className, Class&lt;?&gt; classBeingRedefined,</span><br><span class="line">                        ProtectionDomain domain, byte[] classfileBuffer) throws IllegalClassFormatException &#123;</span><br><span class="line">    if (loader != null &amp;&amp; jspClassLoaderNames.contains(loader.getClass().getName())) &#123;</span><br><span class="line">        jspClassLoaderCache.put(className.replace(&quot;/&quot;, &quot;.&quot;), new WeakReference&lt;ClassLoader&gt;(loader));</span><br><span class="line">    &#125;</span><br><span class="line">    for (final AbstractClassHook hook : hooks) &#123;</span><br><span class="line">        if (hook.isClassMatched(className)) &#123;</span><br><span class="line">            CtClass ctClass = null;</span><br><span class="line">            try &#123;</span><br><span class="line">                ClassPool classPool = new ClassPool();</span><br><span class="line">                addLoader(classPool, loader);</span><br><span class="line">                ctClass = classPool.makeClass(new ByteArrayInputStream(classfileBuffer));</span><br><span class="line">                if (loader == null) &#123;</span><br><span class="line">                    hook.setLoadedByBootstrapLoader(true);</span><br><span class="line">                &#125;</span><br><span class="line">                classfileBuffer = hook.transformClass(ctClass);</span><br><span class="line">                if (classfileBuffer != null) &#123;</span><br><span class="line">                    checkNecessaryHookType(hook.getType());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125; finally &#123;</span><br><span class="line">                if (ctClass != null) &#123;</span><br><span class="line">                    ctClass.detach();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    serverDetector.detectServer(className, loader, domain);</span><br><span class="line">    return classfileBuffer;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看细节，可以发现，先根据isClassMatched(String className)方法判断是否对加载的class进行hook，接着调用的是hook类的transformClass(CtClass ctClass)-&gt;hookMethod(CtClass ctClass)方法进行了字节码的修改（hook），然后返回修改后的字节码并加载，最终实现了对class进行插桩</p>
+<p>例子（com.baidu.openrasp.hook.ssrf.HttpClientHook）：</p>
+<p>HttpClient中发起请求前，都会先创建HttpRequestBase这个类的实例，然后才能发起请求，该实例中包含着URI信息，而对于SSRF的攻击检测，就是在请求发起前，对URI进行检测，检测是否是SSRF，因此需要hook到HttpRequestBase类<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public boolean isClassMatched(String className) &#123;</span><br><span class="line">    return &quot;org/apache/http/client/methods/HttpRequestBase&quot;.equals(className);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>既然要检测SSRF，那么就选择在setURI时，就对其URI进行检测，hookMethod方法其实就是通过javassist生成了一段调用com.baidu.openrasp.hook.ssrf.HttpClientHook#checkHttpUri方法的代码，并插入到HttpRequestBase.setURI方法中，以实现检测SSRF<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">protected void hookMethod(CtClass ctClass) throws IOException, CannotCompileException, NotFoundException &#123;</span><br><span class="line">    String src = getInvokeStaticSrc(HttpClientHook.class, &quot;checkHttpUri&quot;,</span><br><span class="line">            &quot;$1&quot;, URI.class);</span><br><span class="line">    insertBefore(ctClass, &quot;setURI&quot;, &quot;(Ljava/net/URI;)V&quot;, src);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>checkHttpUri方法通过取出相关信息，host、port、url等，然后通过一系列方法，对检测ssrf的js插件进行调用以检测攻击，当然，过程中会加入一些机制，对其可用性的增强<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">public static void checkHttpUri(URI uri) &#123;</span><br><span class="line">    String url = null;</span><br><span class="line">    String hostName = null;</span><br><span class="line">    String port = &quot;&quot;;</span><br><span class="line">    try &#123;</span><br><span class="line">        if (uri != null) &#123;</span><br><span class="line">            url = uri.toString();</span><br><span class="line">            hostName = uri.toURL().getHost();</span><br><span class="line">            int temp = uri.toURL().getPort();</span><br><span class="line">            if (temp &gt; 0) &#123;</span><br><span class="line">                port = temp + &quot;&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (Throwable t) &#123;</span><br><span class="line">        LogTool.traceHookWarn(&quot;parse url &quot; + url + &quot; failed: &quot; + t.getMessage(), t);</span><br><span class="line">    &#125;</span><br><span class="line">    if (hostName != null) &#123;</span><br><span class="line">        checkHttpUrl(url, hostName, port, &quot;httpclient&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-&gt;com.baidu.openrasp.hook.ssrf.AbstractSSRFHook#checkHttpUrl</span><br><span class="line"></span><br><span class="line">protected static void checkHttpUrl(String url, String hostName, String port, String function) &#123;</span><br><span class="line">    HashMap&lt;String, Object&gt; params = new HashMap&lt;String, Object&gt;();</span><br><span class="line">    params.put(&quot;url&quot;, url);</span><br><span class="line">    params.put(&quot;hostname&quot;, hostName);</span><br><span class="line">    params.put(&quot;function&quot;, function);</span><br><span class="line">    params.put(&quot;port&quot;, port);</span><br><span class="line">    LinkedList&lt;String&gt; ip = new LinkedList&lt;String&gt;();</span><br><span class="line">    try &#123;</span><br><span class="line">        InetAddress[] addresses = InetAddress.getAllByName(hostName);</span><br><span class="line">        for (InetAddress address : addresses) &#123;</span><br><span class="line">            if (address != null &amp;&amp; address instanceof Inet4Address) &#123;</span><br><span class="line">                ip.add(address.getHostAddress());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (Throwable t) &#123;</span><br><span class="line">        // ignore</span><br><span class="line">    &#125;</span><br><span class="line">    Collections.sort(ip);</span><br><span class="line">    params.put(&quot;ip&quot;, ip);</span><br><span class="line">    HookHandler.doCheck(CheckParameter.Type.SSRF, params);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>流程汇总：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">1.com.baidu.openrasp.hook.ssrf.HttpClientHook#checkHttpUri</span><br><span class="line"></span><br><span class="line">2.com.baidu.openrasp.hook.ssrf.AbstractSSRFHook#checkHttpUrl</span><br><span class="line"></span><br><span class="line">3.com.baidu.openrasp.HookHandler#doCheck</span><br><span class="line"></span><br><span class="line">4.com.baidu.openrasp.HookHandler#doCheckWithoutRequest</span><br><span class="line">在这里，做了一些云控注册成功判断和白名单的处理</span><br><span class="line"></span><br><span class="line">5.com.baidu.openrasp.HookHandler#doRealCheckWithoutRequest</span><br><span class="line">在这里，做了一些参数的封装，以及失败日志、耗时日志等输出，并且在检测到攻击时（下一层返回），抛出异常</span><br><span class="line"></span><br><span class="line">6.com.baidu.openrasp.plugin.checker.CheckerManager#check</span><br><span class="line"></span><br><span class="line">7.com.baidu.openrasp.plugin.checker.AbstractChecker#check</span><br><span class="line">在这里，对js或者其他类型的安全检测之后的结果，进行事件处理并返回结果</span><br><span class="line"></span><br><span class="line">8.com.baidu.openrasp.plugin.checker.v8.V8Checker#checkParam</span><br><span class="line"></span><br><span class="line">9.com.baidu.openrasp.plugin.js.JS#</span><br><span class="line">在这里，做了一些commonLRUCache的并发幂等处理</span><br><span class="line"></span><br><span class="line">10.com.baidu.openrasp.v8.V8#Check(java.lang.String, byte[], int, com.baidu.openrasp.v8.Context, boolean, int)</span><br></pre></td></tr></table></figure></p>
+<p><strong>总的来说，大概整个OpenRASP的核心就是如此了，还有一些关于cloud的云控实现，这里的篇幅暂且不对其就行研究</strong></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/OpenRASP/" rel="tag"># OpenRASP</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/12/24/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/" rel="next" title="dubbo框架-默认dubbo协议和hessian2反序列化的简单总结">
+                <i class="fa fa-chevron-left"></i> dubbo框架-默认dubbo协议和hessian2反序列化的简单总结
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-介绍"><span class="nav-number">1.</span> <span class="nav-text">0x01 介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Introduction"><span class="nav-number">1.1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#我的理解"><span class="nav-number">1.2.</span> <span class="nav-text">我的理解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重点阅读部分"><span class="nav-number">1.3.</span> <span class="nav-text">重点阅读部分</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-OpenRASP的安装原理"><span class="nav-number">2.</span> <span class="nav-text">0x02 OpenRASP的安装原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#宏观上的审视"><span class="nav-number">2.1.</span> <span class="nav-text">宏观上的审视</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#微观细节的跟踪"><span class="nav-number">2.2.</span> <span class="nav-text">微观细节的跟踪</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结下来："><span class="nav-number">2.3.</span> <span class="nav-text">总结下来：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-OpenRASP的启动工作"><span class="nav-number">3.</span> <span class="nav-text">0x03 OpenRASP的启动工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-OpenRASP-engine的启动"><span class="nav-number">4.</span> <span class="nav-text">0x04 OpenRASP engine的启动</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
