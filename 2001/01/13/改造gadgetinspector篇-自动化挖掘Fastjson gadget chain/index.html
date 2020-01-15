@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="自动化工具,gadgetinspector,java反序列化,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到污点分析：  gadgetinspector.PassthroughDisco">
+<meta name="keywords" content="自动化工具,gadgetinspector,java反序列化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="改造gadgetinspector篇-自动化挖掘Fastjson gadget chain">
+<meta property="og:url" content="http://yoursite.com/2001/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到污点分析：  gadgetinspector.PassthroughDisco">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-01-13T14:49:40.258Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="改造gadgetinspector篇-自动化挖掘Fastjson gadget chain">
+<meta name="twitter:description" content="0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到污点分析：  gadgetinspector.PassthroughDisco">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2001/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/">
+
+
+
+
+
+  <title>改造gadgetinspector篇-自动化挖掘Fastjson gadget chain | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2001/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">改造gadgetinspector篇-自动化挖掘Fastjson gadget chain</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2001-01-13T22:48:41+08:00">
+                2001-01-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/安全开发/" itemprop="url" rel="index">
+                    <span itemprop="name">安全开发</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><h4 id="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"><a href="#《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》" class="headerlink" title="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"></a>《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》</h4><p>我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：</p>
+<ol>
+<li>对于运行时确定的实现，也就是多态性，没办法做到污点分析：</li>
+</ol>
+<p>gadgetinspector.PassthroughDiscovery.PassthroughDataflowMethodVisitor#visitMethodInsn<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Set&lt;Integer&gt; passthrough = passthroughDataflow.get(<span class="keyword">new</span> MethodReference.Handle(<span class="keyword">new</span> ClassReference.Handle(owner), name, desc));</span><br><span class="line"><span class="keyword">if</span> (passthrough != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (Integer passthroughDataflowArg : passthrough) &#123;</span><br><span class="line">        <span class="comment">//判断是否和同一方法体内的其它方法返回值关联，有关联则添加到栈底，等待执行return时保存</span></span><br><span class="line">        resultTaint.addAll(argTaint.get(passthroughDataflowArg));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以想到，如果调用的是一个接口interface中定义的方法，那么，在gadgetinspector对其扫描期间，并不在被扫描程序的Runtime，那么，就没办法取确定实际上的实现method。</p>
+<p>我看过有文章分析，可以通过查找该方法method的实现（接口的实现类中的方法）进行污染判断，不过，这种方式还是具有缺陷性，例如，这个接口存在着两个实现类，那么，从上述代码就可以看到，只能选择其中一个实现方法的污染结果进行判断。</p>
+<a id="more"></a>
+<ol start="2">
+<li>调用链搜索不完整，还是因为多态性的原因，做不到完整的调用链搜索：</li>
+</ol>
+<p>gadgetinspector.CallGraphDiscovery.ModelGeneratorMethodVisitor#visitMethodInsn<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//记录参数流动关系</span></span><br><span class="line"><span class="comment">//argIndex：当前方法参数索引，srcArgIndex：对应上一级方法的参数索引</span></span><br><span class="line">discoveredCalls.add(<span class="keyword">new</span> GraphCall(</span><br><span class="line">        <span class="keyword">new</span> MethodReference.Handle(<span class="keyword">new</span> ClassReference.Handle(<span class="keyword">this</span>.owner), <span class="keyword">this</span>.name, <span class="keyword">this</span>.desc),</span><br><span class="line">        <span class="keyword">new</span> MethodReference.Handle(<span class="keyword">new</span> ClassReference.Handle(owner), name, desc),</span><br><span class="line">        srcArgIndex,</span><br><span class="line">        srcArgPath,</span><br><span class="line">        argIndex));</span><br></pre></td></tr></table></figure></p>
+<p>如果调用的是一个接口interface中定义的方法，那么，在gadgetinspector对其扫描期间，并不在被扫描程序的Runtime，那么，也就没办法取确定实际上的实现method。</p>
+<p>不过，对于这种缺陷，我们是不是可以考虑，通过列举所有的接口实现类出来，并把他们加入到调用链中？这个办法，有好处也有坏处，好处即是能全部Runtime时不管能不能执行到的实现都加进去了。而坏处也是因为这点，会造成路径爆炸，假如接口类有几十个实现类，如果把它们都加入到调用链中（不管Runtime到底是否能走到这个实现），造成的路径爆炸问题会非常严重。</p>
+<ol start="3">
+<li>对于JNDI lookup的slink并没有加入</li>
+<li>还不能挖掘Fastjson利用链</li>
+<li>等等…</li>
+</ol>
+<p>而本篇文章，是围绕着第3、4点而讲，即讲述如何改造gadgetinspector，使它能够挖掘Fastjson的gadget chain</p>
+<h3 id="0x02-如何新加序列化方式"><a href="#0x02-如何新加序列化方式" class="headerlink" title="0x02 如何新加序列化方式"></a>0x02 如何新加序列化方式</h3><h4 id="source"><a href="#source" class="headerlink" title="source"></a>source</h4><p>对于看过gadgetinspector，并且看懂了的小伙伴来说，能够发现，对于一种新序列化方式的gadget chain挖掘，gadgetinspector做到了很好的适配。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">GIConfig</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">String <span class="title">getName</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function">SerializableDecider <span class="title">getSerializableDecider</span><span class="params">(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap, InheritanceMap inheritanceMap)</span></span>;</span><br><span class="line">    <span class="function">ImplementationFinder <span class="title">getImplementationFinder</span><span class="params">(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap,</span></span></span><br><span class="line"><span class="function"><span class="params">                                                 Map&lt;MethodReference.Handle, Set&lt;MethodReference.Handle&gt;&gt; methodImplMap,</span></span></span><br><span class="line"><span class="function"><span class="params">                                                 InheritanceMap inheritanceMap)</span></span>;</span><br><span class="line">    <span class="function">SourceDiscovery <span class="title">getSourceDiscovery</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JacksonDeserializationConfig</span> <span class="keyword">implements</span> <span class="title">GIConfig</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"jackson"</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> SerializableDecider <span class="title">getSerializableDecider</span><span class="params">(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap, InheritanceMap inheritanceMap)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JacksonSerializableDecider(methodMap);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> ImplementationFinder <span class="title">getImplementationFinder</span><span class="params">(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap,</span></span></span><br><span class="line"><span class="function"><span class="params">                                                        Map&lt;MethodReference.Handle, Set&lt;MethodReference.Handle&gt;&gt; methodImplMap,</span></span></span><br><span class="line"><span class="function"><span class="params">                                                        InheritanceMap inheritanceMap)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JacksonImplementationFinder(getSerializableDecider(methodMap, inheritanceMap));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> SourceDiscovery <span class="title">getSourceDiscovery</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> JacksonSourceDiscovery();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上述代码中，可以看到，想要增加新的反序列化类型的挖掘，需要的是实现GIConfig接口，并通过实现类构造三个组件：</p>
+<ol>
+<li>SerializableDecider：序列化决策者，这个决策者的作用主要围绕着apply方法的实现，通过apply方法，判断目标类class是否具备这可序列化，那么相对而言就是是否可以被反序列化</li>
+<li>ImplementationFinder：对于一个接口interface，该组件主要用于判断它的实现类，是否能被反序列化</li>
+<li>SourceDiscovery：链的起始端搜索类，类似于jackson对于json的解析，在反序列化时，会有一定条件的触发setter、getter方法，那么，这些方法即是整个gadget chain的入口点，而该组件就是用于搜索所有具备这样特征的类</li>
+</ol>
+<p>我们可以看看jackson对于这三个组件的具体实现是怎么样的：</p>
+<ul>
+<li>SerializableDecider-&gt;JacksonSerializableDecider</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JacksonSerializableDecider</span> <span class="keyword">implements</span> <span class="title">SerializableDecider</span> </span>&#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">apply</span><span class="params">(ClassReference.Handle handle)</span> </span>&#123;</span><br><span class="line">        Boolean cached = cache.get(handle);</span><br><span class="line">        <span class="keyword">if</span> (cached != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> cached;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Set&lt;MethodReference.Handle&gt; classMethods = methodsByClassMap.get(handle);</span><br><span class="line">        <span class="keyword">if</span> (classMethods != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">for</span> (MethodReference.Handle method : classMethods) &#123;</span><br><span class="line">                <span class="comment">//该类，只要有无参构造方法，就通过决策</span></span><br><span class="line">                <span class="keyword">if</span> (method.getName().equals(<span class="string">"&lt;init&gt;"</span>) &amp;&amp; method.getDesc().equals(<span class="string">"()V"</span>)) &#123;</span><br><span class="line">                    cache.put(handle, Boolean.TRUE);</span><br><span class="line">                    <span class="keyword">return</span> Boolean.TRUE;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        cache.put(handle, Boolean.FALSE);</span><br><span class="line">        <span class="keyword">return</span> Boolean.FALSE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很明显，jackson对于是否可被反序列化的判断就是是否存在无参构造方法。</p>
+<ul>
+<li>ImplementationFinder-&gt;JacksonImplementationFinder</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JacksonImplementationFinder</span> <span class="keyword">implements</span> <span class="title">ImplementationFinder</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> SerializableDecider serializableDecider;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">JacksonImplementationFinder</span><span class="params">(SerializableDecider serializableDecider)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.serializableDecider = serializableDecider;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Set&lt;MethodReference.Handle&gt; getImplementations(MethodReference.Handle target) &#123;</span><br><span class="line">        Set&lt;MethodReference.Handle&gt; allImpls = <span class="keyword">new</span> HashSet&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// For jackson search, we don't get to specify the class; it uses reflection to instantiate the</span></span><br><span class="line">        <span class="comment">// class itself. So just add the target method if the target class is serializable.</span></span><br><span class="line">        <span class="keyword">if</span> (Boolean.TRUE.equals(serializableDecider.apply(target.getClassReference()))) &#123;</span><br><span class="line">            allImpls.add(target);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> allImpls;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而对于判断是否有效实现类，也是借用到了JacksonSerializableDecider，通过它判断，只要具有无参构造方法，那么就是有效的实现类。</p>
+<ul>
+<li>SourceDiscovery-&gt;JacksonSourceDiscovery</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JacksonSourceDiscovery</span> <span class="keyword">extends</span> <span class="title">SourceDiscovery</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">discover</span><span class="params">(Map&lt;ClassReference.Handle, ClassReference&gt; classMap,</span></span></span><br><span class="line"><span class="function"><span class="params">                         Map&lt;MethodReference.Handle, MethodReference&gt; methodMap,</span></span></span><br><span class="line"><span class="function"><span class="params">                         InheritanceMap inheritanceMap)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> JacksonSerializableDecider serializableDecider = <span class="keyword">new</span> JacksonSerializableDecider(methodMap);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (MethodReference.Handle method : methodMap.keySet()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (serializableDecider.apply(method.getClassReference())) &#123;</span><br><span class="line">                <span class="keyword">if</span> (method.getName().equals(<span class="string">"&lt;init&gt;"</span>) &amp;&amp; method.getDesc().equals(<span class="string">"()V"</span>)) &#123;</span><br><span class="line">                    addDiscoveredSource(<span class="keyword">new</span> Source(method, <span class="number">0</span>));</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span> (method.getName().startsWith(<span class="string">"get"</span>) &amp;&amp; method.getDesc().startsWith(<span class="string">"()"</span>)) &#123;</span><br><span class="line">                    addDiscoveredSource(<span class="keyword">new</span> Source(method, <span class="number">0</span>));</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span> (method.getName().startsWith(<span class="string">"set"</span>) &amp;&amp; method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)V"</span>)) &#123;</span><br><span class="line">                    addDiscoveredSource(<span class="keyword">new</span> Source(method, <span class="number">0</span>));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于source搜索组件的逻辑，jackson的处理也非常简单，就是只要有无参构造方法或getter、setter，就能被标识为source起点类</p>
+<p>最后，在实现了这三个组件之后，还有最后的一步，需要把他们的构造放到上述所讲的JacksonDeserializationConfig，也就是GIConfig的实现类中，并最后，放到配置库中ConfigRepository：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConfigRepository</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> List&lt;GIConfig&gt; ALL_CONFIGS = Collections.unmodifiableList(Arrays.asList(</span><br><span class="line">            <span class="keyword">new</span> JavaDeserializationConfig(),</span><br><span class="line">            <span class="keyword">new</span> JacksonDeserializationConfig(),</span><br><span class="line">            <span class="keyword">new</span> XstreamDeserializationConfig()));</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> GIConfig <span class="title">getConfig</span><span class="params">(String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (GIConfig config : ALL_CONFIGS) &#123;</span><br><span class="line">            <span class="keyword">if</span> (config.getName().equals(name)) &#123;</span><br><span class="line">                <span class="keyword">return</span> config;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="slink"><a href="#slink" class="headerlink" title="slink"></a>slink</h4><p>除了三个组件确定节点有效性以外，最终数据流是否能触发到slink，亦是需要进行判断的。而gadgetinspector是这么做的：</p>
+<p>gadgetinspector.GadgetChainDiscovery#isSink<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">isSink</span><span class="params">(MethodReference.Handle method, <span class="keyword">int</span> argIndex, InheritanceMap inheritanceMap)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/io/FileInputStream"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"&lt;init&gt;"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/io/FileOutputStream"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"&lt;init&gt;"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/nio/file/Files"</span>)</span><br><span class="line">        &amp;&amp; (method.getName().equals(<span class="string">"newInputStream"</span>)</span><br><span class="line">            || method.getName().equals(<span class="string">"newOutputStream"</span>)</span><br><span class="line">            || method.getName().equals(<span class="string">"newBufferedReader"</span>)</span><br><span class="line">            || method.getName().equals(<span class="string">"newBufferedWriter"</span>))) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/lang/Runtime"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"exec"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    if (method.getClassReference().getName().equals("java/lang/Class")</span></span><br><span class="line"><span class="comment">            &amp;&amp; method.getName().equals("forName")) &#123;</span></span><br><span class="line"><span class="comment">        return true;</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">    if (method.getClassReference().getName().equals("java/lang/Class")</span></span><br><span class="line"><span class="comment">            &amp;&amp; method.getName().equals("getMethod")) &#123;</span></span><br><span class="line"><span class="comment">        return true;</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="comment">// If we can invoke an arbitrary method, that's probably interesting (though this doesn't assert that we</span></span><br><span class="line">    <span class="comment">// can control its arguments). Conversely, if we can control the arguments to an invocation but not what</span></span><br><span class="line">    <span class="comment">// method is being invoked, we don't mark that as interesting.</span></span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/lang/reflect/Method"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"invoke"</span>) &amp;&amp; argIndex == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/net/URLClassLoader"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"newInstance"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/lang/System"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"exit"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/lang/Shutdown"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"exit"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/lang/Runtime"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"exit"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/nio/file/Files"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"newOutputStream"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/lang/ProcessBuilder"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"&lt;init&gt;"</span>) &amp;&amp; argIndex &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (inheritanceMap.isSubclassOf(method.getClassReference(), <span class="keyword">new</span> ClassReference.Handle(<span class="string">"java/lang/ClassLoader"</span>))</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"&lt;init&gt;"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"java/net/URL"</span>) &amp;&amp; method.getName().equals(<span class="string">"openStream"</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Some groovy-specific sinks</span></span><br><span class="line">    <span class="keyword">if</span> (method.getClassReference().getName().equals(<span class="string">"org/codehaus/groovy/runtime/InvokerHelper"</span>)</span><br><span class="line">            &amp;&amp; method.getName().equals(<span class="string">"invokeMethod"</span>) &amp;&amp; argIndex == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (inheritanceMap.isSubclassOf(method.getClassReference(), <span class="keyword">new</span> ClassReference.Handle(<span class="string">"groovy/lang/MetaClass"</span>))</span><br><span class="line">            &amp;&amp; Arrays.asList(<span class="string">"invokeMethod"</span>, <span class="string">"invokeConstructor"</span>, <span class="string">"invokeStaticMethod"</span>).contains(method.getName())) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>代码有点多，但是不难看懂，其实就是对于一条执行链最末端的判断，基本都是判断是否属于某个类的某个方法，或者是否是某个类的子类、某个接口的实现类的某个方法。只要满足判断的特征，那么就证明这条链的可用性。</p>
+<h3 id="0x03-Fastjson反序列化方式添加前的准备"><a href="#0x03-Fastjson反序列化方式添加前的准备" class="headerlink" title="0x03 Fastjson反序列化方式添加前的准备"></a>0x03 Fastjson反序列化方式添加前的准备</h3><p>在添加Fastjson前，参考jackson三个组件，我们需要去了解Fastjson的一些特性：</p>
+<ol>
+<li>可被反序列化的类特征</li>
+<li>反序列化可被触发执行的方法特征</li>
+</ol>
+<h4 id="可被反序列化的类特征："><a href="#可被反序列化的类特征：" class="headerlink" title="可被反序列化的类特征："></a>可被反序列化的类特征：</h4><p>通过阅读Fastjson的代码，在”@type”的处理部分</p>
+<p>com.alibaba.fastjson.parser.ParserConfig#checkAutoType(java.lang.String, java.lang.Class&lt;?&gt;, int)方法调用后，会返回一个class类对象</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clazz = config.checkAutoType(typeName, <span class="keyword">null</span>, lexer.getFeatures());</span><br></pre></td></tr></table></figure>
+<p>紧接着，会进行黑名单、白名单等判断，接着会创建JavaBeanInfo，进行autoType以及构造方法的判断</p>
+<p>创建JavaBeanInfo<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">JavaBeanInfo beanInfo = JavaBeanInfo.build(clazz</span><br><span class="line">        , type</span><br><span class="line">        , propertyNamingStrategy</span><br><span class="line">        ,<span class="keyword">false</span></span><br><span class="line">        , TypeUtils.compatibleWithJavaBean</span><br><span class="line">        , jacksonCompatible</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<p>在build方法中，会对构造方法进行获取并判断</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Constructor[] constructors = clazz.getDeclaredConstructors();</span><br><span class="line"></span><br><span class="line">Constructor&lt;?&gt; defaultConstructor = <span class="keyword">null</span>;</span><br><span class="line"><span class="keyword">if</span> ((!kotlin) || constructors.length == <span class="number">1</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (builderClass == <span class="keyword">null</span>) &#123;</span><br><span class="line">        defaultConstructor = getDefaultConstructor(clazz, constructors);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        defaultConstructor = getDefaultConstructor(builderClass, builderClass.getDeclaredConstructors());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> Constructor&lt;?&gt; getDefaultConstructor(Class&lt;?&gt; clazz, <span class="keyword">final</span> Constructor&lt;?&gt;[] constructors) &#123;</span><br><span class="line"><span class="keyword">if</span> (Modifier.isAbstract(clazz.getModifiers())) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Constructor&lt;?&gt; defaultConstructor = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (Constructor&lt;?&gt; constructor : constructors) &#123;</span><br><span class="line">    <span class="keyword">if</span> (constructor.getParameterTypes().length == <span class="number">0</span>) &#123;</span><br><span class="line">        defaultConstructor = constructor;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (defaultConstructor == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (clazz.isMemberClass() &amp;&amp; !Modifier.isStatic(clazz.getModifiers())) &#123;</span><br><span class="line">        Class&lt;?&gt;[] types;</span><br><span class="line">        <span class="keyword">for</span> (Constructor&lt;?&gt; constructor : constructors) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((types = constructor.getParameterTypes()).length == <span class="number">1</span></span><br><span class="line">                    &amp;&amp; types[<span class="number">0</span>].equals(clazz.getDeclaringClass())) &#123;</span><br><span class="line">                defaultConstructor = constructor;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> defaultConstructor;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>综上代码，可以清晰的得到，Fastjson对于大部分这些类的反序列化时，优先通过获取无参构造方法实例化，如果没有无参构造方法，则选择一个参数（参数类型和自身一致）的构造方法，并放到defaultConstructor中（后续会用于区分）。但如果都获取不到，那么就会走到下面的逻辑：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#125; else if (!isInterfaceOrAbstract) &#123;</span><br><span class="line">    String className = clazz.getName();</span><br><span class="line"></span><br><span class="line">    String[] paramNames = null;</span><br><span class="line">    if (kotlin &amp;&amp; constructors.length &gt; 0) &#123;</span><br><span class="line">        paramNames = TypeUtils.getKoltinConstructorParameters(clazz);</span><br><span class="line">        creatorConstructor = TypeUtils.getKoltinConstructor(constructors, paramNames);</span><br><span class="line">        TypeUtils.setAccessible(creatorConstructor);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line"></span><br><span class="line">        for (Constructor constructor : constructors) &#123;</span><br><span class="line">        ...</span><br><span class="line">            paramNames = lookupParameterNames;</span><br><span class="line">            creatorConstructor = constructor;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，若是没有无参和一参（和自身class类型一致）构造方法的话，就会遍历构造方法，取最后一个，但是，构造方法会放在creatorConstructor，将会导致在com/alibaba/fastjson/parser/ParserConfig.java:1325，即：</p>
+<p>方法com.alibaba.fastjson.parser.ParserConfig#checkAutoType(java.lang.String, java.lang.Class&lt;?&gt;, int)中<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">JavaBeanInfo beanInfo = JavaBeanInfo.build(clazz, clazz, propertyNamingStrategy);</span><br><span class="line"><span class="keyword">if</span> (beanInfo.creatorConstructor != <span class="keyword">null</span> &amp;&amp; autoTypeSupport) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> JSONException(<span class="string">"autoType is not support. "</span> + typeName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，如果creatorConstructor不为空，并且autoTypeSupport为true，就会直接抛异常.</p>
+<p>而不开启autoType，后续判断到没开启autoType，也会抛出异常</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!autoTypeSupport) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> JSONException(<span class="string">"autoType is not support. "</span> + typeName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但在其抛异常的判断之前，/Users/xuanyh/.ideaLibSources/fastjson-1.2.59-sources.jar!/com/alibaba/fastjson/parser/ParserConfig.java:1154，还是在方法com.alibaba.fastjson.parser.ParserConfig#checkAutoType(java.lang.String, java.lang.Class&lt;?&gt;, int)中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">boolean</span> autoTypeSupport = <span class="keyword">this</span>.autoTypeSupport</span><br><span class="line">        || (features &amp; mask) != <span class="number">0</span></span><br><span class="line">        || (JSON.DEFAULT_PARSER_FEATURE &amp; mask) != <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (clazz == <span class="keyword">null</span> &amp;&amp; (autoTypeSupport || jsonType || expectClassFlag)) &#123;</span><br><span class="line">    <span class="keyword">boolean</span> cacheClass = autoTypeSupport || jsonType;</span><br><span class="line">    clazz = TypeUtils.loadClass(typeName, defaultClassLoader, cacheClass);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>只要开启了autoType，都会调用TypeUtils.loadClass去加载class，观察其内部代码实现可以发现，会把class放到mappings缓存中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">public static Class&lt;?&gt; loadClass(String className, ClassLoader classLoader, boolean cache) &#123;</span><br><span class="line">    if(className == null || className.length() == 0 || className.length() &gt; 128)&#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Class&lt;?&gt; clazz = mappings.get(className);</span><br><span class="line">    if(clazz != null)&#123;</span><br><span class="line">        return clazz;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if(className.charAt(0) == &apos;[&apos;)&#123;</span><br><span class="line">        Class&lt;?&gt; componentType = loadClass(className.substring(1), classLoader);</span><br><span class="line">        return Array.newInstance(componentType, 0).getClass();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if(className.startsWith(&quot;L&quot;) &amp;&amp; className.endsWith(&quot;;&quot;))&#123;</span><br><span class="line">        String newClassName = className.substring(1, className.length() - 1);</span><br><span class="line">        return loadClass(newClassName, classLoader);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    try&#123;</span><br><span class="line">        if(classLoader != null)&#123;</span><br><span class="line">            clazz = classLoader.loadClass(className);</span><br><span class="line">            if (cache) &#123;</span><br><span class="line">                mappings.put(className, clazz);</span><br><span class="line">            &#125;</span><br><span class="line">            return clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch(Throwable e)&#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        // skip</span><br><span class="line">    &#125;</span><br><span class="line">    try&#123;</span><br><span class="line">        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();</span><br><span class="line">        if(contextClassLoader != null &amp;&amp; contextClassLoader != classLoader)&#123;</span><br><span class="line">            clazz = contextClassLoader.loadClass(className);</span><br><span class="line">            if (cache) &#123;</span><br><span class="line">                mappings.put(className, clazz);</span><br><span class="line">            &#125;</span><br><span class="line">            return clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch(Throwable e)&#123;</span><br><span class="line">        // skip</span><br><span class="line">    &#125;</span><br><span class="line">    try&#123;</span><br><span class="line">        clazz = Class.forName(className);</span><br><span class="line">        if (cache) &#123;</span><br><span class="line">            mappings.put(className, clazz);</span><br><span class="line">        &#125;</span><br><span class="line">        return clazz;</span><br><span class="line">    &#125; catch(Throwable e)&#123;</span><br><span class="line">        // skip</span><br><span class="line">    &#125;</span><br><span class="line">    return clazz;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的代码，得到一个非常重要的信息，通过这个缓存，我们可以得到一个构造方法判断绕过方式：一个需要反序列化的class，如果不存在上面所说的无参、一参构造方法，那么在第一次反序列化时，会通过TypeUtils.loadClass存到mappings缓存，然后再到后面的抛异常报错，但是这个时候，class已经加到mappings缓存了，那么，只要再发起一次反序列化，就能从最早最早的地方从mappings缓存加载，从而避免了后续的构造方法和autoType判断</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = deserializers.findClass(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = typeMapping.get(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (clazz != null) &#123;</span><br><span class="line">    if (expectClass != null</span><br><span class="line">            &amp;&amp; clazz != java.util.HashMap.class</span><br><span class="line">            &amp;&amp; !expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">        throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return clazz;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么也就是说，对于Fastjson，不管存不存在无参或自身类型一致的一参构造方法，都能被反序列化。</p>
+<p>PS：而关于注解部分，大部分第三方依赖都不会用到Fastjson的注解，这部分我们暂且不加入，因为gadgetinspector对于方法扫描的时候还没有做到存储注解，如果需要做这样的改造的话，需要做一部分的改造，这篇文章暂且不提。</p>
+<h4 id="反序列化可被触发执行的方法特征"><a href="#反序列化可被触发执行的方法特征" class="headerlink" title="反序列化可被触发执行的方法特征"></a>反序列化可被触发执行的方法特征</h4><p>因为Fastjson反序列化时，并不是直接反射Field设值，而是智能的提取出相应的setter、getter方法等，然后通过这些方法提取得到字段名称，接着进行设值</p>
+<p>对于反序列化时会调用哪个特征的方法，由于网络上有一部分博文已经描述总结得很详细了，故而，我这边也不再贴代码了。</p>
+<p>setter：</p>
+<ol>
+<li>方法名长度大于3</li>
+<li>非静态方法</li>
+<li>返回类型为Void.TYPE</li>
+<li>返回类型为自身class类型</li>
+<li>显式入参只有一个</li>
+</ol>
+<p>getter：</p>
+<ol>
+<li>对于提取名称（getName-&gt;name），setter未存在的</li>
+<li>方法名长度大于3，并且第4个字符为大写</li>
+<li>非静态方法</li>
+<li>没有入参</li>
+<li>返回值类型是Collection.class、Map.class、AtomicBoolean.class、AtomicInteger.class、AtomicLong.class或是其子孙类</li>
+</ol>
+<h3 id="0x04-编写Fastjson三件套"><a href="#0x04-编写Fastjson三件套" class="headerlink" title="0x04 编写Fastjson三件套"></a>0x04 编写Fastjson三件套</h3><h4 id="SerializableDecider-gt-FastjsonSerializableDecider"><a href="#SerializableDecider-gt-FastjsonSerializableDecider" class="headerlink" title="SerializableDecider-&gt;FastjsonSerializableDecider"></a>SerializableDecider-&gt;FastjsonSerializableDecider</h4><p>由上一节分析得出，只要存在构造方法，就能被Fastjson反序列化，因此，对于SerializableDecider的apply方法的逻辑实现，全部返回true就可以了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FastjsonSerializableDecider</span> <span class="keyword">implements</span> <span class="title">SerializableDecider</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">FastjsonSerializableDecider</span><span class="params">(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">apply</span><span class="params">(ClassReference.Handle handle)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Boolean.TRUE;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>考虑到Fastjson具有反序列化黑名单的机制，如果各位想要减少已被禁用链的输出，可以在这里加入黑名单。</p>
+<h4 id="SourceDiscovery-gt-FastjsonSourceDiscovery"><a href="#SourceDiscovery-gt-FastjsonSourceDiscovery" class="headerlink" title="SourceDiscovery-&gt;FastjsonSourceDiscovery"></a>SourceDiscovery-&gt;FastjsonSourceDiscovery</h4><p>根据前面列出的规则，创建Fastjson的SourceDiscovery</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FastjsonSourceDiscovery</span> <span class="keyword">extends</span> <span class="title">SourceDiscovery</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">discover</span><span class="params">(Map&lt;ClassReference.Handle, ClassReference&gt; classMap,</span></span></span><br><span class="line"><span class="function"><span class="params">      Map&lt;MethodReference.Handle, MethodReference&gt; methodMap,</span></span></span><br><span class="line"><span class="function"><span class="params">      InheritanceMap inheritanceMap)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> FastjsonSerializableDecider serializableDecider = <span class="keyword">new</span> FastjsonSerializableDecider(</span><br><span class="line">        methodMap);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (MethodReference.Handle method : methodMap.keySet()) &#123;</span><br><span class="line">      <span class="keyword">if</span> (serializableDecider.apply(method.getClassReference())) &#123;</span><br><span class="line">        <span class="keyword">if</span> (method.getName().startsWith(<span class="string">"get"</span>) &amp;&amp; method.getDesc().startsWith(<span class="string">"()"</span>)) &#123;</span><br><span class="line">          <span class="keyword">if</span> (method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)L.+?;"</span>)) &#123;</span><br><span class="line">            String fieldName =</span><br><span class="line">                method.getName().charAt(<span class="number">3</span>) + method.getName().substring(<span class="number">4</span>);</span><br><span class="line">            String desc = method.getDesc()</span><br><span class="line">                .substring(method.getDesc().indexOf(<span class="string">")L"</span>) + <span class="number">2</span>, method.getDesc().length() - <span class="number">1</span>);</span><br><span class="line">            MethodReference.Handle handle = <span class="keyword">new</span> MethodReference.Handle(</span><br><span class="line">                method.getClassReference(), <span class="string">"set"</span> + fieldName, desc);</span><br><span class="line">            <span class="keyword">if</span> (!methodMap.containsKey(handle) &amp;&amp;</span><br><span class="line">                method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)Ljava/util/Collection;"</span>) ||</span><br><span class="line">                method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)Ljava/util/Map;"</span>) ||</span><br><span class="line">                method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)Ljava/util/concurrent/atomic/AtomicBoolean;"</span>) ||</span><br><span class="line">                method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)Ljava/util/concurrent/atomic/AtomicInteger;"</span>) ||</span><br><span class="line">                method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)Ljava/util/concurrent/atomic/AtomicLong;"</span>))&#123;</span><br><span class="line">              addDiscoveredSource(<span class="keyword">new</span> Source(method, <span class="number">0</span>));</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (method.getName().startsWith(<span class="string">"set"</span>) &amp;&amp; method.getDesc().matches(<span class="string">"\\(L[^;]*;\\)V"</span>)) &#123;</span><br><span class="line">          addDiscoveredSource(<span class="keyword">new</span> Source(method, <span class="number">1</span>));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ImplementationFinder-gt-FastjsonImplementationFinder"><a href="#ImplementationFinder-gt-FastjsonImplementationFinder" class="headerlink" title="ImplementationFinder-&gt;FastjsonImplementationFinder"></a>ImplementationFinder-&gt;FastjsonImplementationFinder</h4><p>因为该Finder类，基本都是用到SerializableDecider决策者就可以了，那么这个实现就非常简单</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">public class FastjsonImplementationFinder implements ImplementationFinder &#123;</span><br><span class="line"></span><br><span class="line">    private final SerializableDecider serializableDecider;</span><br><span class="line"></span><br><span class="line">    public FastjsonImplementationFinder(SerializableDecider serializableDecider) &#123;</span><br><span class="line">        this.serializableDecider = serializableDecider;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Set&lt;MethodReference.Handle&gt; getImplementations(MethodReference.Handle target) &#123;</span><br><span class="line">        Set&lt;MethodReference.Handle&gt; allImpls = new HashSet&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        // For jackson search, we don&apos;t get to specify the class; it uses reflection to instantiate the</span><br><span class="line">        // class itself. So just add the target method if the target class is serializable.</span><br><span class="line">        if (Boolean.TRUE.equals(serializableDecider.apply(target.getClassReference()))) &#123;</span><br><span class="line">            allImpls.add(target);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return allImpls;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="配置Fastjson以及添加到配置仓库ConfigRepository"><a href="#配置Fastjson以及添加到配置仓库ConfigRepository" class="headerlink" title="配置Fastjson以及添加到配置仓库ConfigRepository"></a>配置Fastjson以及添加到配置仓库ConfigRepository</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">public class FastjsonDeserializationConfig implements GIConfig &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return &quot;fastjson&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public SerializableDecider getSerializableDecider(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap, InheritanceMap inheritanceMap) &#123;</span><br><span class="line">        return new FastjsonSerializableDecider(methodMap);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public ImplementationFinder getImplementationFinder(Map&lt;MethodReference.Handle, MethodReference&gt; methodMap,</span><br><span class="line">                                                        Map&lt;MethodReference.Handle, Set&lt;MethodReference.Handle&gt;&gt; methodImplMap,</span><br><span class="line">                                                        InheritanceMap inheritanceMap) &#123;</span><br><span class="line">        return new FastjsonImplementationFinder(getSerializableDecider(methodMap, inheritanceMap));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public SourceDiscovery getSourceDiscovery() &#123;</span><br><span class="line">        return new FastjsonSourceDiscovery();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public class ConfigRepository &#123;</span><br><span class="line">    private static final List&lt;GIConfig&gt; ALL_CONFIGS = Collections.unmodifiableList(Arrays.asList(</span><br><span class="line">            new JavaDeserializationConfig(),</span><br><span class="line">            new JacksonDeserializationConfig(),</span><br><span class="line">            new XstreamDeserializationConfig(),</span><br><span class="line">            new FastjsonDeserializationConfig()));</span><br><span class="line"></span><br><span class="line">    public static GIConfig getConfig(String name) &#123;</span><br><span class="line">        for (GIConfig config : ALL_CONFIGS) &#123;</span><br><span class="line">            if (config.getName().equals(name)) &#123;</span><br><span class="line">                return config;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="0x05-优化slink-加入jndi-lookup"><a href="#0x05-优化slink-加入jndi-lookup" class="headerlink" title="0x05 优化slink-加入jndi-lookup"></a>0x05 优化slink-加入jndi-lookup</h3><p>因为Fastjson反序列化RCE很多的打法，基本都是jndi-lookup实现，但是我看到gadgetinspector中并没有该slink的判断，因此，加入该slink的判断，以对其进行优化</p>
+<p>gadgetinspector.GadgetChainDiscovery#isSink</p>
+<p>在该方法末尾添加jndi-lookup判断即可<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">if ((inheritanceMap.isSubclassOf(method.getClassReference(), new ClassReference.Handle(&quot;java/rmi/registry/Registry&quot;)) || </span><br><span class="line">    inheritanceMap.isSubclassOf(method.getClassReference(), new ClassReference.Handle(&quot;javax/naming/Context&quot;)))</span><br><span class="line">        &amp;&amp; method.getName().equals(&quot;lookup&quot;)) &#123;</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>至此，gadgetinspector的改造就完成了，那么接下来，我们以一个已有gadget chain的jar进行扫描挖掘，测试一下效果</p>
+<p>例：HikariCP-3.4.1.jar</p>
+<p>扫描挖掘结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">sun/usagetracker/UsageTrackerClient.setup(Ljava/io/File;)V (1)</span><br><span class="line">  java/io/FileInputStream.&lt;init&gt;(Ljava/io/File;)V (1)</span><br><span class="line"></span><br><span class="line">org/apache/log4j/jmx/LayoutDynamicMBean.setAttribute(Ljavax/management/Attribute;)V (1)</span><br><span class="line">  java/lang/reflect/Method.invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; (0)</span><br><span class="line"></span><br><span class="line">com/sun/org/apache/xml/internal/serializer/ToStream.setOutputFormat(Ljava/util/Properties;)V (1)</span><br><span class="line">  com/sun/org/apache/xml/internal/serializer/ToStream.init(Ljava/io/Writer;Ljava/util/Properties;ZZ)V (2)</span><br><span class="line">  com/sun/org/apache/xml/internal/serializer/CharInfo.getCharInfo(Ljava/lang/String;Ljava/lang/String;)Lcom/sun/org/apache/xml/internal/serializer/CharInfo; (0)</span><br><span class="line">  com/sun/org/apache/xml/internal/serializer/CharInfo.&lt;init&gt;(Ljava/lang/String;Ljava/lang/String;Z)V (1)</span><br><span class="line">  java/net/URL.openStream()Ljava/io/InputStream; (0)</span><br><span class="line"></span><br><span class="line">com/sun/management/jmx/TraceListener.setFile(Ljava/lang/String;)V (1)</span><br><span class="line">  java/io/FileOutputStream.&lt;init&gt;(Ljava/lang/String;Z)V (1)</span><br><span class="line"></span><br><span class="line">com/zaxxer/hikari/HikariConfig.setMetricRegistry(Ljava/lang/Object;)V (1)</span><br><span class="line">  com/zaxxer/hikari/HikariConfig.getObjectOrPerformJndiLookup(Ljava/lang/Object;)Ljava/lang/Object; (1)</span><br><span class="line">  javax/naming/InitialContext.lookup(Ljava/lang/String;)Ljava/lang/Object; (1)</span><br><span class="line"></span><br><span class="line">org/apache/log4j/jmx/AppenderDynamicMBean.setAttribute(Ljavax/management/Attribute;)V (1)</span><br><span class="line">  org/apache/log4j/jmx/AppenderDynamicMBean.getAttribute(Ljava/lang/String;)Ljava/lang/Object; (1)</span><br><span class="line">  java/lang/reflect/Method.invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; (0)</span><br><span class="line"></span><br><span class="line">org/apache/log4j/varia/LevelMatchFilter.setLevelToMatch(Ljava/lang/String;)V (1)</span><br><span class="line">  org/apache/log4j/helpers/OptionConverter.toLevel(Ljava/lang/String;Lorg/apache/log4j/Level;)Lorg/apache/log4j/Level; (0)</span><br><span class="line">  java/lang/reflect/Method.invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; (0)</span><br><span class="line"></span><br><span class="line">org/apache/log4j/jmx/LayoutDynamicMBean.setAttribute(Ljavax/management/Attribute;)V (1)</span><br><span class="line">  org/apache/log4j/jmx/LayoutDynamicMBean.getAttribute(Ljava/lang/String;)Ljava/lang/Object; (1)</span><br><span class="line">  java/lang/reflect/Method.invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; (0)</span><br><span class="line"></span><br><span class="line">org/apache/log4j/jmx/AppenderDynamicMBean.setAttribute(Ljavax/management/Attribute;)V (1)</span><br><span class="line">  java/lang/reflect/Method.invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; (0)</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，其中我们新加入的jndi-lookup的slink，顺利的挖掘到一个可用的gadget chain：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">com/zaxxer/hikari/HikariConfig.setMetricRegistry(Ljava/lang/Object;)V (1)</span><br><span class="line">  com/zaxxer/hikari/HikariConfig.getObjectOrPerformJndiLookup(Ljava/lang/Object;)Ljava/lang/Object; (1)</span><br><span class="line">  javax/naming/InitialContext.lookup(Ljava/lang/String;)Ljava/lang/Object; (1)</span><br></pre></td></tr></table></figure>
+<p>当然，这个gadget chain早在1.2.60就被黑名单禁了，哈哈！还有就是，文章难免某个地方会搞错，希望各位dalao阅读之后可以不吝指教。</p>
+<p>新年将至，也祝各位小伙伴能挖到好洞，过一个愉快的肥年，谢谢！</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/自动化工具/" rel="tag"># 自动化工具</a>
+          
+            <a href="/tags/gadgetinspector/" rel="tag"># gadgetinspector</a>
+          
+            <a href="/tags/java反序列化/" rel="tag"># java反序列化</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/09/XMAN2017选拔赛-Mobile-writeup/" rel="prev" title="XMAN2017选拔赛(Mobile)writeup">
+                XMAN2017选拔赛(Mobile)writeup <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.</span> <span class="nav-text">0x01 前言</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"><span class="nav-number">1.1.</span> <span class="nav-text">《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-如何新加序列化方式"><span class="nav-number">2.</span> <span class="nav-text">0x02 如何新加序列化方式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#source"><span class="nav-number">2.1.</span> <span class="nav-text">source</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#slink"><span class="nav-number">2.2.</span> <span class="nav-text">slink</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-Fastjson反序列化方式添加前的准备"><span class="nav-number">3.</span> <span class="nav-text">0x03 Fastjson反序列化方式添加前的准备</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#可被反序列化的类特征："><span class="nav-number">3.1.</span> <span class="nav-text">可被反序列化的类特征：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#反序列化可被触发执行的方法特征"><span class="nav-number">3.2.</span> <span class="nav-text">反序列化可被触发执行的方法特征</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-编写Fastjson三件套"><span class="nav-number">4.</span> <span class="nav-text">0x04 编写Fastjson三件套</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SerializableDecider-gt-FastjsonSerializableDecider"><span class="nav-number">4.1.</span> <span class="nav-text">SerializableDecider-&gt;FastjsonSerializableDecider</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SourceDiscovery-gt-FastjsonSourceDiscovery"><span class="nav-number">4.2.</span> <span class="nav-text">SourceDiscovery-&gt;FastjsonSourceDiscovery</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ImplementationFinder-gt-FastjsonImplementationFinder"><span class="nav-number">4.3.</span> <span class="nav-text">ImplementationFinder-&gt;FastjsonImplementationFinder</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#配置Fastjson以及添加到配置仓库ConfigRepository"><span class="nav-number">4.4.</span> <span class="nav-text">配置Fastjson以及添加到配置仓库ConfigRepository</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x05-优化slink-加入jndi-lookup"><span class="nav-number">5.</span> <span class="nav-text">0x05 优化slink-加入jndi-lookup</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
