@@ -88,7 +88,7 @@
 <meta property="og:description" content="0 前言以往看到很多讲述RMI、JNDI、JRMP的文章，有部分文章都描述的并不是很清晰，看着通篇大论，觉得很详细，但看完之后却搞不懂，也解释不清，反正就是感觉自己还没搞懂，却又好像懂了点，很迷糊… 这篇文章，我想要的就是以最简短的内容和例子，去阐述RMI、JNDI、JRMP…，并讲讲为什么用InitialContext lookup一个JNDI的rmi、ldap服务会导致自身被反序列化RCE，为">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/2351578379904_.pic_hd.jpg">
-<meta property="og:updated_time" content="2020-01-15T05:15:29.937Z">
+<meta property="og:updated_time" content="2020-01-15T05:20:17.262Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI">
 <meta name="twitter:description" content="0 前言以往看到很多讲述RMI、JNDI、JRMP的文章，有部分文章都描述的并不是很清晰，看着通篇大论，觉得很详细，但看完之后却搞不懂，也解释不清，反正就是感觉自己还没搞懂，却又好像懂了点，很迷糊… 这篇文章，我想要的就是以最简短的内容和例子，去阐述RMI、JNDI、JRMP…，并讲讲为什么用InitialContext lookup一个JNDI的rmi、ldap服务会导致自身被反序列化RCE，为">
@@ -366,6 +366,7 @@
       
         <h3 id="0-前言"><a href="#0-前言" class="headerlink" title="0 前言"></a>0 前言</h3><p>以往看到很多讲述RMI、JNDI、JRMP的文章，有部分文章都描述的并不是很清晰，看着通篇大论，觉得很详细，但看完之后却搞不懂，也解释不清，反正就是感觉自己还没搞懂，却又好像懂了点，很迷糊…</p>
 <p>这篇文章，我想要的就是以最简短的内容和例子，去阐述RMI、JNDI、JRMP…，并讲讲为什么用InitialContext lookup一个JNDI的rmi、ldap服务会导致自身被反序列化RCE，为什么Registry bind暴露一个服务对象到RmiRegistry会导致Registry服务自身被反序列化RCE，为什么使用JRMP能互相对打等等。虽然我不能百分百保证我写的毫无错误，但是，我觉得你看了这篇文章之后，大概应该就懂了。</p>
+<a id="more"></a>
 <h3 id="1-搞懂概念"><a href="#1-搞懂概念" class="headerlink" title="1 搞懂概念"></a>1 搞懂概念</h3><h4 id="1-1-RMI"><a href="#1-1-RMI" class="headerlink" title="1.1 RMI"></a>1.1 RMI</h4><p>以下是wiki的描述：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Java远程方法调用，即Java RMI（Java Remote Method Invocation）是Java编程语言里，一种用于实现远程过程调用的应用程序编程接口。它使客户机上运行的程序可以调用远程服务器上的对象。远程方法调用特性使Java编程人员能够在网络环境中分布操作。RMI全部的宗旨就是尽可能简化远程接口对象的使用。</span><br><span class="line"></span><br><span class="line">Java RMI极大地依赖于接口。在需要创建一个远程对象的时候，程序员通过传递一个接口来隐藏底层的实现细节。客户端得到的远程对象句柄正好与本地的根代码连接，由后者负责透过网络通信。这样一来，程序员只需关心如何通过自己的接口句柄发送消息。</span><br></pre></td></tr></table></figure>
 <p>根据wiki所说RMI全称为Remote Method Invocation，也就是远程方法调用，通俗点解释，就是跨越jvm，调用一个远程方法。众所周知，一般情况下java方法调用<br>指的是同一个jvm内方法的调用，而RMI与之恰恰相反。</p>
