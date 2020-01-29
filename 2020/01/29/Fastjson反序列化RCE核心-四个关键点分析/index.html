@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Fastjson,反序列化,RCE,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="文章转载自先知社区：https://xz.aliyun.com/t/7107 0x01 前言A fast JSON parser/generator for Java.一个Java语言实现的JSON快速解析/生成器。 官方描述：1234567891011Fastjson is a Java library that can be used to convert Java Objects into">
+<meta name="keywords" content="Fastjson,反序列化,RCE">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fastjson反序列化RCE核心-四个关键点分析">
+<meta property="og:url" content="http://yoursite.com/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7107 0x01 前言A fast JSON parser/generator for Java.一个Java语言实现的JSON快速解析/生成器。 官方描述：1234567891011Fastjson is a Java library that can be used to convert Java Objects into">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-01-29T03:08:10.217Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Fastjson反序列化RCE核心-四个关键点分析">
+<meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7107 0x01 前言A fast JSON parser/generator for Java.一个Java语言实现的JSON快速解析/生成器。 官方描述：1234567891011Fastjson is a Java library that can be used to convert Java Objects into">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/">
+
+
+
+
+
+  <title>Fastjson反序列化RCE核心-四个关键点分析 | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Fastjson反序列化RCE核心-四个关键点分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-29T11:05:00+08:00">
+                2020-01-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java框架源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7107" target="_blank" rel="noopener">https://xz.aliyun.com/t/7107</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>A fast JSON parser/generator for Java.一个Java语言实现的JSON快速解析/生成器。</p>
+<p>官方描述：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Fastjson is a Java library that can be used to convert Java Objects into their JSON representation. </span><br><span class="line">It can also be used to convert a JSON string to an equivalent Java object. </span><br><span class="line">Fastjson can work with arbitrary Java objects including pre-existing objects that you do not have source-code of.</span><br><span class="line"></span><br><span class="line">Fastjson Goals:</span><br><span class="line">- Provide best performance in server side and android client</span><br><span class="line">- Provide simple toJSONString() and parseObject() methods to convert Java objects to JSON and vice-versa</span><br><span class="line">- Allow pre-existing unmodifiable objects to be converted to and from JSON</span><br><span class="line">- Extensive support of Java Generics</span><br><span class="line">- Allow custom representations for objects</span><br><span class="line">- Support arbitrarily complex objects (with deep inheritance hierarchies and extensive use of generic types)</span><br></pre></td></tr></table></figure></p>
+<p>Fastjson是阿里巴巴开源的Apache顶级项目，在国内开发圈子中被使用广泛，由于它假定有序的解析特性，其相对于Jackson，性能会有一定的优势，不过个人觉得，相对于磁盘、网络IO等时间损耗，这样的提升对于大部分企业来讲，意义并不大。</p>
+<p>因为Fastjson在国内被广泛使用，也就是说受众广，影响范围大，那么一但出现安全漏洞，被不法分子利用，将会对企业、用户造成极大损失。对于我们研究安全的人员来讲，研究分析Fastjson的源码，跟踪Fastjson安全漏洞，可以更好的挖掘出潜在的安全隐患，提前消灭它。</p>
+<p>我曾经从网络上看到过很多对Fastjson分析的文章，但大部分都是对于新漏洞gadget chain触发的源码debug跟踪，缺少对于一些关键点代码的分析描述，也就是说，我看完之后，该不懂还是不懂，最后时间花出去了，得到的只是一个证明可用的exp…因此，我这篇文章，将针对Fastjson反序列化部分涉及到的关键点代码进行详细的讲解，其中一共四个关键点“词法解析、构造方法选择、缓存绕过、反射调用”，希望大家看完之后，将能完全搞懂Fastjson漏洞触发的一些条件以及原理。</p>
+<a id="more"></a>
+<h3 id="0x02-四个关键点"><a href="#0x02-四个关键点" class="headerlink" title="0x02 四个关键点"></a>0x02 四个关键点</h3><ul>
+<li>词法解析</li>
+<li>构造方法选择</li>
+<li>缓存绕过</li>
+<li>反射调用</li>
+</ul>
+<h4 id="1、词法解析"><a href="#1、词法解析" class="headerlink" title="1、词法解析"></a>1、词法解析</h4><p>词法解析是Fastjson反序列化中比较重要的一环，一个json的格式、内容是否能被Fastjson理解，它充当了最重要的角色。</p>
+<p>在调用JSON.parse(text)对json文本进行解析时，将使用缺省的默认配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public static Object parse(String text) &#123;</span><br><span class="line">    return parse(text, DEFAULT_PARSER_FEATURE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>DEFAULT_PARSER_FEATURE是一个缺省默认的feature配置，具体每个feature的作用，我这边就不做讲解了，跟这一小节中的词法解析关联不大</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public static int DEFAULT_PARSER_FEATURE;</span><br><span class="line">static &#123;</span><br><span class="line">    int features = 0;</span><br><span class="line">    features |= Feature.AutoCloseSource.getMask();</span><br><span class="line">    features |= Feature.InternFieldNames.getMask();</span><br><span class="line">    features |= Feature.UseBigDecimal.getMask();</span><br><span class="line">    features |= Feature.AllowUnQuotedFieldNames.getMask();</span><br><span class="line">    features |= Feature.AllowSingleQuotes.getMask();</span><br><span class="line">    features |= Feature.AllowArbitraryCommas.getMask();</span><br><span class="line">    features |= Feature.SortFeidFastMatch.getMask();</span><br><span class="line">    features |= Feature.IgnoreNotMatch.getMask();</span><br><span class="line">    DEFAULT_PARSER_FEATURE = features;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而如果想使用自定义的feature的话，可以自己或运算配置feature</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public static Object parse(String text, int features) &#123;</span><br><span class="line">    return parse(text, ParserConfig.getGlobalInstance(), features);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而这里，我们也能看到，传入了一个解析配置ParserConfig.getGlobalInstance()，它是一个默认的全局配置，因此，如果我们想要不使用全局解析配置的话，也可以自己构建一个局部的解析配置进行传入，这一系列的重载方法都给我们的使用提供了很大的自由度。</p>
+<p>接着，我们可以看到，最终其实都走到这一步，创建DefaultJSONParser类实例，接着对json进行解析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public static Object parse(String text, ParserConfig config, int features) &#123;</span><br><span class="line">    if (text == null) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    DefaultJSONParser parser = new DefaultJSONParser(text, config, features);</span><br><span class="line">    Object value = parser.parse();</span><br><span class="line"></span><br><span class="line">    parser.handleResovleTask(value);</span><br><span class="line"></span><br><span class="line">    parser.close();</span><br><span class="line"></span><br><span class="line">    return value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后我们跟进DefaultJSONParser构造方法中，可以看到其中调用了另一个重载的构造方法，我们可以重点关注第二个参数，也就是JSONScanner，它就是词法解析的具体实现类了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public DefaultJSONParser(final String input, final ParserConfig config, int features)&#123;</span><br><span class="line">    this(input, new JSONScanner(input, features), config);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看类注释，可以知道，这个类为了词法解析中的性能提升，做了很多特别的处理<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">//这个类，为了性能优化做了很多特别处理，一切都是为了性能！！！</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author wenshao[szujobs@hotmail.com]</span><br><span class="line"> */</span><br><span class="line">public final class JSONScanner extends JSONLexerBase &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在分析该词法解析类之前，我这里列出一些该类以及父类中变量的含义，有助于后续的代码分析：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">text：json文本数据</span><br><span class="line">len：json文本数据长度</span><br><span class="line">token：代表解析到的这一段数据的类型</span><br><span class="line">ch：当前读取到的字符</span><br><span class="line">bp：当前字符索引</span><br><span class="line">sbuf：正在解析段的数据，char数组</span><br><span class="line">sp：sbuf最后一个数据的索引</span><br><span class="line">hasSpecial=false：需要初始化或者扩容sbuf</span><br></pre></td></tr></table></figure>
+<p>可以从JSONScanner构造方法看到，text、len、bp、ch的大概意义，并且对utf-8 bom进行跳过</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public JSONScanner(String input, int features)&#123;</span><br><span class="line">    super(features);</span><br><span class="line"></span><br><span class="line">    text = input;//json文本数据</span><br><span class="line">    len = text.length();//json文本数据长度</span><br><span class="line">    bp = -1;//当前字符索引</span><br><span class="line"></span><br><span class="line">    next();</span><br><span class="line">    if (ch == 65279) &#123; // utf-8 bom</span><br><span class="line">        next();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着在构造方法中，会调用next进行对text中一个一个字符的获取，可以看到bp值初始值为-1，在第一次调用时执行++bp变为0，即开始读取第一个字符的索引</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public final char next() &#123;</span><br><span class="line">    int index = ++bp;</span><br><span class="line">    return ch = (index &gt;= this.len ? //</span><br><span class="line">            EOI //</span><br><span class="line">            : text.charAt(index));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>再跟进DefaultJSONParser主要构造方法，其中lexer是词法解析器，这里我们跟踪得到其实现为JSONScanner，也就是我们前面所讲的那个，而input就是需要解析的json字符串，config为解析配置，最重要的就是symbolTable，我称之为符号表，它可以根据传入的字符，进而解析知道你想要读取的一段字符串</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public DefaultJSONParser(final Object input, final JSONLexer lexer, final ParserConfig config)&#123;</span><br><span class="line">    this.lexer = lexer;//JSONScanner</span><br><span class="line">    this.input = input;//需要解析的json字符串</span><br><span class="line">    this.config = config;//解析配置</span><br><span class="line">    this.symbolTable = config.symbolTable;</span><br><span class="line"></span><br><span class="line">    //获取当前解析到的字符</span><br><span class="line">    int ch = lexer.getCurrent();</span><br><span class="line">    if (ch == &apos;&#123;&apos;) &#123;</span><br><span class="line">        lexer.next();</span><br><span class="line">        ((JSONLexerBase) lexer).token = JSONToken.LBRACE;</span><br><span class="line">    &#125; else if (ch == &apos;[&apos;) &#123;</span><br><span class="line">        lexer.next();</span><br><span class="line">        ((JSONLexerBase) lexer).token = JSONToken.LBRACKET;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        lexer.nextToken(); // prime the pump</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的if、else流判断中可以知道，当开始头解析时，如果能解析到’{‘或’[‘，就会赋值token，指明当前读到的token类型（在Fastjson中，会对json数据字符串一位一位的提取，然后比对，得出当前位置的词法类型，也即token），接着继续执行next()滑动到下一个字符。如果不能解析到’{‘或’[‘开头，就会执行nextToken()，后续parse也会继续执行nextToken()</p>
+<p>nextToken，顾名思义就是下一个token，其中实现逻辑会对字符一个一个的进行一定的解析，判断出下一个token类型</p>
+<p>而整个Fastjson反序列化时，就是这样根据不断的next()提取出字符，然后判断当前token类型，接着根据token类型的不同，会有不一样的处理逻辑，表现为根据token类型做一定的数据字符串读取，并根据读取出来的字符串数据，进行反序列化成Java Object</p>
+<p>我们回到nextToken中来：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br></pre></td><td class="code"><pre><span class="line">public final void nextToken() &#123;</span><br><span class="line">    sp = 0;</span><br><span class="line"></span><br><span class="line">    for (;;) &#123;</span><br><span class="line">        pos = bp;</span><br><span class="line"></span><br><span class="line">        if (ch == &apos;/&apos;) &#123;</span><br><span class="line">            skipComment();</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (ch == &apos;&quot;&apos;) &#123;</span><br><span class="line">            scanString();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (ch == &apos;,&apos;) &#123;</span><br><span class="line">            next();</span><br><span class="line">            token = COMMA;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (ch &gt;= &apos;0&apos; &amp;&amp; ch &lt;= &apos;9&apos;) &#123;</span><br><span class="line">            scanNumber();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (ch == &apos;-&apos;) &#123;</span><br><span class="line">            scanNumber();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        switch (ch) &#123;</span><br><span class="line">            case &apos;\&apos;&apos;:</span><br><span class="line">                if (!isEnabled(Feature.AllowSingleQuotes)) &#123;</span><br><span class="line">                    throw new JSONException(&quot;Feature.AllowSingleQuotes is false&quot;);</span><br><span class="line">                &#125;</span><br><span class="line">                scanStringSingleQuote();</span><br><span class="line">                return;</span><br><span class="line">            case &apos; &apos;:</span><br><span class="line">            case &apos;\t&apos;:</span><br><span class="line">            case &apos;\b&apos;:</span><br><span class="line">            case &apos;\f&apos;:</span><br><span class="line">            case &apos;\n&apos;:</span><br><span class="line">            case &apos;\r&apos;:</span><br><span class="line">                next();</span><br><span class="line">                break;</span><br><span class="line">            case &apos;t&apos;: // true</span><br><span class="line">                scanTrue();</span><br><span class="line">                return;</span><br><span class="line">            case &apos;f&apos;: // false</span><br><span class="line">                scanFalse();</span><br><span class="line">                return;</span><br><span class="line">            case &apos;n&apos;: // new,null</span><br><span class="line">                scanNullOrNew();</span><br><span class="line">                return;</span><br><span class="line">            case &apos;T&apos;:</span><br><span class="line">            case &apos;N&apos;: // NULL</span><br><span class="line">            case &apos;S&apos;:</span><br><span class="line">            case &apos;u&apos;: // undefined</span><br><span class="line">                scanIdent();</span><br><span class="line">                return;</span><br><span class="line">            case &apos;(&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = LPAREN;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;)&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = RPAREN;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;[&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = LBRACKET;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;]&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = RBRACKET;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;&#123;&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = LBRACE;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;&#125;&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = RBRACE;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;:&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = COLON;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;;&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = SEMI;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;.&apos;:</span><br><span class="line">                next();</span><br><span class="line">                token = DOT;</span><br><span class="line">                return;</span><br><span class="line">            case &apos;+&apos;:</span><br><span class="line">                next();</span><br><span class="line">                scanNumber();</span><br><span class="line">                return;</span><br><span class="line">            case &apos;x&apos;:</span><br><span class="line">                scanHex();</span><br><span class="line">                return;</span><br><span class="line">            default:</span><br><span class="line">                if (isEOF()) &#123; // JLS</span><br><span class="line">                    if (token == EOF) &#123;</span><br><span class="line">                        throw new JSONException(&quot;EOF error&quot;);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    token = EOF;</span><br><span class="line">                    eofPos = pos = bp;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    if (ch &lt;= 31 || ch == 127) &#123;</span><br><span class="line">                        next();</span><br><span class="line">                        break;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    lexError(&quot;illegal.char&quot;, String.valueOf((int) ch));</span><br><span class="line">                    next();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                return;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，就是前面所说的，根据当前读到的字符，而选择执行不同的字符串提取逻辑，我们这小节最核心的代码就位于scanString()，当判断当前字符为双引号时，则执行这个方法，我们看一下具体实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line">public final void scanString() &#123;</span><br><span class="line">    np = bp;</span><br><span class="line">    hasSpecial = false;</span><br><span class="line">    char ch;</span><br><span class="line">    for (;;) &#123;</span><br><span class="line">        ch = next();</span><br><span class="line"></span><br><span class="line">        if (ch == &apos;\&quot;&apos;) &#123;</span><br><span class="line">            break;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (ch == EOI) &#123;</span><br><span class="line">            if (!isEOF()) &#123;</span><br><span class="line">                putChar((char) EOI);</span><br><span class="line">                continue;</span><br><span class="line">            &#125;</span><br><span class="line">            throw new JSONException(&quot;unclosed string : &quot; + ch);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (ch == &apos;\\&apos;) &#123;</span><br><span class="line">            if (!hasSpecial) &#123;</span><br><span class="line">                ...扩容</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            ch = next();</span><br><span class="line"></span><br><span class="line">            switch (ch) &#123;</span><br><span class="line">                case &apos;0&apos;:</span><br><span class="line">                    putChar(&apos;\0&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;1&apos;:</span><br><span class="line">                    putChar(&apos;\1&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;2&apos;:</span><br><span class="line">                    putChar(&apos;\2&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;3&apos;:</span><br><span class="line">                    putChar(&apos;\3&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;4&apos;:</span><br><span class="line">                    putChar(&apos;\4&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;5&apos;:</span><br><span class="line">                    putChar(&apos;\5&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;6&apos;:</span><br><span class="line">                    putChar(&apos;\6&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;7&apos;:</span><br><span class="line">                    putChar(&apos;\7&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;b&apos;: // 8</span><br><span class="line">                    putChar(&apos;\b&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;t&apos;: // 9</span><br><span class="line">                    putChar(&apos;\t&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;n&apos;: // 10</span><br><span class="line">                    putChar(&apos;\n&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;v&apos;: // 11</span><br><span class="line">                    putChar(&apos;\u000B&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;f&apos;: // 12</span><br><span class="line">                case &apos;F&apos;:</span><br><span class="line">                    putChar(&apos;\f&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;r&apos;: // 13</span><br><span class="line">                    putChar(&apos;\r&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;&quot;&apos;: // 34</span><br><span class="line">                    putChar(&apos;&quot;&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;\&apos;&apos;: // 39</span><br><span class="line">                    putChar(&apos;\&apos;&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;/&apos;: // 47</span><br><span class="line">                    putChar(&apos;/&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;\\&apos;: // 92</span><br><span class="line">                    putChar(&apos;\\&apos;);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;x&apos;:</span><br><span class="line">                    char x1 = next();</span><br><span class="line">                    char x2 = next();</span><br><span class="line"></span><br><span class="line">                    boolean hex1 = (x1 &gt;= &apos;0&apos; &amp;&amp; x1 &lt;= &apos;9&apos;)</span><br><span class="line">                            || (x1 &gt;= &apos;a&apos; &amp;&amp; x1 &lt;= &apos;f&apos;)</span><br><span class="line">                            || (x1 &gt;= &apos;A&apos; &amp;&amp; x1 &lt;= &apos;F&apos;);</span><br><span class="line">                    boolean hex2 = (x2 &gt;= &apos;0&apos; &amp;&amp; x2 &lt;= &apos;9&apos;)</span><br><span class="line">                            || (x2 &gt;= &apos;a&apos; &amp;&amp; x2 &lt;= &apos;f&apos;)</span><br><span class="line">                            || (x2 &gt;= &apos;A&apos; &amp;&amp; x2 &lt;= &apos;F&apos;);</span><br><span class="line">                    if (!hex1 || !hex2) &#123;</span><br><span class="line">                        throw new JSONException(&quot;invalid escape character \\x&quot; + x1 + x2);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    char x_char = (char) (digits[x1] * 16 + digits[x2]);</span><br><span class="line">                    putChar(x_char);</span><br><span class="line">                    break;</span><br><span class="line">                case &apos;u&apos;:</span><br><span class="line">                    char u1 = next();</span><br><span class="line">                    char u2 = next();</span><br><span class="line">                    char u3 = next();</span><br><span class="line">                    char u4 = next();</span><br><span class="line">                    int val = Integer.parseInt(new String(new char[] &#123; u1, u2, u3, u4 &#125;), 16);</span><br><span class="line">                    putChar((char) val);</span><br><span class="line">                    break;</span><br><span class="line">                default:</span><br><span class="line">                    this.ch = ch;</span><br><span class="line">                    throw new JSONException(&quot;unclosed string : &quot; + ch);</span><br><span class="line">            &#125;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (!hasSpecial) &#123;</span><br><span class="line">            sp++;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (sp == sbuf.length) &#123;</span><br><span class="line">            putChar(ch);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            sbuf[sp++] = ch;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    token = JSONToken.LITERAL_STRING;</span><br><span class="line">    this.ch = next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从代码中可以看到，当下一个字符遇到也是双引号时，就会结束scanString()循环，因为Fastjson认为读取到的字符串为空字符串，接着就是EOI的判断，不过我们这边关心的是’\\‘的处理，因为在java中，只要是硬编码的字符串，对于一些转义字符，都需要使用’\’对其转义，那么’\\‘其实正真就代表则字符’\‘</p>
+<p>接着看后面的switch-case处理，可以看出，其实就是对json数据字符串中’\0 \1 \2 \3 \4 \5 \6 \7 \b \t \n \u000B \f \F \r \“ \\ \x \u’等双字节字符的处理，总结一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">例：</span><br><span class="line">\0 \1 \2 \3 \4 \5 \6 \7 \b \t \n \r \&quot; \&apos; \/ \\\ </span><br><span class="line">等，java字符串读入之后会变成两个字符，因此，fastjson会把它转换会单个字符</span><br><span class="line">\f \F双字符都会转成单字符\f</span><br><span class="line">\v双字符转成\u000B单字符</span><br><span class="line">\x..四字符16进制数读取转成单字符</span><br><span class="line">\u....六字符16进制数读取转成单字符</span><br></pre></td></tr></table></figure>
+<p><strong>其实，对于\x和\u的词法处理，才是反序列化RCE中的核心，也就是我这一节词法解析中最想要讲的内容，我曾经遇到某道CTF题目，它在程序的filter层，对json数据的@type进行的过滤处理，而唯一能绕过它的办法，正恰恰是词法解析中对\x和\u也即16进制、Unicode的处理，通过对字符的十六进制转换或者Unicode处理，我们就可以通过以下的方式进行filter过滤器的绕过，而对于开发人员来说，也可以通过针对这种绕过方式进行filter的加强：</strong></p>
+<p><strong>例：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@\u0074ype     -&gt;     @type</span><br><span class="line">@\x74ype       -&gt;     @type</span><br></pre></td></tr></table></figure></p>
+<p>接着就是执行DefaultJSONParser.parse()，根据上一步中token的识别，进行解析处理</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public Object parse(Object fieldName) &#123;</span><br><span class="line">    final JSONLexer lexer = this.lexer;</span><br><span class="line">    switch (lexer.token()) &#123;</span><br><span class="line">        case SET:</span><br><span class="line">            ...HashSet集合的处理</span><br><span class="line">        case TREE_SET:</span><br><span class="line">            ...TreeSet集合的处理</span><br><span class="line">        case LBRACKET:</span><br><span class="line">            ...读取到&quot;[&quot;，数组的处理</span><br><span class="line">        case LBRACE:</span><br><span class="line">            ...读取到&quot;&#123;&quot;，对象解析的处理</span><br><span class="line">        case LITERAL_INT:</span><br><span class="line">            ...</span><br><span class="line">        case LITERAL_FLOAT:</span><br><span class="line">            ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对象解析，反序列化的利用流程，基本都是走到LBRACE或LBRACKET中，进入对象的解析，而对象解析中，基本都会利用到符号表进行数据的提取：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">public final Object parseObject(final Map object, Object fieldName) &#123;</span><br><span class="line">    final JSONLexer lexer = this.lexer;</span><br><span class="line"></span><br><span class="line">    if (lexer.token() == JSONToken.NULL) &#123;</span><br><span class="line">        lexer.nextToken();</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (lexer.token() == JSONToken.RBRACE) &#123;</span><br><span class="line">        lexer.nextToken();</span><br><span class="line">        return object;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (lexer.token() == JSONToken.LITERAL_STRING &amp;&amp; lexer.stringVal().length() == 0) &#123;</span><br><span class="line">        lexer.nextToken();</span><br><span class="line">        return object;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (lexer.token() != JSONToken.LBRACE &amp;&amp; lexer.token() != JSONToken.COMMA) &#123;</span><br><span class="line">        throw new JSONException(&quot;syntax error, expect &#123;, actual &quot; + lexer.tokenName() + &quot;, &quot; + lexer.info());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   ParseContext context = this.context;</span><br><span class="line">    try &#123;</span><br><span class="line">        boolean isJsonObjectMap = object instanceof JSONObject;</span><br><span class="line">        Map map = isJsonObjectMap ? ((JSONObject) object).getInnerMap() : object;</span><br><span class="line"></span><br><span class="line">        boolean setContextFlag = false;</span><br><span class="line">        for (;;) &#123;</span><br><span class="line">            lexer.skipWhitespace();</span><br><span class="line">            char ch = lexer.getCurrent();</span><br><span class="line">            if (lexer.isEnabled(Feature.AllowArbitraryCommas)) &#123;</span><br><span class="line">                while (ch == &apos;,&apos;) &#123;</span><br><span class="line">                    lexer.next();</span><br><span class="line">                    lexer.skipWhitespace();</span><br><span class="line">                    ch = lexer.getCurrent();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            boolean isObjectKey = false;</span><br><span class="line">            Object key;</span><br><span class="line">            //判断到双引号开端的，利用符号表读取双引号闭合之间字符串，从而提取出key</span><br><span class="line">            if (ch == &apos;&quot;&apos;) &#123;</span><br><span class="line">                key = lexer.scanSymbol(symbolTable, &apos;&quot;&apos;);</span><br><span class="line">                lexer.skipWhitespace();</span><br><span class="line">                ch = lexer.getCurrent();</span><br><span class="line">                if (ch != &apos;:&apos;) &#123;</span><br><span class="line">                    throw new JSONException(&quot;expect &apos;:&apos; at &quot; + lexer.pos() + &quot;, name &quot; + key);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else if (ch == &apos;&#125;&apos;) &#123;</span><br><span class="line">                ...</span><br><span class="line">            &#125;</span><br><span class="line">            ...</span><br><span class="line">            </span><br><span class="line">            //判断到key为@type，则进行checkAutoType，然后反序列化成Java Object</span><br><span class="line">            if (key == JSON.DEFAULT_TYPE_KEY</span><br><span class="line">                    &amp;&amp; !lexer.isEnabled(Feature.DisableSpecialKeyDetect)) &#123;</span><br><span class="line">                ...</span><br><span class="line">                </span><br><span class="line">                clazz = config.checkAutoType(typeName, null, lexer.getFeatures());</span><br><span class="line">                </span><br><span class="line">                ...</span><br><span class="line"></span><br><span class="line">                </span><br><span class="line">                ObjectDeserializer deserializer = config.getDeserializer(clazz);</span><br><span class="line">                Class deserClass = deserializer.getClass();</span><br><span class="line">                if (JavaBeanDeserializer.class.isAssignableFrom(deserClass)</span><br><span class="line">                        &amp;&amp; deserClass != JavaBeanDeserializer.class</span><br><span class="line">                        &amp;&amp; deserClass != ThrowableDeserializer.class) &#123;</span><br><span class="line">                    this.setResolveStatus(NONE);</span><br><span class="line">                &#125; else if (deserializer instanceof MapDeserializer) &#123;</span><br><span class="line">                    this.setResolveStatus(NONE);</span><br><span class="line">                &#125;</span><br><span class="line">                Object obj = deserializer.deserialze(this, clazz, fieldName);</span><br><span class="line">                return obj;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        this.setContext(context);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后，总结一下：在反序列化RCE中，我们可以利用词法解析中\x\u的十六进制或者Unicode的处理，进行绕过一些检查机制。</p>
+<h4 id="2、构造方法选择"><a href="#2、构造方法选择" class="headerlink" title="2、构造方法选择"></a>2、构造方法选择</h4><p>构造方法的选择，我这一小节中，主要想讲解的是，在Fastjson反序列化中，针对每个class的特点，到底Fastjson会选择class的哪个构造方法进行反射实例化，到底是否可以不存在无参构造方法。</p>
+<p>在上一节：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">clazz = config.checkAutoType(typeName, null, lexer.getFeatures());</span><br><span class="line">                </span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">ObjectDeserializer deserializer = config.getDeserializer(clazz);</span><br><span class="line">Class deserClass = deserializer.getClass();</span><br><span class="line">if (JavaBeanDeserializer.class.isAssignableFrom(deserClass)</span><br><span class="line">        &amp;&amp; deserClass != JavaBeanDeserializer.class</span><br><span class="line">        &amp;&amp; deserClass != ThrowableDeserializer.class) &#123;</span><br><span class="line">    this.setResolveStatus(NONE);</span><br><span class="line">&#125; else if (deserializer instanceof MapDeserializer) &#123;</span><br><span class="line">    this.setResolveStatus(NONE);</span><br><span class="line">&#125;</span><br><span class="line">Object obj = deserializer.deserialze(this, clazz, fieldName);</span><br><span class="line">return obj;</span><br></pre></td></tr></table></figure>
+<p>在通过config.checkAutoType后会返回一个class，接着会根据class选择一个ObjectDeserializer，做Java Object的反序列化</p>
+<p>而对于ObjectDeserializer的选择，很多class返回的都是一些没有利用价值的ObjectDeserializer：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">deserializer</span><br><span class="line">├─ASMDeserializerFactory.java</span><br><span class="line">├─AbstractDateDeserializer.java</span><br><span class="line">├─ArrayListTypeFieldDeserializer.java</span><br><span class="line">├─AutowiredObjectDeserializer.java</span><br><span class="line">├─ContextObjectDeserializer.java</span><br><span class="line">├─DefaultFieldDeserializer.java</span><br><span class="line">├─EnumDeserializer.java</span><br><span class="line">├─ExtraProcessable.java</span><br><span class="line">├─ExtraProcessor.java</span><br><span class="line">├─ExtraTypeProvider.java</span><br><span class="line">├─FieldDeserializer.java</span><br><span class="line">├─FieldTypeResolver.java</span><br><span class="line">├─JSONPDeserializer.java</span><br><span class="line">├─JavaBeanDeserializer.java</span><br><span class="line">├─JavaObjectDeserializer.java</span><br><span class="line">├─Jdk8DateCodec.java</span><br><span class="line">├─MapDeserializer.java</span><br><span class="line">├─NumberDeserializer.java</span><br><span class="line">├─ObjectDeserializer.java</span><br><span class="line">├─OptionalCodec.java</span><br><span class="line">├─ParseProcess.java</span><br><span class="line">├─PropertyProcessable.java</span><br><span class="line">├─PropertyProcessableDeserializer.java</span><br><span class="line">├─ResolveFieldDeserializer.java</span><br><span class="line">├─SqlDateDeserializer.java</span><br><span class="line">├─StackTraceElementDeserializer.java</span><br><span class="line">├─ThrowableDeserializer.java</span><br><span class="line">└TimeDeserializer.java</span><br></pre></td></tr></table></figure>
+<p>以及一些根据JSONType注解等不太会存在安全漏洞的条件处理，而对于大部分可利用gadget chains的处理，最终都会走到</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">com.alibaba.fastjson.parser.ParserConfig#getDeserializer(java.lang.reflect.Type)</span><br><span class="line">-&gt;</span><br><span class="line">com.alibaba.fastjson.parser.ParserConfig#getDeserializer(java.lang.Class&lt;?&gt;, java.lang.reflect.Type)</span><br><span class="line">-&gt;</span><br><span class="line">com.alibaba.fastjson.parser.ParserConfig#createJavaBeanDeserializer</span><br></pre></td></tr></table></figure>
+<p>接着在其中，构建了JavaBeanInfo，在build方法中，会构建一个JavaBeanInfo对象，其中存储了选择哪个构造方法、字段信息、反射调用哪个方法等等，用于在最后的反射实例化时，做相应的处理</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">JavaBeanInfo beanInfo = JavaBeanInfo.build(clazz</span><br><span class="line">        , type</span><br><span class="line">        , propertyNamingStrategy</span><br><span class="line">        ,false</span><br><span class="line">        , TypeUtils.compatibleWithJavaBean</span><br><span class="line">        , jacksonCompatible</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>跟进JavaBeanInfo.build</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">JSONType jsonType = TypeUtils.getAnnotation(clazz,JSONType.class);</span><br><span class="line">if (jsonType != null) &#123;</span><br><span class="line">    PropertyNamingStrategy jsonTypeNaming = jsonType.naming();</span><br><span class="line">    if (jsonTypeNaming != null &amp;&amp; jsonTypeNaming != PropertyNamingStrategy.CamelCase) &#123;</span><br><span class="line">        propertyNamingStrategy = jsonTypeNaming;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，一开始就会从class中取JSONType注解，根据注解配置去选择参数命名方式，默认是驼峰式</p>
+<p>接着会取出class的字段、方法、构造方法等数据，并且判断出class非kotlin实现时，如果构造方法只有一个，则调用getDefaultConstructor获取默认的构造方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Class&lt;?&gt; builderClass = getBuilderClass(clazz, jsonType);</span><br><span class="line"></span><br><span class="line">Field[] declaredFields = clazz.getDeclaredFields();</span><br><span class="line">Method[] methods = clazz.getMethods();</span><br><span class="line">Map&lt;TypeVariable, Type&gt; genericInfo = buildGenericInfo(clazz);</span><br><span class="line"></span><br><span class="line">boolean kotlin = TypeUtils.isKotlin(clazz);</span><br><span class="line">Constructor[] constructors = clazz.getDeclaredConstructors();</span><br><span class="line"></span><br><span class="line">Constructor&lt;?&gt; defaultConstructor = null;</span><br><span class="line">if ((!kotlin) || constructors.length == 1) &#123;</span><br><span class="line">    if (builderClass == null) &#123;</span><br><span class="line">        defaultConstructor = getDefaultConstructor(clazz, constructors);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        defaultConstructor = getDefaultConstructor(builderClass, builderClass.getDeclaredConstructors());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从getDefaultConstructor的实现中可以清楚的看到，对于这个构造方法，如果它是无参构造方法或一参（自身类型）构造方法，则就会作为默认构造方法（反序列化对Java Object实例化时反射调用的构造方法），即defaultConstructor<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">static Constructor&lt;?&gt; getDefaultConstructor(Class&lt;?&gt; clazz, final Constructor&lt;?&gt;[] constructors) &#123;</span><br><span class="line">    if (Modifier.isAbstract(clazz.getModifiers())) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Constructor&lt;?&gt; defaultConstructor = null;</span><br><span class="line"></span><br><span class="line">    for (Constructor&lt;?&gt; constructor : constructors) &#123;</span><br><span class="line">        if (constructor.getParameterTypes().length == 0) &#123;</span><br><span class="line">            defaultConstructor = constructor;</span><br><span class="line">            break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (defaultConstructor == null) &#123;</span><br><span class="line">        if (clazz.isMemberClass() &amp;&amp; !Modifier.isStatic(clazz.getModifiers())) &#123;</span><br><span class="line">            Class&lt;?&gt;[] types;</span><br><span class="line">            for (Constructor&lt;?&gt; constructor : constructors) &#123;</span><br><span class="line">                if ((types = constructor.getParameterTypes()).length == 1</span><br><span class="line">                        &amp;&amp; types[0].equals(clazz.getDeclaringClass())) &#123;</span><br><span class="line">                    defaultConstructor = constructor;</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return defaultConstructor;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>若不存在这样特性的构造方法，则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">boolean isInterfaceOrAbstract = clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers());</span><br><span class="line">if ((defaultConstructor == null &amp;&amp; builderClass == null) || isInterfaceOrAbstract) &#123;</span><br><span class="line">    ...抽象类或接口类</span><br><span class="line">&#125; else if ((factoryMethod = getFactoryMethod(clazz, methods, jacksonCompatible)) != null) &#123;</span><br><span class="line">    ...使用JSONCreator注解指定构造工厂方法</span><br><span class="line">&#125; else if (!isInterfaceOrAbstract) &#123;</span><br><span class="line">   ...</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    for (Constructor constructor : constructors) &#123;</span><br><span class="line">        Class&lt;?&gt;[] parameterTypes = constructor.getParameterTypes();</span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line">        boolean is_public = (constructor.getModifiers() &amp; Modifier.PUBLIC) != 0;</span><br><span class="line">        if (!is_public) &#123;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line">        String[] lookupParameterNames = ASMUtils.lookupParameterNames(constructor);</span><br><span class="line">        if (lookupParameterNames == null || lookupParameterNames.length == 0) &#123;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (creatorConstructor != null</span><br><span class="line">                &amp;&amp; paramNames != null &amp;&amp; lookupParameterNames.length &lt;= paramNames.length) &#123;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        paramNames = lookupParameterNames;</span><br><span class="line">        creatorConstructor = constructor;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上述代码中可以了解到，若非接口类，并且没有使用JSONCreator注解的话，则会对构造方法进行遍历选择，如果是以下三个class的话，会直接作为构造方法creatorConstructor</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">org.springframework.security.web.authentication.WebAuthenticationDetails</span><br><span class="line">org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken</span><br><span class="line">org.springframework.security.core.authority.SimpleGrantedAuthority</span><br></pre></td></tr></table></figure>
+<p>而非public的构造方法会被直接跳过。</p>
+<p>接着使用com.alibaba.fastjson.util.ASMUtils#lookupParameterNames获取出所有的构造方法参数，若取出的参数为空，则也会直接跳过。</p>
+<p>若前面遍历构造方法时，已有creatorConstructor选择，以及asm取出的参数数量&lt;=构造方法参数数量，则也会直接跳过。</p>
+<p>也就是说，除非是非公有public的，否则必然会选择一个creatorConstructor。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">defaultConstructor：无参和一参（自身类型入参）构造方法</span><br><span class="line"></span><br><span class="line">creatorConstructor：非defaultConstructor，遍历取最后的一个构造方法</span><br></pre></td></tr></table></figure>
+<p>总结的来讲：若可以找到defaultConstructor，则不再遍历选择creatorConstructor，否则必须遍历查找creatorConstructor。</p>
+<h4 id="3、缓存绕过"><a href="#3、缓存绕过" class="headerlink" title="3、缓存绕过"></a>3、缓存绕过</h4><p>缓存绕过，这是什么意思？我们上一小节已经详细的描述并总结了构造方法的选择逻辑。其中构造方法的选择分为defaultConstructor和creatorConstructor</p>
+<p>我们这一节主要分析的关键点：缓存绕过，位于com.alibaba.fastjson.parser.ParserConfig#checkAutoType(java.lang.String, java.lang.Class&lt;?&gt;, int)，它是在json数据反序列化时，通过@type指定class后，对class是否可被反序列化进行检查，其中检查包括黑名单、白名单、构造方法等</p>
+<p>我们跟进com.alibaba.fastjson.parser.ParserConfig#checkAutoType(java.lang.String, java.lang.Class&lt;?&gt;, int)：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">if (typeName == null) &#123;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (typeName.length() &gt;= 192 || typeName.length() &lt; 3) &#123;</span><br><span class="line">    throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，一开始的地方，会对typeName做一定的检查，typeName是我们传入json数据@type这个key对应的值value</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">final boolean expectClassFlag;</span><br><span class="line">if (expectClass == null) &#123;</span><br><span class="line">    expectClassFlag = false;</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    if (expectClass == Object.class</span><br><span class="line">            || expectClass == Serializable.class</span><br><span class="line">            || expectClass == Cloneable.class</span><br><span class="line">            || expectClass == Closeable.class</span><br><span class="line">            || expectClass == EventListener.class</span><br><span class="line">            || expectClass == Iterable.class</span><br><span class="line">            || expectClass == Collection.class</span><br><span class="line">            ) &#123;</span><br><span class="line">        expectClassFlag = false;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        expectClassFlag = true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着是对一些期望class的判断，若不是期望中反序列化指定的class，后续黑白名单的检查会不管是否启用autoTypeSupport。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">String className = typeName.replace(&apos;$&apos;, &apos;.&apos;);</span><br><span class="line">Class&lt;?&gt; clazz = null;</span><br><span class="line"></span><br><span class="line">final long BASIC = 0xcbf29ce484222325L;</span><br><span class="line">final long PRIME = 0x100000001b3L;</span><br><span class="line"></span><br><span class="line">final long h1 = (BASIC ^ className.charAt(0)) * PRIME;</span><br><span class="line">if (h1 == 0xaf64164c86024f1aL) &#123; // [</span><br><span class="line">    throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if ((h1 ^ className.charAt(className.length() - 1)) * PRIME == 0x9198507b5af98f0L) &#123;</span><br><span class="line">    throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">final long h3 = (((((BASIC ^ className.charAt(0))</span><br><span class="line">        * PRIME)</span><br><span class="line">        ^ className.charAt(1))</span><br><span class="line">        * PRIME)</span><br><span class="line">        ^ className.charAt(2))</span><br><span class="line">        * PRIME;</span><br><span class="line"></span><br><span class="line">boolean internalWhite = Arrays.binarySearch(INTERNAL_WHITELIST_HASHCODES,</span><br><span class="line">        TypeUtils.fnv1a_64(className)</span><br><span class="line">) &gt;= 0;</span><br><span class="line"></span><br><span class="line">if ((!internalWhite) &amp;&amp; (autoTypeSupport || expectClassFlag)) &#123;</span><br><span class="line">    long hash = h3;</span><br><span class="line">    for (int i = 3; i &lt; className.length(); ++i) &#123;</span><br><span class="line">        hash ^= className.charAt(i);</span><br><span class="line">        hash *= PRIME;</span><br><span class="line">        if (Arrays.binarySearch(acceptHashCodes, hash) &gt;= 0) &#123;</span><br><span class="line">            clazz = TypeUtils.loadClass(typeName, defaultClassLoader, true);</span><br><span class="line">            if (clazz != null) &#123;</span><br><span class="line">                return clazz;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (Arrays.binarySearch(denyHashCodes, hash) &gt;= 0 &amp;&amp; TypeUtils.getClassFromMapping(typeName) == null) &#123;</span><br><span class="line">            throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>再接着，会对className的前两位字符进行判断是否允许，然后会二分查找内部白名单INTERNAL_WHITELIST_HASHCODES，若不在内部白名单内，并且开启了autoTypeSupport或者是预期以外的class，则会对className后面的字符继续进行hash处理后与外部白名单、黑名单进行判断，决定其是否被支持反序列化。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = deserializers.findClass(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = typeMapping.get(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (internalWhite) &#123;</span><br><span class="line">    clazz = TypeUtils.loadClass(typeName, defaultClassLoader, true);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (clazz != null) &#123;</span><br><span class="line">    if (expectClass != null</span><br><span class="line">            &amp;&amp; clazz != java.util.HashMap.class</span><br><span class="line">            &amp;&amp; !expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">        throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return clazz;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的代码中，我们可以看到有好几个if流程从jvm缓存中获取class，也即会对class进行一定的判断，决定是否从缓存map中加载，我们这一节重点关注的其实是TypeUtils.getClassFromMapping：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>跟进TypeUtils.getClassFromMapping代码实现，可以看到，其具体是从mappings缓存中获取class</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public static Class&lt;?&gt; getClassFromMapping(String className)&#123;</span><br><span class="line">    return mappings.get(className);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着会判断class是否在内部白名单内，若在白名单内，会直接通过检查，返回class</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (internalWhite) &#123;</span><br><span class="line">    clazz = TypeUtils.loadClass(typeName, defaultClassLoader, true);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>跟进TypeUtils.loadClass，可以看到第三个参数true，决定了在其方法实现中是否会对查找出来的class进行缓存到mappings</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">public static Class&lt;?&gt; loadClass(String className, ClassLoader classLoader, boolean cache) &#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    try&#123;</span><br><span class="line">        if(classLoader != null)&#123;</span><br><span class="line">            clazz = classLoader.loadClass(className);</span><br><span class="line">            if (cache) &#123;</span><br><span class="line">                mappings.put(className, clazz);</span><br><span class="line">            &#125;</span><br><span class="line">            return clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch(Throwable e)&#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        // skip</span><br><span class="line">    &#125;</span><br><span class="line">    try&#123;</span><br><span class="line">        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();</span><br><span class="line">        if(contextClassLoader != null &amp;&amp; contextClassLoader != classLoader)&#123;</span><br><span class="line">            clazz = contextClassLoader.loadClass(className);</span><br><span class="line">            if (cache) &#123;</span><br><span class="line">                mappings.put(className, clazz);</span><br><span class="line">            &#125;</span><br><span class="line">            return clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch(Throwable e)&#123;</span><br><span class="line">        // skip</span><br><span class="line">    &#125;</span><br><span class="line">    try&#123;</span><br><span class="line">        clazz = Class.forName(className);</span><br><span class="line">        if (cache) &#123;</span><br><span class="line">            mappings.put(className, clazz);</span><br><span class="line">        &#125;</span><br><span class="line">        return clazz;</span><br><span class="line">    &#125; catch(Throwable e)&#123;</span><br><span class="line">        // skip</span><br><span class="line">    &#125;</span><br><span class="line">    return clazz;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下一步，可以看到，又是一段黑白名单的检查代码，不过这次是autoTypeSupport不启用的情况下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">if (!autoTypeSupport) &#123;</span><br><span class="line">    long hash = h3;</span><br><span class="line">    for (int i = 3; i &lt; className.length(); ++i) &#123;</span><br><span class="line">        char c = className.charAt(i);</span><br><span class="line">        hash ^= c;</span><br><span class="line">        hash *= PRIME;</span><br><span class="line"></span><br><span class="line">        if (Arrays.binarySearch(denyHashCodes, hash) &gt;= 0) &#123;</span><br><span class="line">            throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // white list</span><br><span class="line">        if (Arrays.binarySearch(acceptHashCodes, hash) &gt;= 0) &#123;</span><br><span class="line">            if (clazz == null) &#123;</span><br><span class="line">                clazz = TypeUtils.loadClass(typeName, defaultClassLoader, true);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if (expectClass != null &amp;&amp; expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">                throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            return clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>接着，在这段代码中通过asm对其class进行visit，取出JsonType注解信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">boolean jsonType = false;</span><br><span class="line">InputStream is = null;</span><br><span class="line">try &#123;</span><br><span class="line">    String resource = typeName.replace(&apos;.&apos;, &apos;/&apos;) + &quot;.class&quot;;</span><br><span class="line">    if (defaultClassLoader != null) &#123;</span><br><span class="line">        is = defaultClassLoader.getResourceAsStream(resource);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        is = ParserConfig.class.getClassLoader().getResourceAsStream(resource);</span><br><span class="line">    &#125;</span><br><span class="line">    if (is != null) &#123;</span><br><span class="line">        ClassReader classReader = new ClassReader(is, true);</span><br><span class="line">        TypeCollector visitor = new TypeCollector(&quot;&lt;clinit&gt;&quot;, new Class[0]);</span><br><span class="line">        classReader.accept(visitor);</span><br><span class="line">        jsonType = visitor.hasJsonType();</span><br><span class="line">    &#125;</span><br><span class="line">&#125; catch (Exception e) &#123;</span><br><span class="line">    // skip</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    IOUtils.close(is);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而从后续代码中也可以了解到，若到这一步，class还是null的时候，就会对其是否注解了JsonType、是否期望class、是否开启autotype进行判断。若判断通过，然后会判断是否开启autotype或是否注解了JsonType，从而觉得是否会在加载class后，对其缓存到mappings这个集合中，那也就是说，我只要开启了autoType的话，在这段逻辑就会把class缓存道mappings中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (clazz == null &amp;&amp; (autoTypeSupport || jsonType || expectClassFlag)) &#123;</span><br><span class="line">    boolean cacheClass = autoTypeSupport || jsonType;</span><br><span class="line">    clazz = TypeUtils.loadClass(typeName, defaultClassLoader, cacheClass);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这一块是一个很关键的地方，也是我这一小节缓存绕过的主要核心</p>
+<p>最后，也就是我们需要去绕过的地方了，像一般大部分情况下，我们基本不可能找到注解有JsonType的class的gadget chains，所以，这一步中对jsonType判断，然后缓存class到mappings基本就没什么利用价值了。但这块逻辑中，我们需要注意的其实是JavaBeanInfo在build后，对其creatorConstructor的判断</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">if (clazz != null) &#123;</span><br><span class="line">    if (jsonType) &#123;</span><br><span class="line">        TypeUtils.addMapping(typeName, clazz);</span><br><span class="line">        return clazz;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (ClassLoader.class.isAssignableFrom(clazz) // classloader is danger</span><br><span class="line">            || javax.sql.DataSource.class.isAssignableFrom(clazz) // dataSource can load jdbc driver</span><br><span class="line">            || javax.sql.RowSet.class.isAssignableFrom(clazz) //</span><br><span class="line">            ) &#123;</span><br><span class="line">        throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (expectClass != null) &#123;</span><br><span class="line">        if (expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">            TypeUtils.addMapping(typeName, clazz);</span><br><span class="line">            return clazz;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    JavaBeanInfo beanInfo = JavaBeanInfo.build(clazz, clazz, propertyNamingStrategy);</span><br><span class="line">    if (beanInfo.creatorConstructor != null &amp;&amp; autoTypeSupport) &#123;</span><br><span class="line">        throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (!autoTypeSupport) &#123;</span><br><span class="line">    throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从creatorConstructor和autoTypeSupport的判断流程中，我们可以得知，只要autoTypeSupport为true，并且creatorConstructor（上一小节就是描述构造方法的选择，这里判断的构造方法是第二种选择）不为空，则会抛出异常，而后面的!autoTypeSupport判断，也表示了，就算上一步通过设置autoTypeSupport为true可以绕过，但是最终也避免不了它抛出异常的制裁：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (!autoTypeSupport) &#123;</span><br><span class="line">    throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那怎么办呢？这时候就得看前面的代码了，我前面也说了，在对黑白名单进行一轮检查后的时候，会有这个判断：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">if (clazz == null) &#123;</span><br><span class="line">    clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static Class&lt;?&gt; getClassFromMapping(String className)&#123;</span><br><span class="line">    return mappings.get(className);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从mappings中直接获取，接着在后面判断道class不为空时，直接就返回了，从而提前结束该方法执行，绕过构造方法creatorConstructor和autoTypeSupport的判断</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">if (clazz != null) &#123;</span><br><span class="line">    if (expectClass != null</span><br><span class="line">            &amp;&amp; clazz != java.util.HashMap.class</span><br><span class="line">            &amp;&amp; !expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">        throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return clazz;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那我们怎么才能从缓存中获取到class呢？答案其实前面也说了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (clazz == null &amp;&amp; (autoTypeSupport || jsonType || expectClassFlag)) &#123;</span><br><span class="line">    boolean cacheClass = autoTypeSupport || jsonType;</span><br><span class="line">    clazz = TypeUtils.loadClass(typeName, defaultClassLoader, cacheClass);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>对，没错，就是这里，我们只要开启了autoTypeSupport，绕后通过两次反序列化，在第一次反序列化时，虽然最后会抛出异常，但是在抛异常前，做了上述代码中的缓存class到mappings的处理，那么，在第二次反序列化该class的时候，我们就可以顺利的从缓存中取出了，从而绕过后面的判断。</p>
+<h4 id="4、反射调用"><a href="#4、反射调用" class="headerlink" title="4、反射调用"></a>4、反射调用</h4><p>反射调用，就是fastjson反序列化的最后一个阶段了，当经历了前面：词法解析、构造方法选择、缓存绕过阶段之后，我们离RCE就差最后的一步了，也就是反射调用，从而触发gadget chain的执行，最终实现RCE。</p>
+<p>接着，又回到DefaultJSONParser.parseObject来，也就是第2小节构造方法选择部分</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ObjectDeserializer deserializer = config.getDeserializer(clazz);</span><br><span class="line">Class deserClass = deserializer.getClass();</span><br><span class="line">if (JavaBeanDeserializer.class.isAssignableFrom(deserClass)</span><br><span class="line">        &amp;&amp; deserClass != JavaBeanDeserializer.class</span><br><span class="line">        &amp;&amp; deserClass != ThrowableDeserializer.class) &#123;</span><br><span class="line">    this.setResolveStatus(NONE);</span><br><span class="line">&#125; else if (deserializer instanceof MapDeserializer) &#123;</span><br><span class="line">    this.setResolveStatus(NONE);</span><br><span class="line">&#125;</span><br><span class="line">Object obj = deserializer.deserialze(this, clazz, fieldName);</span><br><span class="line">return obj;</span><br></pre></td></tr></table></figure>
+<p>前面也说了，大部分可利用的gadget chain，config.getDeserializer(clazz)最终都会走到</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">com.alibaba.fastjson.parser.ParserConfig#getDeserializer(java.lang.reflect.Type)</span><br><span class="line">-&gt;</span><br><span class="line">com.alibaba.fastjson.parser.ParserConfig#getDeserializer(java.lang.Class&lt;?&gt;, java.lang.reflect.Type)</span><br><span class="line">-&gt;</span><br><span class="line">com.alibaba.fastjson.parser.ParserConfig#createJavaBeanDeserializer</span><br></pre></td></tr></table></figure>
+<p>而反射调用，是选择setter还是getter方法调用，亦或者是直接反射field设值，它需要一系列的判断处理，最终确定下来在JavaBeanDeserializer中执行deserialze时，到底会做什么样的反射调用处理</p>
+<p>我们跟进JavaBeanInfo.build，前面一大段，我们在讲构造方法选择的时候已经简单讲过了，但是我们并没讲一个小地方，就是FieldInfo的创建和添加<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">if (creatorConstructor != null &amp;&amp; !isInterfaceOrAbstract) &#123; // 基于标记 JSONCreator 注解的构造方法</span><br><span class="line">    ...</span><br><span class="line">    if (types.length &gt; 0) &#123;</span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line">            FieldInfo fieldInfo = new FieldInfo(fieldName, clazz, fieldClass, fieldType, field,</span><br><span class="line">                    ordinal, serialzeFeatures, parserFeatures);</span><br><span class="line">            add(fieldList, fieldInfo);</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //return new JavaBeanInfo(clazz, builderClass, null, creatorConstructor, null, null, jsonType, fieldList);</span><br><span class="line">&#125; else if ((factoryMethod = getFactoryMethod(clazz, methods, jacksonCompatible)) != null) &#123;</span><br><span class="line">    ...</span><br><span class="line">        Field field = TypeUtils.getField(clazz, fieldName, declaredFields);</span><br><span class="line">        FieldInfo fieldInfo = new FieldInfo(fieldName, clazz, fieldClass, fieldType, field,</span><br><span class="line">                ordinal, serialzeFeatures, parserFeatures);</span><br><span class="line">        add(fieldList, fieldInfo);</span><br><span class="line">    </span><br><span class="line">    ...</span><br><span class="line">       </span><br><span class="line">&#125; else if (!isInterfaceOrAbstract) &#123;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">    if (paramNames != null</span><br><span class="line">            &amp;&amp; types.length == paramNames.length) &#123;</span><br><span class="line">        ...</span><br><span class="line">            FieldInfo fieldInfo = new FieldInfo(paramName, clazz, fieldClass, fieldType, field,</span><br><span class="line">                    ordinal, serialzeFeatures, parserFeatures);</span><br><span class="line">            add(fieldList, fieldInfo);</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在省略大部分无关代码后，可以看到，对于这三种情况下的处理，最终都是实例化FieldInfo，然后直接调用add添加到集合fieldList中来，但是细心去看FieldInfo重载的构造方法可以发现，它存在多个构造方法，其中就有入参method的构造方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public FieldInfo(String name, // </span><br><span class="line">                     Class&lt;?&gt; declaringClass, // </span><br><span class="line">                     Class&lt;?&gt; fieldClass, // </span><br><span class="line">                     Type fieldType, // </span><br><span class="line">                     Field field, // </span><br><span class="line">                     int ordinal, // </span><br><span class="line">                     int serialzeFeatures, // </span><br><span class="line">                     int parserFeatures)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public FieldInfo(String name, //</span><br><span class="line">                     Method method, //</span><br><span class="line">                     Field field, //</span><br><span class="line">                     Class&lt;?&gt; clazz, //</span><br><span class="line">                     Type type, //</span><br><span class="line">                     int ordinal, //</span><br><span class="line">                     int serialzeFeatures, //</span><br><span class="line">                     int parserFeatures, //</span><br><span class="line">                     JSONField fieldAnnotation, //</span><br><span class="line">                     JSONField methodAnnotation, //</span><br><span class="line">                     String label)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public FieldInfo(String name, //</span><br><span class="line">                     Method method, //</span><br><span class="line">                     Field field, //</span><br><span class="line">                     Class&lt;?&gt; clazz, //</span><br><span class="line">                     Type type, //</span><br><span class="line">                     int ordinal, //</span><br><span class="line">                     int serialzeFeatures, //</span><br><span class="line">                     int parserFeatures, //</span><br><span class="line">                     JSONField fieldAnnotation, //</span><br><span class="line">                     JSONField methodAnnotation, //</span><br><span class="line">                     String label,</span><br><span class="line">                     Map&lt;TypeVariable, Type&gt; genericInfo)</span><br></pre></td></tr></table></figure>
+<p>这种构造方法意味着什么？在后面执行JavaBeanDeserializer.deserialze时，会发现，具有method入参的字段，很有可能会触发方法的执行，从而可以触发gadget chain的执行。</p>
+<p>接着，后面就是一串惆怅的代码，无非就是根据setter方法名称智能提取出field名字…，其中会对所有的方法进行两次的遍历，我这边简单总结一下：</p>
+<ul>
+<li><p>第一遍</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">1. 静态方法跳过</span><br><span class="line">2. 返回值类型不为Void.TYPE和自身class类型的方法跳过</span><br><span class="line">3. 获取JSONField注解，确定字段field名称，然后和方法添加到集合中</span><br><span class="line">4. 没有JSONField则判断方法名长度是否大于4，不大于4则跳过</span><br><span class="line">5. 判断是否set前缀，不是则跳过</span><br><span class="line">6. 根据setter方法名从第四个字符开始确定字段field名称（需把第一个字符转小写），若是boolean类型，则需把字段第一个字符转大写，然后前面拼接is</span><br><span class="line">7. 根据字段名获取到字段Field后，判断是否注解了JSONField，获取JSONField注解，确定字段field名称，然后和方法添加到集合中</span><br><span class="line">8. 根据setter方法确定的字段名添加到集合</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二遍</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">1. 判断方法名长度是否大于4，不大于4则跳过</span><br><span class="line">2. 静态方法跳过</span><br><span class="line">3. 判断方法名称是否get前缀，并且第四个字符为大写，不符合则跳过</span><br><span class="line">4. 方法有入参则跳过</span><br><span class="line">5. 方法返回值不是Collection.class、Map.class、AtomicBoolean.class、AtomicInteger.class、AtomicLong.class或其子孙类则跳过</span><br><span class="line">6. 获取方法上的注解JSONField，根据注解取字段名称</span><br><span class="line">7. 根据getter方法名从第四个字符开始确定字段field名称（需把第一个字符转小写），若是boolean类型，则需把字段第一个字符转大写</span><br><span class="line">8. 根据字段名获取到字段Field后，判断是否注解了JSONField，获取JSONField注解，确定字段field是否可以被反序列化，不可被反序列化则跳过</span><br><span class="line">9. 根据字段名获取集合中是否已有FieldInfo，有则跳过</span><br><span class="line">10. 根据getter方法确定的字段名添加到集合</span><br></pre></td></tr></table></figure>
+<p>以上就是总结，从这些总结，我们就不难分析，fastjson反序列化时，class到底哪个方法能被触发。</p>
+<p>最后，对于这些添加到集合fieldList中的FieldInfo，会在JavaBeanDeserializer.deserialze中被处理</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">protected &lt;T&gt; T deserialze(DefaultJSONParser parser, // </span><br><span class="line">                               Type type, // </span><br><span class="line">                               Object fieldName, // </span><br><span class="line">                               Object object, //</span><br><span class="line">                               int features, //</span><br><span class="line">                               int[] setFlags) &#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        Map&lt;String, Object&gt; fieldValues = null;</span><br><span class="line"></span><br><span class="line">        if (token == JSONToken.RBRACE) &#123;</span><br><span class="line">            lexer.nextToken(JSONToken.COMMA);</span><br><span class="line">            if (object == null) &#123;</span><br><span class="line">                object = createInstance(parser, type);</span><br><span class="line">            &#125;</span><br><span class="line">            return (T) object;</span><br><span class="line">        &#125;</span><br><span class="line">    ...</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        if (childContext != null) &#123;</span><br><span class="line">            childContext.object = object;</span><br><span class="line">        &#125;</span><br><span class="line">        parser.setContext(context);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上述代码可以看到，配对”@type”:”…”之后，如果下一个token不为”}”，即JSONToken.RBRACE，则获取反序列化器进行反序列化，根据前面扫描Field得到的信息以及json后续的key-value进行反序列化，如果下一个token为”}”，则直接反射实例化返回</p>
+<p>判断下一个token为”[“，即JSONToken.LBRACKET，则进行数组处理<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">if (token == JSONToken.LBRACKET) &#123;</span><br><span class="line">    final int mask = Feature.SupportArrayToBean.mask;</span><br><span class="line">    boolean isSupportArrayToBean = (beanInfo.parserFeatures &amp; mask) != 0 //</span><br><span class="line">                                   || lexer.isEnabled(Feature.SupportArrayToBean) //</span><br><span class="line">                                   || (features &amp; mask) != 0</span><br><span class="line">                                   ;</span><br><span class="line">    if (isSupportArrayToBean) &#123;</span><br><span class="line">        return deserialzeArrayMapping(parser, type, fieldName, object);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>调用构造方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">if (beanInfo.creatorConstructor != null) &#123;</span><br><span class="line">    ...</span><br><span class="line">    try &#123;</span><br><span class="line">        if (hasNull &amp;&amp; beanInfo.kotlinDefaultConstructor != null) &#123;</span><br><span class="line">            object = beanInfo.kotlinDefaultConstructor.newInstance(new Object[0]);</span><br><span class="line"></span><br><span class="line">            for (int i = 0; i &lt; params.length; i++) &#123;</span><br><span class="line">                final Object param = params[i];</span><br><span class="line">                if (param != null &amp;&amp; beanInfo.fields != null &amp;&amp; i &lt; beanInfo.fields.length) &#123;</span><br><span class="line">                    FieldInfo fieldInfo = beanInfo.fields[i];</span><br><span class="line">                    fieldInfo.set(object, param);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            object = beanInfo.creatorConstructor.newInstance(params);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        throw new JSONException(&quot;create instance error, &quot; + paramNames + &quot;, &quot;</span><br><span class="line">                                + beanInfo.creatorConstructor.toGenericString(), e);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后，通过FieldDeserializer对字段进行反序列化处理，其中，会利用到FieldInfo前面构建时，收集到的信息，例如method、getOnly等，进行判断是否调用某些方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FieldDeserializer fieldDeserializer = getFieldDeserializer(entry.getKey());</span><br><span class="line">if (fieldDeserializer != null) &#123;</span><br><span class="line">    fieldDeserializer.setValue(object, entry.getValue());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，对于method不为空的fieldInfo，若getOnly为false，则直接反射执行method，若getOnly为true，也就是只存在对应字段field的getter，而不存在setter，则会对其method的返回类型进行判断，若符合，才会进行反射执行该method<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">Method method = fieldInfo.method;</span><br><span class="line">if (method != null) &#123;</span><br><span class="line">    if (fieldInfo.getOnly) &#123;</span><br><span class="line">        if (fieldInfo.fieldClass == AtomicInteger.class) &#123;</span><br><span class="line">            AtomicInteger atomic = (AtomicInteger) method.invoke(object);</span><br><span class="line">            if (atomic != null) &#123;</span><br><span class="line">                atomic.set(((AtomicInteger) value).get());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (fieldInfo.fieldClass == AtomicLong.class) &#123;</span><br><span class="line">            AtomicLong atomic = (AtomicLong) method.invoke(object);</span><br><span class="line">            if (atomic != null) &#123;</span><br><span class="line">                atomic.set(((AtomicLong) value).get());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (fieldInfo.fieldClass == AtomicBoolean.class) &#123;</span><br><span class="line">            AtomicBoolean atomic = (AtomicBoolean) method.invoke(object);</span><br><span class="line">            if (atomic != null) &#123;</span><br><span class="line">                atomic.set(((AtomicBoolean) value).get());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (Map.class.isAssignableFrom(method.getReturnType())) &#123;</span><br><span class="line">            Map map = (Map) method.invoke(object);</span><br><span class="line">            if (map != null) &#123;</span><br><span class="line">                if (map == Collections.emptyMap()</span><br><span class="line">                        || map.getClass().getName().startsWith(&quot;java.util.Collections$Unmodifiable&quot;)) &#123;</span><br><span class="line">                    // skip</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                map.putAll((Map) value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            Collection collection = (Collection) method.invoke(object);</span><br><span class="line">            if (collection != null &amp;&amp; value != null) &#123;</span><br><span class="line">                if (collection == Collections.emptySet()</span><br><span class="line">                        || collection == Collections.emptyList()</span><br><span class="line">                        || collection.getClass().getName().startsWith(&quot;java.util.Collections$Unmodifiable&quot;)) &#123;</span><br><span class="line">                    // skip</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                collection.clear();</span><br><span class="line">                collection.addAll((Collection) value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        method.invoke(object, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>而对于method为空的情况，根本就不可能对method进行反射调用，除了构建实例时选择的构造方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">&#125; else &#123;</span><br><span class="line">    final Field field = fieldInfo.field;</span><br><span class="line">    </span><br><span class="line">    if (fieldInfo.getOnly) &#123;</span><br><span class="line">        if (fieldInfo.fieldClass == AtomicInteger.class) &#123;</span><br><span class="line">            AtomicInteger atomic = (AtomicInteger) field.get(object);</span><br><span class="line">            if (atomic != null) &#123;</span><br><span class="line">                atomic.set(((AtomicInteger) value).get());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (fieldInfo.fieldClass == AtomicLong.class) &#123;</span><br><span class="line">            AtomicLong atomic = (AtomicLong) field.get(object);</span><br><span class="line">            if (atomic != null) &#123;</span><br><span class="line">                atomic.set(((AtomicLong) value).get());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (fieldInfo.fieldClass == AtomicBoolean.class) &#123;</span><br><span class="line">            AtomicBoolean atomic = (AtomicBoolean) field.get(object);</span><br><span class="line">            if (atomic != null) &#123;</span><br><span class="line">                atomic.set(((AtomicBoolean) value).get());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (Map.class.isAssignableFrom(fieldInfo.fieldClass)) &#123;</span><br><span class="line">            Map map = (Map) field.get(object);</span><br><span class="line">            if (map != null) &#123;</span><br><span class="line">                if (map == Collections.emptyMap()</span><br><span class="line">                        || map.getClass().getName().startsWith(&quot;java.util.Collections$Unmodifiable&quot;)) &#123;</span><br><span class="line">                    // skip</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line">                map.putAll((Map) value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            Collection collection = (Collection) field.get(object);</span><br><span class="line">            if (collection != null &amp;&amp; value != null) &#123;</span><br><span class="line">                if (collection == Collections.emptySet()</span><br><span class="line">                        || collection == Collections.emptyList()</span><br><span class="line">                        || collection.getClass().getName().startsWith(&quot;java.util.Collections$Unmodifiable&quot;)) &#123;</span><br><span class="line">                    // skip</span><br><span class="line">                    return;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                collection.clear();</span><br><span class="line">                collection.addAll((Collection) value);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        if (field != null) &#123;</span><br><span class="line">            field.set(object, value);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>至此，四个关键点得分析就此结束！</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Fastjson/" rel="tag"># Fastjson</a>
+          
+            <a href="/tags/反序列化/" rel="tag"># 反序列化</a>
+          
+            <a href="/tags/RCE/" rel="tag"># RCE</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/01/15/基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI/" rel="next" title="基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI">
+                <i class="fa fa-chevron-left"></i> 基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/9999/12/31/学习与生活/" rel="prev" title="学习与生活">
+                学习与生活 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://www.leadroyal.cn/" title="leadroyal(卓卓师傅)" target="_blank">leadroyal(卓卓师傅)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.kingkk.com/" title="kingkk" target="_blank">kingkk</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.</span> <span class="nav-text">0x01 前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-四个关键点"><span class="nav-number">2.</span> <span class="nav-text">0x02 四个关键点</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、词法解析"><span class="nav-number">2.1.</span> <span class="nav-text">1、词法解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、构造方法选择"><span class="nav-number">2.2.</span> <span class="nav-text">2、构造方法选择</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、缓存绕过"><span class="nav-number">2.3.</span> <span class="nav-text">3、缓存绕过</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4、反射调用"><span class="nav-number">2.4.</span> <span class="nav-text">4、反射调用</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

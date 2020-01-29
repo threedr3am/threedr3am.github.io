@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到污点分析：  gadgetinspector.PassthroughDisco">
+<meta name="description" content="文章转载自先知社区：https://xz.aliyun.com/t/7063 0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到">
 <meta name="keywords" content="自动化工具,gadgetinspector,java反序列化">
 <meta property="og:type" content="article">
 <meta property="og:title" content="改造gadgetinspector篇-自动化挖掘Fastjson gadget chain">
 <meta property="og:url" content="http://yoursite.com/2020/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到污点分析：  gadgetinspector.PassthroughDisco">
+<meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7063 0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-01-15T05:07:44.047Z">
+<meta property="og:updated_time" content="2020-01-29T03:03:35.526Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="改造gadgetinspector篇-自动化挖掘Fastjson gadget chain">
-<meta name="twitter:description" content="0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到污点分析：  gadgetinspector.PassthroughDisco">
+<meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7063 0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到">
 
 
 
@@ -362,7 +362,8 @@
       
 
       
-        <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><h4 id="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"><a href="#《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》" class="headerlink" title="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"></a>《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》</h4><p>我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：</p>
+        <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7063" target="_blank" rel="noopener">https://xz.aliyun.com/t/7063</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><h4 id="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"><a href="#《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》" class="headerlink" title="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"></a>《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》</h4><p>我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：</p>
 <ol>
 <li>对于运行时确定的实现，也就是多态性，没办法做到污点分析：</li>
 </ol>
@@ -602,7 +603,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-count">16</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -624,7 +625,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">15</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
