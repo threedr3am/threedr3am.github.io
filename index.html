@@ -365,17 +365,9 @@
 
       
         
-          <h4 id="2020-02-01"><a href="#2020-02-01" class="headerlink" title="2020-02-01"></a>2020-02-01</h4><p>昨天用gadgetinspector挖到条Jackson和Fastjson通用的链，report给官方了，今天再次优化优化大规模扫描挖掘的代码（加入了记录已扫描过jar的功能），有空把一些互联网项目clone下来，让它把一些常用的dependencies下载到本地maven库，然后再跑跑，希望再出几条链。</p>
-<h4 id="2020-01-31"><a href="#2020-01-31" class="headerlink" title="2020-01-31"></a>2020-01-31</h4><p>昨晚跟kingkk师傅聊了下，我决定在gadgetinspector加入可选选项去选择不使用污点分析，这样就能把所有链挖掘出来了，好处是不会遗漏，只是需要人工审计链有没有效。</p>
-<p>已经做好了，搜索出来的链多了很多，跟预期一样，还优化了下路径指定（可以直接指定maven本库），这样就能大批量的挖掘了。</p>
-<p>发现这样大规模去挖，存在两点问题：</p>
-<ol>
-<li>多个版本jar存在问题</li>
-<li>太全面，出来的链巨多，审死人…就我新电脑没用多少天，本地的maven库底下com目录下的所有jar，找出来的链都1497条了…</li>
-</ol>
-<h4 id="2020-01-30"><a href="#2020-01-30" class="headerlink" title="2020-01-30"></a>2020-01-30</h4><p>今天一大早起床冒出个想法，最近想重新复习复习SPEL的各种使用方式以及利用手法，然后接着回去复习复习SPEL的旧洞，并且去跟一下新洞。</p>
-<p>我发现ruilin师傅跟我研究java安全的方向好像啊，学到很多，例如SPEL的文章：<a href="http://rui0.cn/archives/1043" target="_blank" rel="noopener">由浅入深SpEL表达式注入漏洞</a>，还有jsp在抛异常栈信息的时候使用smap定位源码行号、passive iast这些等等…</p>
-<p>突然之间想复现一下JDBC反序列化洞，我觉得，只要把数据包抓下来，然后对序列化数据那部分做成可以动态修改，接着起一个socket服务监听，被连接上后把包发出去，这样就可以做成一个java版的exp，这样感觉挺灵活的，接着，是不是可以组合前段时间那个CVE-2019-12086的jackson反序列化com.mysql.cj.jdbc.admin.MiniAdmin导致文件读取的类，这样URL就可控了。</p>
+          <h4 id="2020-02-02"><a href="#2020-02-02" class="headerlink" title="2020-02-02"></a>2020-02-02</h4><p>昨天一千多个jar没跑出新的gadget chain，所以说，有时候还是运气来了就有了，31号就report到阿里src了，到今天还没确认，不知道是不是他们还没上班。</p>
+<p>昨晚打算在marshalsec加入dubbo-hessian2的exploits，今天早上终于弄完了，有的hessian payload在dubbo普通Spring和Spring-boot环境下的区别还是有点大的，一些触发类不存在的因素吧，原有在marshalsec上的一些payload不能打Spring-boot，有的经过改变触发类也能顺利打，等有空了把改造过的marshalsec发到github，然后写个文章投先知吧，赚点稿费，tq（qiong）l</p>
+<h4 id="2020-02-01"><a href="#2020-02-01" class="headerlink" title="2020-02-01"></a>2020-02-01</h4><p>昨天用gadgetinspector挖到条Jackson和Fastjson通用的链，report给官方了，今天再次优化优化大规模扫描挖掘的代码（加入了记录已扫描过jar的功能），有空把一些互联网项目clone下来，让它把一些常用的dependencies下载到本地maven库，然后再跑跑，希望再出几条链。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/9999/12/31/学习与生活/#more" rel="contents">
