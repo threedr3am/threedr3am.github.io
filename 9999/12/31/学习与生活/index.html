@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-02-03T07:53:22.732Z">
+<meta property="og:updated_time" content="2020-02-03T08:08:42.245Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="学习与生活">
 <meta name="twitter:description" content="2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢">
@@ -382,7 +382,7 @@
 <!--more-->
 <h4 id="2020-01-29"><a href="#2020-01-29" class="headerlink" title="2020-01-29"></a>2020-01-29</h4><p>昨晚调到三点钟都没成，毫无睡意，磕了颗褪黑素沉沉地睡去，一大早精精神神终于调通了，文章直接发安全客了，希望审核快点吧，早点拿到稿费，太南了。</p>
 <h4 id="2020-01-28"><a href="#2020-01-28" class="headerlink" title="2020-01-28"></a>2020-01-28</h4><p>在家待着好难受，入职时间改成2月14了，这么长的假期时间本应很快乐，然而肺炎病毒，多灾多难的人类啊，好想重启2020，其实并不仅仅是肺炎病毒，还有生活上的诸多不顺，钱包也见底了，1月14号离职，2月14入职。。。一个月0收入，只能写写文章养家糊口了。</p>
-<p>前段时间阅读过dubbo源码，本来觉得hessian2反序列化利用条件太苛刻了，前几天ruilin师傅一言点醒梦中人，刚好看到安全客双倍稿费，故写了篇dubbo源码解析和反序列化利用的文章，希望能稿费多点，哈哈！</p>
+<p>前段时间阅读过dubbo源码，本来觉得hessian2反序列化利用条件太苛刻了，前几天ruilin师傅一言点醒梦中人，刚好看到安全客双倍稿费，故写了篇文章《dubbo源码浅析-默认反序列化利用之hessian2》，希望能稿费多点，哈哈！</p>
 <h4 id="2020-01-21"><a href="#2020-01-21" class="headerlink" title="2020-01-21"></a>2020-01-21</h4><p>今天一大早五点多起床赶去杭州坐飞机回家，下午重新理了一下IAST中插桩模式下的active IAST和passive IAST的区别，看来我在前两周结合gadgetinspector和OpenRASP的试验品，的确是passive IAST，而active IAST我记得github上有个百度的openrasp-iast，原理是通过openrasp把请求数据上传到云控，接着云控把数据下发到openrasp-iast进行修改后返回到服务执行，最后把执行结果再次经由云控传到openrasp-iast进行检测，以此来确定是否存在漏洞，好处是不会误报，不过对于一些逻辑漏洞没办法检测。</p>
 <h4 id="2020-01-20"><a href="#2020-01-20" class="headerlink" title="2020-01-20"></a>2020-01-20</h4><p>今天在研究MyBatis源码的时候发现，动态代理给静态代码分析带来了很大的难度，我感觉这种只能通过直接检测mapper的xml文件和interface方法注解，然后跟踪数据流动污点分析到interface方法实现了。</p>
 <p>上个月底不知道会在年前离职，买的机票还是杭州的，明天五点多要起个大早去杭州坐飞机，因为怕杭州东站到萧山机场会堵车，所以早点过去了。因为改签太贵了，穷，高铁又抢不到，只能等到21号再回家了，今天看到前同事昨天发年终奖了，xm$l，我就差5天，没有我的，有点苦逼了，不过没事，我追逐的是梦想，只能这样安慰自己了，emmm。。。</p>
