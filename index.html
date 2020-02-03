@@ -365,9 +365,11 @@
 
       
         
-          <h4 id="2020-02-03"><a href="#2020-02-03" class="headerlink" title="2020-02-03"></a>2020-02-03</h4><p>今天决定研究Spring Boot Actuator的老bug</p>
+          <h4 id="2020-02-03"><a href="#2020-02-03" class="headerlink" title="2020-02-03"></a>2020-02-03</h4><p>今天决定研究Spring Boot Actuator的老bug。</p>
+<p>研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢写，虽然我看过几遍它的源码了，但是攻击是攻击，源码是源码，这次是了了心愿了，过几天写一篇《Apache Shiro源码浅析之远古洞到最新PaddingOracle CBC》</p>
 <h4 id="2020-02-02"><a href="#2020-02-02" class="headerlink" title="2020-02-02"></a>2020-02-02</h4><p>昨天一千多个jar没跑出新的gadget chain，所以说，有时候还是运气来了就有了，31号就report到阿里src了，到今天还没确认，不知道是不是他们还没上班。</p>
 <p>昨晚打算在marshalsec加入dubbo-hessian2的exploits，今天早上终于弄完了，有的hessian payload在dubbo普通Spring和Spring-boot环境下的区别还是有点大的，原有在marshalsec上的一些payload不能打Spring-boot，有的经过改变触发类也能顺利打Spring，等有空了把改造过的marshalsec发到github，然后写个文章，赚点稿费，tq（qiong）l</p>
+<p>文章写完了，叫《marshalsec改造篇-加入dubbo-hessian2 exploit》，但是因为某些原因，短时间内不会发上去了。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/9999/12/31/学习与生活/#more" rel="contents">
