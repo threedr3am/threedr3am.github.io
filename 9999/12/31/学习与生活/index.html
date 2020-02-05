@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢">
+<meta name="description" content="2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java">
 <meta name="keywords" content="学习记录">
 <meta property="og:type" content="article">
 <meta property="og:title" content="学习与生活">
 <meta property="og:url" content="http://yoursite.com/9999/12/31/学习与生活/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢">
+<meta property="og:description" content="2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-02-03T08:08:42.245Z">
+<meta property="og:updated_time" content="2020-02-05T02:55:50.841Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="学习与生活">
-<meta name="twitter:description" content="2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢">
+<meta name="twitter:description" content="2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 2020-02-03今天决定研究Spring Boot Actuator的老bug。 研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java">
 
 
 
@@ -362,12 +362,13 @@
       
 
       
-        <h4 id="2020-02-03"><a href="#2020-02-03" class="headerlink" title="2020-02-03"></a>2020-02-03</h4><p>今天决定研究Spring Boot Actuator的老bug。</p>
+        <h4 id="2020-02-05"><a href="#2020-02-05" class="headerlink" title="2020-02-05"></a>2020-02-05</h4><p>昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂</p>
+<h4 id="2020-02-03"><a href="#2020-02-03" class="headerlink" title="2020-02-03"></a>2020-02-03</h4><p>今天决定研究Spring Boot Actuator的老bug。</p>
 <p>研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢写，虽然我看过几遍它的源码了，但是攻击是攻击，源码是源码，这次是了了心愿了，过几天写一篇《Apache Shiro源码浅析之远古洞到最新PaddingOracle CBC》</p>
+<a id="more"></a>
 <h4 id="2020-02-02"><a href="#2020-02-02" class="headerlink" title="2020-02-02"></a>2020-02-02</h4><p>昨天一千多个jar没跑出新的gadget chain，所以说，有时候还是运气来了就有了，31号就report到阿里src了，到今天还没确认，不知道是不是他们还没上班。</p>
 <p>昨晚打算在marshalsec加入dubbo-hessian2的exploits，今天早上终于弄完了，有的hessian payload在dubbo普通Spring和Spring-boot环境下的区别还是有点大的，原有在marshalsec上的一些payload不能打Spring-boot，有的经过改变触发类也能顺利打Spring，等有空了把改造过的marshalsec发到github，然后写个文章，赚点稿费，tq（qiong）l</p>
 <p>文章写完了，叫《marshalsec改造篇-加入dubbo-hessian2 exploit》，但是因为某些原因，短时间内不会发上去了。</p>
-<a id="more"></a>
 <h4 id="2020-02-01"><a href="#2020-02-01" class="headerlink" title="2020-02-01"></a>2020-02-01</h4><p>昨天用gadgetinspector挖到条Jackson和Fastjson通用的链，report给官方了，今天再次优化优化大规模扫描挖掘的代码（加入了记录已扫描过jar的功能），有空把一些互联网项目clone下来，让它把一些常用的dependencies下载到本地maven库，然后再跑跑，希望再出几条链。</p>
 <h4 id="2020-01-31"><a href="#2020-01-31" class="headerlink" title="2020-01-31"></a>2020-01-31</h4><p>昨晚跟kingkk师傅聊了下，我决定在gadgetinspector加入可选选项去选择不使用污点分析，这样就能把所有链挖掘出来了，好处是不会遗漏，只是需要人工审计链有没有效。</p>
 <p>已经做好了，搜索出来的链多了很多，跟预期一样，还优化了下路径指定（可以直接指定maven本库），这样就能大批量的挖掘了。</p>
@@ -614,7 +615,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-03"><span class="nav-number">1.</span> <span class="nav-text">2020-02-03</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-02"><span class="nav-number">2.</span> <span class="nav-text">2020-02-02</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-01"><span class="nav-number">3.</span> <span class="nav-text">2020-02-01</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-31"><span class="nav-number">4.</span> <span class="nav-text">2020-01-31</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-30"><span class="nav-number">5.</span> <span class="nav-text">2020-01-30</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-29"><span class="nav-number">6.</span> <span class="nav-text">2020-01-29</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-28"><span class="nav-number">7.</span> <span class="nav-text">2020-01-28</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-21"><span class="nav-number">8.</span> <span class="nav-text">2020-01-21</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-20"><span class="nav-number">9.</span> <span class="nav-text">2020-01-20</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-19"><span class="nav-number">10.</span> <span class="nav-text">2020-01-19</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-18"><span class="nav-number">11.</span> <span class="nav-text">2020-01-18</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-17"><span class="nav-number">12.</span> <span class="nav-text">2020-01-17</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-16"><span class="nav-number">13.</span> <span class="nav-text">2020-01-16</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-05"><span class="nav-number">1.</span> <span class="nav-text">2020-02-05</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-03"><span class="nav-number">2.</span> <span class="nav-text">2020-02-03</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-02"><span class="nav-number">3.</span> <span class="nav-text">2020-02-02</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-01"><span class="nav-number">4.</span> <span class="nav-text">2020-02-01</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-31"><span class="nav-number">5.</span> <span class="nav-text">2020-01-31</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-30"><span class="nav-number">6.</span> <span class="nav-text">2020-01-30</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-29"><span class="nav-number">7.</span> <span class="nav-text">2020-01-29</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-28"><span class="nav-number">8.</span> <span class="nav-text">2020-01-28</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-21"><span class="nav-number">9.</span> <span class="nav-text">2020-01-21</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-20"><span class="nav-number">10.</span> <span class="nav-text">2020-01-20</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-19"><span class="nav-number">11.</span> <span class="nav-text">2020-01-19</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-18"><span class="nav-number">12.</span> <span class="nav-text">2020-01-18</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-17"><span class="nav-number">13.</span> <span class="nav-text">2020-01-17</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-16"><span class="nav-number">14.</span> <span class="nav-text">2020-01-16</span></a></li></ol></div>
             
 
           </div>

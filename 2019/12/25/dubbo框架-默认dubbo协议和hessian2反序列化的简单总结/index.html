@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="dubbo协议header：1234567890-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字16位：Req/Res：请求还是响应标识。17位：2way：单向还是双向18位：Event：是否是事件19-23位：Serialization 编号24-31位：status状态32-95位：id编号9">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-12-31T07:23:37.150Z">
+<meta property="og:updated_time" content="2020-02-03T09:27:43.517Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="dubbo框架-默认dubbo协议和hessian2反序列化的简单总结">
 <meta name="twitter:description" content="dubbo协议header：1234567890-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字16位：Req/Res：请求还是响应标识。17位：2way：单向还是双向18位：Event：是否是事件19-23位：Serialization 编号24-31位：status状态32-95位：id编号9">
@@ -381,6 +381,10 @@
 <li>有参构造方法</li>
 <li>参数不包含非基本类型</li>
 <li>cost最小</li>
+</ol>
+<p>例外：</p>
+<ol>
+<li>利用反序列化HashMap，put方法执行时触发hashCode方法，或putVal方法执行时触发equal方法</li>
 </ol>
 
       
