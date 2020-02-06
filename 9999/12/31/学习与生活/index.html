@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 把exploit写在marshalsec了，但是因为之前已经在本地git提交了dubbo-hessian2的exploit，里面涉及到一些暂时不方便公开的东西（不是漏洞），所以就不push到github了 多嘴说一句，安全客的投稿审核真慢，极慢，ASRC">
+<meta name="description" content="2020-02-06经测试，打shiro还是用JRMPClient这个gadget去打最好，没有数组限制，payload也短，padding耗时是普通的链1/30左右。因为现在很多企业生产环境系统对外网访问限制很严格，所以等会测试一下特殊的回显方法。 2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 把">
 <meta name="keywords" content="学习记录">
 <meta property="og:type" content="article">
 <meta property="og:title" content="学习与生活">
 <meta property="og:url" content="http://yoursite.com/9999/12/31/学习与生活/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 把exploit写在marshalsec了，但是因为之前已经在本地git提交了dubbo-hessian2的exploit，里面涉及到一些暂时不方便公开的东西（不是漏洞），所以就不push到github了 多嘴说一句，安全客的投稿审核真慢，极慢，ASRC">
+<meta property="og:description" content="2020-02-06经测试，打shiro还是用JRMPClient这个gadget去打最好，没有数组限制，payload也短，padding耗时是普通的链1/30左右。因为现在很多企业生产环境系统对外网访问限制很严格，所以等会测试一下特殊的回显方法。 2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 把">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-02-05T10:04:09.744Z">
+<meta property="og:updated_time" content="2020-02-06T05:22:03.406Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="学习与生活">
-<meta name="twitter:description" content="2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 把exploit写在marshalsec了，但是因为之前已经在本地git提交了dubbo-hessian2的exploit，里面涉及到一些暂时不方便公开的东西（不是漏洞），所以就不push到github了 多嘴说一句，安全客的投稿审核真慢，极慢，ASRC">
+<meta name="twitter:description" content="2020-02-06经测试，打shiro还是用JRMPClient这个gadget去打最好，没有数组限制，payload也短，padding耗时是普通的链1/30左右。因为现在很多企业生产环境系统对外网访问限制很严格，所以等会测试一下特殊的回显方法。 2020-02-05昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂 把">
 
 
 
@@ -362,12 +362,13 @@
       
 
       
-        <h4 id="2020-02-05"><a href="#2020-02-05" class="headerlink" title="2020-02-05"></a>2020-02-05</h4><p>昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂</p>
+        <h4 id="2020-02-06"><a href="#2020-02-06" class="headerlink" title="2020-02-06"></a>2020-02-06</h4><p>经测试，打shiro还是用JRMPClient这个gadget去打最好，没有数组限制，payload也短，padding耗时是普通的链1/30左右。因为现在很多企业生产环境系统对外网访问限制很严格，所以等会测试一下特殊的回显方法。</p>
+<h4 id="2020-02-05"><a href="#2020-02-05" class="headerlink" title="2020-02-05"></a>2020-02-05</h4><p>昨天奋战了半天没写出shiro的java版padding oracle cbc的exploit，今天起床趁精神大好，成功搞掂</p>
 <p>把exploit写在marshalsec了，但是因为之前已经在本地git提交了dubbo-hessian2的exploit，里面涉及到一些暂时不方便公开的东西（不是漏洞），所以就不push到github了</p>
 <p>多嘴说一句，安全客的投稿审核真慢，极慢，ASRC的确认真慢，极慢…</p>
+<a id="more"></a>
 <h4 id="2020-02-03"><a href="#2020-02-03" class="headerlink" title="2020-02-03"></a>2020-02-03</h4><p>今天决定研究Spring Boot Actuator的老bug。</p>
 <p>研究着Spring Boot Actuator的bug的时候，突然灵光一闪，我终于明白之前写的多组任意长度(16bytes)PaddingOracle CBC的Java实现为何不管用了，哈哈，猜想没错，终于成了，写在LearnJavaBug这个项目上，之前因为多组任意长度没办法实现，遂关于shiro的文章一直不敢写，虽然我看过几遍它的源码了，但是攻击是攻击，源码是源码，这次是了了心愿了，过几天写一篇《Apache Shiro源码浅析之远古洞到最新PaddingOracle CBC》</p>
-<a id="more"></a>
 <h4 id="2020-02-02"><a href="#2020-02-02" class="headerlink" title="2020-02-02"></a>2020-02-02</h4><p>昨天一千多个jar没跑出新的gadget chain，所以说，有时候还是运气来了就有了，31号就report到阿里src了，到今天还没确认，不知道是不是他们还没上班。</p>
 <p>昨晚打算在marshalsec加入dubbo-hessian2的exploits，今天早上终于弄完了，有的hessian payload在dubbo普通Spring和Spring-boot环境下的区别还是有点大的，原有在marshalsec上的一些payload不能打Spring-boot，有的经过改变触发类也能顺利打Spring，等有空了把改造过的marshalsec发到github，然后写个文章，赚点稿费，tq（qiong）l</p>
 <p>文章写完了，叫《marshalsec改造篇-加入dubbo-hessian2 exploit》，但是因为某些原因，短时间内不会发上去了。</p>
@@ -382,7 +383,6 @@
 <h4 id="2020-01-30"><a href="#2020-01-30" class="headerlink" title="2020-01-30"></a>2020-01-30</h4><p>今天一大早起床冒出个想法，最近想重新复习复习SPEL的各种使用方式以及利用手法，然后接着回去复习复习SPEL的旧洞，并且去跟一下新洞。</p>
 <p>我发现ruilin师傅跟我研究java安全的方向好像啊，学到很多，例如SPEL的文章：<a href="http://rui0.cn/archives/1043" target="_blank" rel="noopener">由浅入深SpEL表达式注入漏洞</a>，还有jsp在抛异常栈信息的时候使用smap定位源码行号、passive iast这些等等…</p>
 <p>突然之间想复现一下JDBC反序列化洞，我觉得，只要把数据包抓下来，然后对序列化数据那部分做成可以动态修改，接着起一个socket服务监听，被连接上后把包发出去，这样就可以做成一个java版的exp，这样感觉挺灵活的，接着，是不是可以组合前段时间那个CVE-2019-12086的jackson反序列化com.mysql.cj.jdbc.admin.MiniAdmin导致文件读取的类，这样URL就可控了。</p>
-<!--more-->
 <h4 id="2020-01-29"><a href="#2020-01-29" class="headerlink" title="2020-01-29"></a>2020-01-29</h4><p>昨晚调到三点钟都没成，毫无睡意，磕了颗褪黑素沉沉地睡去，一大早精精神神终于调通了，文章直接发安全客了，希望审核快点吧，早点拿到稿费，太南了。</p>
 <h4 id="2020-01-28"><a href="#2020-01-28" class="headerlink" title="2020-01-28"></a>2020-01-28</h4><p>在家待着好难受，入职时间改成2月14了，这么长的假期时间本应很快乐，然而肺炎病毒，多灾多难的人类啊，好想重启2020，其实并不仅仅是肺炎病毒，还有生活上的诸多不顺，钱包也见底了，1月14号离职，2月14入职。。。一个月0收入，只能写写文章养家糊口了。</p>
 <p>前段时间阅读过dubbo源码，本来觉得hessian2反序列化利用条件太苛刻了，前几天ruilin师傅一言点醒梦中人，刚好看到安全客双倍稿费，故写了篇文章《dubbo源码浅析-默认反序列化利用之hessian2》，希望能稿费多点，哈哈！</p>
@@ -617,7 +617,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-05"><span class="nav-number">1.</span> <span class="nav-text">2020-02-05</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-03"><span class="nav-number">2.</span> <span class="nav-text">2020-02-03</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-02"><span class="nav-number">3.</span> <span class="nav-text">2020-02-02</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-01"><span class="nav-number">4.</span> <span class="nav-text">2020-02-01</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-31"><span class="nav-number">5.</span> <span class="nav-text">2020-01-31</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-30"><span class="nav-number">6.</span> <span class="nav-text">2020-01-30</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-29"><span class="nav-number">7.</span> <span class="nav-text">2020-01-29</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-28"><span class="nav-number">8.</span> <span class="nav-text">2020-01-28</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-21"><span class="nav-number">9.</span> <span class="nav-text">2020-01-21</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-20"><span class="nav-number">10.</span> <span class="nav-text">2020-01-20</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-19"><span class="nav-number">11.</span> <span class="nav-text">2020-01-19</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-18"><span class="nav-number">12.</span> <span class="nav-text">2020-01-18</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-17"><span class="nav-number">13.</span> <span class="nav-text">2020-01-17</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-16"><span class="nav-number">14.</span> <span class="nav-text">2020-01-16</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-06"><span class="nav-number">1.</span> <span class="nav-text">2020-02-06</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-05"><span class="nav-number">2.</span> <span class="nav-text">2020-02-05</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-03"><span class="nav-number">3.</span> <span class="nav-text">2020-02-03</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-02"><span class="nav-number">4.</span> <span class="nav-text">2020-02-02</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-02-01"><span class="nav-number">5.</span> <span class="nav-text">2020-02-01</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-31"><span class="nav-number">6.</span> <span class="nav-text">2020-01-31</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-30"><span class="nav-number">7.</span> <span class="nav-text">2020-01-30</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-29"><span class="nav-number">8.</span> <span class="nav-text">2020-01-29</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-28"><span class="nav-number">9.</span> <span class="nav-text">2020-01-28</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-21"><span class="nav-number">10.</span> <span class="nav-text">2020-01-21</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-20"><span class="nav-number">11.</span> <span class="nav-text">2020-01-20</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-19"><span class="nav-number">12.</span> <span class="nav-text">2020-01-19</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-18"><span class="nav-number">13.</span> <span class="nav-text">2020-01-18</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-17"><span class="nav-number">14.</span> <span class="nav-text">2020-01-17</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2020-01-16"><span class="nav-number">15.</span> <span class="nav-text">2020-01-16</span></a></li></ol></div>
             
 
           </div>
