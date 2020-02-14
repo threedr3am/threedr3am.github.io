@@ -365,8 +365,8 @@
 
       
         
-          <h3 id="2020-02-13"><a href="#2020-02-13" class="headerlink" title="2020-02-13"></a>2020-02-13</h3><p>昨天看到360关于dubbo在http协议下反序列化漏洞的通报，今天跟一下</p>
-<h3 id="2020-02-11"><a href="#2020-02-11" class="headerlink" title="2020-02-11"></a>2020-02-11</h3><p>今天挖hessian反序列化gadget，明天回沪</p>
+          <h3 id="2020-02-14"><a href="#2020-02-14" class="headerlink" title="2020-02-14"></a>2020-02-14</h3><p>dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方<code>mapper.readValue(input, JsonNode.class</code>，参数的反序列化都是根据方法参数名称去json节点取值，感觉没啥意思，撤。</p>
+<h3 id="2020-02-13"><a href="#2020-02-13" class="headerlink" title="2020-02-13"></a>2020-02-13</h3><p>昨天看到360关于dubbo在http协议下反序列化漏洞的通报，今天跟一下</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/9999/12/31/学习与生活/#more" rel="contents">
