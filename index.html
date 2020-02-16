@@ -365,11 +365,162 @@
 
       
         
-          <h3 id="2020-02-14"><a href="#2020-02-14" class="headerlink" title="2020-02-14"></a>2020-02-14</h3><p>dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方<code>mapper.readValue(input, JsonNode.class</code>，参数的反序列化都是根据方法参数名称去json节点取值，感觉没啥意思，撤。</p>
-<h3 id="2020-02-13"><a href="#2020-02-13" class="headerlink" title="2020-02-13"></a>2020-02-13</h3><p>昨天看到360关于dubbo在http协议下反序列化漏洞的通报，今天跟一下</p>
+          <h3 id="2020-02-17"><a href="#2020-02-17" class="headerlink" title="2020-02-17"></a>2020-02-17</h3><p>成了，dubbo新的攻击手法。搞安全很累！！！</p>
+<h3 id="2020-02-14"><a href="#2020-02-14" class="headerlink" title="2020-02-14"></a>2020-02-14</h3><p>dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方<code>mapper.readValue(input, JsonNode.class</code>，参数的反序列化都是根据方法参数名称去json节点取值，感觉没啥意思，撤。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/9999/12/31/学习与生活/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/14/dubbo源码浅析-默认dubbo协议反序列化利用之hessian2/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/02/14/dubbo源码浅析-默认dubbo协议反序列化利用之hessian2/" itemprop="url">dubbo源码浅析-默认dubbo协议反序列化利用之hessian2</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-14T16:08:00+08:00">
+                2020-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java框架源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>【原文来自安全客 <a href="https://www.anquanke.com/post/id/197658】" target="_blank" rel="noopener">https://www.anquanke.com/post/id/197658】</a></p>
+<h3 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h3><p>官方github描述：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Apache Dubbo is a high-performance, java based, open source RPC framework.</span><br></pre></td></tr></table></figure></p>
+<p>Apache Dubbo是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。</p>
+<p>现在大部分企业开发，无论是微服务架构，还是传统的垂直切分架构，大部分都用到了RPC（远程过程调用），实现分布式的协作，其中有比较简单的RESTful方式的RPC实现，也有自定义协议自成一系的RPC实现，而大部分RPC实现框架都使用了一种或多种序列化方式对传输数据进行序列化以及反序列化。</p>
+<p>Apache Dubbo是本篇文章主要讲述的RPC实现框架，我会使用我一贯的源码浅析风格，对其进行原理细节的分析探讨，先从dubbo的简单使用，慢慢引申出其源码架构细节，最后在了解大概原理后，重点分析其默认hessian2序列化实现细节。</p>
+<p>我希望您看完这篇文章之后，能对dubbo的大概架构和源码具有比较清晰的理解，以及对序列化、反序列化部分有充分的理解，希望为您学习dubbo源码走少一点弯路，并且能挖掘出dubbo的潜在安全问题，从而完善它，使它更加的健壮更加的安全。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2020/02/14/dubbo源码浅析-默认dubbo协议反序列化利用之hessian2/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -859,175 +1010,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/" itemprop="url">java反序列化利用链自动挖掘工具gadgetinspector源码浅析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-09T10:32:41+08:00">
-                2020-01-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/安全开发/" itemprop="url" rel="index">
-                    <span itemprop="name">安全开发</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7058" target="_blank" rel="noopener">https://xz.aliyun.com/t/7058</a></p>
-<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。</p>
-<p>这些gadget chain有长有短，大部分可以通过类似Intellij idea这类工具去根据slink，查找调用者，以及各种调用者的实现，一路反向的跟踪，对于一些比较简单比较短的链，通常通过人工查找也能快速的找到，但是对于一些比较长的链，人工查找会耗费巨大的精力和时间，并且不一定能挖掘到gadget chain。</p>
-<p>而有段时间，我苦恼于人工查找浪费巨大精力得不偿失时，忽然发现这样一款自动化挖掘gadget chain的工具，通过阅读分析它的源码，它给我带来了非常多的知识以及自动化挖掘的思路，其中就包括类似污点分析，如何去分析方法调用中，参数是否可以影响返回值，从而跟踪数据流动是否可以从source最终流动至slink，并影响至最终的slink点。</p>
-<p><strong>gadgetinspector</strong>：</p>
-<p><a href="https://github.com/JackOfMostTrades/gadgetinspector" target="_blank" rel="noopener">https://github.com/JackOfMostTrades/gadgetinspector</a></p>
-<p><strong>slink</strong>：</p>
-<ul>
-<li>Runtime.exec()：这种利用最为简单，但是实际生产情况基本不会遇到</li>
-<li>Method.invoke()：这种方式通过反射执行方法，需要方法以及参数可控</li>
-<li>RMI/JRMP：通过反序列化使用RMI或者JRMP链接到我们的exp服务器，通过发送序列化payload至靶机实现</li>
-<li>URL.openStream：这种利用方式需要参数可控，实现SSRF</li>
-<li>Context.lookup：这种利用方式也是需要参数可控，最终通过rmi或ldap的server实现攻击</li>
-<li>…等等</li>
-</ul>
-<p>在分析gadgetinspector源码的时候，大概会在以下几方面去讲解，并核心分析ASM部分，详细讲解如何进行污点分析：</p>
-<ol>
-<li>GadgetInspector：main方法，程序的入口，做一些配置以及数据的准备工作</li>
-<li>MethodDiscovery：类、方法数据以及父子类、超类关系数据的搜索</li>
-<li>PassthroughDiscovery：分析参数能影响到返回值的方法，并收集存储</li>
-<li>CallGraphDiscovery：记录调用者caller方法和被调用者target方法的参数关联</li>
-<li>SourceDiscovery：入口方法的搜索，只有具备某种特征的入口才会被标记收集</li>
-<li>GadgetChainDiscovery：整合以上数据，并通过判断调用链的最末端slink特征，从而判断出可利用的gadget chain</li>
-</ol>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1080,7 +1062,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-count">17</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1102,7 +1084,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-count">17</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
