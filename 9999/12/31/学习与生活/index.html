@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="2020-02-17成了，dubbo新的攻击手法。搞安全很累！！！ 2020-02-14dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方mapper.readValue(input, JsonNode.class，参数的反序列化都是根据方">
+<meta name="description" content="2020-02-17dubbo新的攻击手法？不确定算不算洞，report到apache dubbo了，最近有点累，打算休息几天，打打农药。 2020-02-14dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方mapper.readValu">
 <meta name="keywords" content="学习记录">
 <meta property="og:type" content="article">
 <meta property="og:title" content="学习与生活">
 <meta property="og:url" content="http://yoursite.com/9999/12/31/学习与生活/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="2020-02-17成了，dubbo新的攻击手法。搞安全很累！！！ 2020-02-14dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方mapper.readValue(input, JsonNode.class，参数的反序列化都是根据方">
+<meta property="og:description" content="2020-02-17dubbo新的攻击手法？不确定算不算洞，report到apache dubbo了，最近有点累，打算休息几天，打打农药。 2020-02-14dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方mapper.readValu">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-02-16T16:11:21.473Z">
+<meta property="og:updated_time" content="2020-02-17T08:22:22.979Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="学习与生活">
-<meta name="twitter:description" content="2020-02-17成了，dubbo新的攻击手法。搞安全很累！！！ 2020-02-14dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方mapper.readValue(input, JsonNode.class，参数的反序列化都是根据方">
+<meta name="twitter:description" content="2020-02-17dubbo新的攻击手法？不确定算不算洞，report到apache dubbo了，最近有点累，打算休息几天，打打农药。 2020-02-14dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方mapper.readValu">
 
 
 
@@ -362,7 +362,7 @@
       
 
       
-        <h3 id="2020-02-17"><a href="#2020-02-17" class="headerlink" title="2020-02-17"></a>2020-02-17</h3><p>成了，dubbo新的攻击手法。搞安全很累！！！</p>
+        <h3 id="2020-02-17"><a href="#2020-02-17" class="headerlink" title="2020-02-17"></a>2020-02-17</h3><p>dubbo新的攻击手法？不确定算不算洞，report到apache dubbo了，最近有点累，打算休息几天，打打农药。</p>
 <h3 id="2020-02-14"><a href="#2020-02-14" class="headerlink" title="2020-02-14"></a>2020-02-14</h3><p>dubbo-2.7.5，所谓的http协议rpc已经由jsonrpc实现了，根本就没了所谓的Java原生反序列化了（不知道我有没有搞错），所以http协议下的利用非常鸡肋，感觉可以挖的地方就是解析json的地方<code>mapper.readValue(input, JsonNode.class</code>，参数的反序列化都是根据方法参数名称去json节点取值，感觉没啥意思，撤。</p>
 <a id="more"></a>
 <h3 id="2020-02-13"><a href="#2020-02-13" class="headerlink" title="2020-02-13"></a>2020-02-13</h3><p>昨天看到360关于dubbo在http协议下反序列化漏洞的通报，今天跟一下</p>
