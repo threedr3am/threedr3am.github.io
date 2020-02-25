@@ -365,11 +365,164 @@
 
       
         
-          <h3 id="2020-02-21"><a href="#2020-02-21" class="headerlink" title="2020-02-21"></a>2020-02-21</h3><p>今天整理了下dubbo，把http和dubbo协议下的多种反序列化利用工程化，唉，感觉自己代码能力还是不到家，很多地方写得不优雅，白干这么久。</p>
+          <h3 id="2020-02-25"><a href="#2020-02-25" class="headerlink" title="2020-02-25"></a>2020-02-25</h3><p>这几天沉沦在挖gadget的海洋中，挖到个十几年前jar包的gadget…继续努力</p>
+<p>空闲时间，也整理了一下CAS-4.x相关漏洞和源码可部署debug的环境放到learnjavabug，还有rmi相关的也添加了点注释说明</p>
+<p>昨天联系dubbo开发了，不过修洞的哥们微信还没加上…</p>
+<h3 id="2020-02-21"><a href="#2020-02-21" class="headerlink" title="2020-02-21"></a>2020-02-21</h3><p>今天整理了下dubbo，把http和dubbo协议下的多种反序列化利用工程化，唉，感觉自己代码能力还是不到家，很多地方写得不优雅，白干这么久。</p>
 <h3 id="2020-02-20"><a href="#2020-02-20" class="headerlink" title="2020-02-20"></a>2020-02-20</h3><p>这几天梳理了一下RMI相关的东西，没事干，就写了篇《搞懂RMI、JRMP、JNDI-终结篇》总结一下，也投先知去了。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/9999/12/31/学习与生活/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/25/marshalsec改造篇-加入dubbo-hessian2 exploit/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/02/25/marshalsec改造篇-加入dubbo-hessian2 exploit/" itemprop="url">marshalsec改造篇-加入dubbo-hessian2 exploit</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-25T17:02:00+08:00">
+                2020-02-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/安全开发/" itemprop="url" rel="index">
+                    <span itemprop="name">安全开发</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7235】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7235】</a></p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><h4 id="1-描述"><a href="#1-描述" class="headerlink" title="1. 描述"></a>1. 描述</h4><p>官方github描述：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Java Unmarshaller Security - Turning your data into code execution</span><br></pre></td></tr></table></figure>
+<p>“将数据转换为代码执行”，我对其理解就是，在java反序列化时，利用序列化数据造成代码执行攻击。</p>
+<hr>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2020/02/25/marshalsec改造篇-加入dubbo-hessian2 exploit/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -872,154 +1025,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/15/基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/01/15/基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI/" itemprop="url">基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-15T13:13:00+08:00">
-                2020-01-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/java漏洞分析/" itemprop="url" rel="index">
-                    <span itemprop="name">java漏洞分析</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7079" target="_blank" rel="noopener">https://xz.aliyun.com/t/7079</a></p>
-<h3 id="0-前言"><a href="#0-前言" class="headerlink" title="0 前言"></a>0 前言</h3><p>以往看到很多讲述RMI、JNDI、JRMP的文章，有部分文章都描述的并不是很清晰，看着通篇大论，觉得很详细，但看完之后却搞不懂，也解释不清，反正就是感觉自己还没搞懂，却又好像懂了点，很迷糊…</p>
-<p>这篇文章，我想要的就是以最简短的内容和例子，去阐述RMI、JNDI、JRMP…，并讲讲为什么用InitialContext lookup一个JNDI的rmi、ldap服务会导致自身被反序列化RCE，为什么Registry bind暴露一个服务对象到RmiRegistry会导致Registry服务自身被反序列化RCE，为什么使用JRMP能互相对打等等。虽然我不能百分百保证我写的毫无错误，但是，我觉得你看了这篇文章之后，大概应该就懂了。</p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2020/01/15/基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1072,7 +1077,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">18</span>
+                  <span class="site-state-item-count">19</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1094,7 +1099,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-count">21</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
