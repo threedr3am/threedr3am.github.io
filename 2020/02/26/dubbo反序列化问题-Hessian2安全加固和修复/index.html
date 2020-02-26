@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Java反序列化,安全加固、修复,dubbo,RCE,hessian,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7238】 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。 大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构">
+<meta name="keywords" content="Java反序列化,安全加固、修复,dubbo,RCE,hessian">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dubbo反序列化问题-Hessian2安全加固和修复">
+<meta property="og:url" content="http://yoursite.com/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7238】 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。 大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-02-26T07:56:26.029Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dubbo反序列化问题-Hessian2安全加固和修复">
+<meta name="twitter:description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7238】 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。 大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/">
+
+
+
+
+
+  <title>dubbo反序列化问题-Hessian2安全加固和修复 | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">dubbo反序列化问题-Hessian2安全加固和修复</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-26T15:54:00+08:00">
+                2020-02-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/安全开发/" itemprop="url" rel="index">
+                    <span itemprop="name">安全开发</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238】</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间在安全客发了篇Dubbo的反序列化利用文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。</p>
+<p>大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构，或对业务进行划分，做成分布式，那么分布式环境下，多个系统间的协作通讯一般使用RPC、HTTP、MQ等，而我相信大部分中小公司、阿里系公司、阿里输送人才的公司..一般都使用到了Dubbo，据我对Dubbo源码的微末了解，其Dubbo协议默认的Hessian2反序列化，并没有什么所谓的安全保护机制（有个瓜，ruilin湿敷一堆gadget，官方不给CVE）。</p>
+<p>在我写那篇文章前，我发现国内貌似也没人写过Dubbo相关的漏洞利用，这几天，应该很多用到Dubbo的公司，都在排查其安全受影响情况，因此，我打算写这篇文章，讲讲如何去对Dubbo进行反序列化安全加固，一般情况下，大概有这几种安全加固方案：</p>
+<ol>
+<li>修改反序列化类型（不推荐，就算你改成原生Java、Fastjson等等反序列化，依然存在问题，与其不熟悉的情况下对dubbo进行修改可能会导致业务受损风险，还不如不改）</li>
+<li>RPC改成HTTP API（业务开发量太大了）</li>
+<li>加固Hessian2（推荐，也是这篇文章主要讲的）</li>
+</ol>
+<a id="more"></a>
+<h3 id="0x02-Java-SPI和Spring-SPI"><a href="#0x02-Java-SPI和Spring-SPI" class="headerlink" title="0x02 Java SPI和Spring SPI"></a>0x02 Java SPI和Spring SPI</h3><p>SPI全称Service Provider Interface，是Java提供的一套用来被第三方实现或者扩展的API，它可以用来启用框架扩展和替换组件。</p>
+<p>经常使用Java语言开发一些框架的人都清楚，SPI的机制带来了很大的便利，使用SPI，我们就可以开发多种实现，分别打包到不同的jar包中去，用户根据所需选择实现的jar包，我们得核心程序就能根据用户引入的jar包，使用SPI去加载其实现。也就是说，如果我提供一个序列化工具，然后把每种序列化实现都分别打包到不同的jar包中去，用户就可以根据引入的jar包选择序列化实现。</p>
+<h4 id="Java-SPI"><a href="#Java-SPI" class="headerlink" title="Java SPI"></a>Java SPI</h4><p>下面以一个例子讲解Java SPI使用原理：</p>
+<ol>
+<li>core.jar</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">package my.threedr3am.fruit;</span><br><span class="line"></span><br><span class="line">public interface Fruit &#123;</span><br><span class="line">    String name();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>apple.jar</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">package my.threedr3am.fruit;</span><br><span class="line"></span><br><span class="line">public class Apple implememt Fruit &#123;</span><br><span class="line">    public String name() &#123;</span><br><span class="line">        return &quot;apple&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>META-INF/services 文件夹下创建一个文件，名称为 Robot 的全限定名 my.threedr3am.fruit.Fruit。文件内容为实现类的全限定的类名，如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">my.threedr3am.fruit.Apple</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>mango.jar</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">package my.threedr3am.fruit;</span><br><span class="line"></span><br><span class="line">public class Mango implememt Fruit &#123;</span><br><span class="line">    public String name() &#123;</span><br><span class="line">        return &quot;mango&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>META-INF/services 文件夹下创建一个文件，名称为 Robot 的全限定名 my.threedr3am.fruit.Fruit。文件内容为实现类的全限定的类名，如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">my.threedr3am.fruit.Mango</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>使用</li>
+</ol>
+<p>我们引入core.jar包以及Spring依赖，运行：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">    ServiceLoader&lt;Fruit&gt; fruits = ServiceLoader.load(Fruit.class);</span><br><span class="line">    fruits.forEach(fruit -&gt; &#123;</span><br><span class="line">        System.out.println(fruit.name());</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>若我们引入了apple.jar，main方法的执行就会输出apple，若引入的是mango.jar，则输出的是mango。</p>
+<h4 id="Spring-SPI"><a href="#Spring-SPI" class="headerlink" title="Spring SPI"></a>Spring SPI</h4><p>与Java原生的SPI不一样，Spring SPI配置文件并不在<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">下面以一个例子讲解Spring SPI使用原理：</span><br><span class="line"></span><br><span class="line">1. core.jar</span><br></pre></td></tr></table></figure></p>
+<p>package my.threedr3am.fruit;</p>
+<p>public interface Fruit {<br>    String name();<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">2. apple.jar</span><br></pre></td></tr></table></figure></p>
+<p>package my.threedr3am.fruit;</p>
+<p>public class Apple implememt Fruit {<br>    public String name() {<br>        return “apple”;<br>    }<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">spring.factories文件（文件在可以打包到classes目录下的地方，例：resources）:</span><br></pre></td></tr></table></figure></p>
+<p>my.threedr3am.fruit=my.threedr3am.fruit.Apple<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">3. mango.jar</span><br></pre></td></tr></table></figure></p>
+<p>package my.threedr3am.fruit;</p>
+<p>public class Mango implememt Fruit {<br>    public String name() {<br>        return “mango”;<br>    }<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">spring.factories文件（文件在可以打包到classes目录下的地方，例：resources）:</span><br></pre></td></tr></table></figure></p>
+<p>my.threedr3am.fruit=my.threedr3am.fruit.Mango<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">4. 使用</span><br><span class="line"></span><br><span class="line">我们引入core.jar包以及Spring依赖，运行：</span><br></pre></td></tr></table></figure></p>
+<p>public static void main(String[] args) {<br>    List<fruit> fruits = SpringFactoriesLoader.loadFactories(Fruit.class, null);<br>    fruits.forEach(fruit -&gt; {<br>        System.out.println(fruit.name());<br>    });<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">若我们引入了apple.jar，main方法的执行就会输出apple，若引入的是mango.jar，则输出的是mango。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">### 0x03 dubbo序列化SPI原理</span><br><span class="line"></span><br><span class="line">Dubbo的SPI和Java SPI以及Spring SPI都不一样，Dubbo 并未使用 Java SPI，而是重新实现了一套功能更强的 SPI 机制。</span><br><span class="line"></span><br><span class="line">以下是dubbo官方对其SPI功能的一个小简介：</span><br><span class="line"></span><br><span class="line">SPI 全称为 Service Provider Interface，是一种服务发现机制。SPI 的本质是将接口实现类的全限定名配置在文件中，并由服务加载器读取配置文件，加载实现类。这样可以在运行时，动态为接口替换实现类。正因此特性，我们可以很容易的通过 SPI 机制为我们的程序提供拓展功能。SPI 机制在第三方框架中也有所应用，比如 Dubbo 就是通过 SPI 机制加载所有的组件。不过，Dubbo 并未使用 Java 原生的 SPI 机制，而是对其进行了增强，使其能够更好的满足需求。在 Dubbo 中，SPI 是一个非常重要的模块。基于 SPI，我们可以很容易的对 Dubbo 进行拓展。如果大家想要学习 Dubbo 的源码，SPI 机制务必弄懂。</span><br><span class="line"></span><br><span class="line">Dubbo SPI的相关逻辑在ExtensionLoader类中，通过ExtensionLoader类，我们就可以根据参数配置、依赖选择需要的实现类，Dubbo SPI 所需的配置文件通常放置在 META-INF/dubbo 路径下，但是Dubbo对其做了一定的兼容处理：</span><br></pre></td></tr></table></figure></fruit></p>
+<p>private static final String SERVICES_DIRECTORY = “META-INF/services/“;</p>
+<p>private static final String DUBBO_DIRECTORY = “META-INF/dubbo/“;</p>
+<p>private static final String DUBBO_INTERNAL_DIRECTORY = DUBBO_DIRECTORY + “internal/“;</p>
+<p>private Map&lt;String, Class&lt;?&gt;&gt; loadExtensionClasses() {<br>    cacheDefaultExtensionName();</p>
+<pre><code>Map&lt;String, Class&lt;?&gt;&gt; extensionClasses = new HashMap&lt;&gt;();
+// internal extension load from ExtensionLoader&apos;s ClassLoader first
+loadDirectory(extensionClasses, DUBBO_INTERNAL_DIRECTORY, type.getName(), true);
+loadDirectory(extensionClasses, DUBBO_INTERNAL_DIRECTORY, type.getName().replace(&quot;org.apache&quot;, &quot;com.alibaba&quot;), true);
+
+loadDirectory(extensionClasses, DUBBO_DIRECTORY, type.getName());
+loadDirectory(extensionClasses, DUBBO_DIRECTORY, type.getName().replace(&quot;org.apache&quot;, &quot;com.alibaba&quot;));
+loadDirectory(extensionClasses, SERVICES_DIRECTORY, type.getName());
+loadDirectory(extensionClasses, SERVICES_DIRECTORY, type.getName().replace(&quot;org.apache&quot;, &quot;com.alibaba&quot;));
+return extensionClasses;
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">可以看到，放在这些目录下也是没问题的。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">### 0x04 hessian2反序列化安全加固</span><br><span class="line"></span><br><span class="line">通过前面的讲解，我相信大家都学会了Dubbo的SPI原理了，那么，我们如果要对Hessian2进行修改，只有两个方法：</span><br><span class="line">1. 创建新的Hessian2序列化工厂，引入我们自定义的反序列化类，通过Dubbo SPI注册我们创建的Hessian2序列化工厂</span><br><span class="line">2. 修改Dubbo源码（不现实）</span><br><span class="line"></span><br><span class="line">也就是说，我现在最推荐的做法，就是加Hessian2反序列化黑名单，具体做法，看下面：</span><br><span class="line"></span><br><span class="line">1. 新增三个自定义的Hessian2序列化类：</span><br><span class="line"></span><br><span class="line">MyHessian2Serialization：</span><br></pre></td></tr></table></figure></p>
+<p>package com.threedr3am.learn.server.boot.serialize;</p>
+<p>import java.io.IOException;<br>import java.io.InputStream;<br>import java.io.OutputStream;<br>import org.apache.dubbo.common.URL;<br>import org.apache.dubbo.common.serialize.ObjectInput;<br>import org.apache.dubbo.common.serialize.ObjectOutput;<br>import org.apache.dubbo.common.serialize.Serialization;<br>import org.apache.dubbo.common.serialize.hessian2.Hessian2ObjectOutput;</p>
+<p>public class MyHessian2Serialization implements Serialization {</p>
+<pre><code>@Override
+public byte getContentTypeId() {
+    return 22;
+}
+
+@Override
+public String getContentType() {
+    return &quot;x-application/hessian2&quot;;
+}
+
+@Override
+public ObjectOutput serialize(URL url, OutputStream out) throws IOException {
+    return new Hessian2ObjectOutput(out);
+}
+
+@Override
+public ObjectInput deserialize(URL url, InputStream is) throws IOException {
+    return new MyHessian2ObjectInput(is);
+}
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MyHessian2ObjectInput：</span><br></pre></td></tr></table></figure>
+<p>package com.threedr3am.learn.server.boot.serialize;</p>
+<p>import java.io.IOException;<br>import java.io.InputStream;<br>import java.lang.reflect.Type;<br>import org.apache.dubbo.common.serialize.ObjectInput;<br>import org.apache.dubbo.common.serialize.hessian2.Hessian2SerializerFactory;</p>
+<p>public class MyHessian2ObjectInput implements ObjectInput {<br>    private final MyHessian2Input mH2i;</p>
+<pre><code>public MyHessian2ObjectInput(InputStream is) {
+    mH2i = new MyHessian2Input(is);
+    mH2i.setSerializerFactory(Hessian2SerializerFactory.SERIALIZER_FACTORY);
+}
+
+@Override
+public boolean readBool() throws IOException {
+    return mH2i.readBoolean();
+}
+
+@Override
+public byte readByte() throws IOException {
+    return (byte) mH2i.readInt();
+}
+
+@Override
+public short readShort() throws IOException {
+    return (short) mH2i.readInt();
+}
+
+@Override
+public int readInt() throws IOException {
+    return mH2i.readInt();
+}
+
+@Override
+public long readLong() throws IOException {
+    return mH2i.readLong();
+}
+
+@Override
+public float readFloat() throws IOException {
+    return (float) mH2i.readDouble();
+}
+
+@Override
+public double readDouble() throws IOException {
+    return mH2i.readDouble();
+}
+
+@Override
+public byte[] readBytes() throws IOException {
+    return mH2i.readBytes();
+}
+
+@Override
+public String readUTF() throws IOException {
+    return mH2i.readString();
+}
+
+@Override
+public Object readObject() throws IOException {
+    return mH2i.readObject();
+}
+
+@Override
+@SuppressWarnings(&quot;unchecked&quot;)
+public &lt;T&gt; T readObject(Class&lt;T&gt; cls) throws IOException,
+        ClassNotFoundException {
+    return (T) mH2i.readObject(cls);
+}
+
+@Override
+public &lt;T&gt; T readObject(Class&lt;T&gt; cls, Type type) throws IOException, ClassNotFoundException {
+    return readObject(cls);
+}
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MyHessian2Input：</span><br></pre></td></tr></table></figure>
+<p>package com.threedr3am.learn.server.boot.serialize;</p>
+<p>import com.alibaba.com.caucho.hessian.io.Hessian2Input;<br>import java.io.IOException;<br>import java.io.InputStream;<br>import java.lang.reflect.Field;<br>import java.util.ArrayList;<br>import java.util.HashSet;<br>import java.util.List;<br>import java.util.Set;</p>
+<p>public class MyHessian2Input extends Hessian2Input {</p>
+<p>  private static final Set<string> blackList = new HashSet&lt;&gt;();</string></p>
+<p>  static {<br>    blackList.add(“com.threedr3am.learn.server.boot.A”);<br>  }</p>
+<p>  public MyHessian2Input(InputStream is) {<br>    super(is);<br>  }</p>
+<p>  @Override<br>  public Object readObject(Class cl) throws IOException {<br>    checkClassDef();<br>    return super.readObject(cl);<br>  }</p>
+<p>  @Override<br>  public Object readObject(Class expectedClass, Class&lt;?&gt;… expectedTypes) throws IOException {<br>    checkClassDef();<br>    return super.readObject(expectedClass, expectedTypes);<br>  }</p>
+<p>  @Override<br>  public Object readObject() throws IOException {<br>    checkClassDef();<br>    return super.readObject();<br>  }</p>
+<p>  @Override<br>  public Object readObject(List&lt;Class&lt;?&gt;&gt; expectedTypes) throws IOException {<br>    checkClassDef();<br>    return super.readObject(expectedTypes);<br>  }</p>
+<p>  void checkClassDef() {<br>    if (_classDefs == null || _classDefs.isEmpty())<br>      return;<br>    for (Object c : _classDefs) {<br>      Field[] fields = c.getClass().getDeclaredFields();<br>      if (fields.length == 2) {<br>        fields[0].setAccessible(true);<br>        try {<br>          String type = (String) fields[0].get(c);<br>          if (blackList.contains(type))<br>            _classDefs = new ArrayList();<br>        } catch (IllegalAccessException e) {<br>          e.printStackTrace();<br>        }<br>      }<br>    }<br>  }<br>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">以上三个文件，必须Dubbo的服务和消费者双方两端都存在</span><br><span class="line"></span><br><span class="line">2. 在resources目录下，新增目录META-INF/dubbo，并创建文件org.apache.dubbo.common.serialize.Serialization，内容：</span><br></pre></td></tr></table></figure>
+<p>MyHessian2=com.threedr3am.learn.server.boot.serialize.MyHessian2Serialization<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">和上面一样，也是必须Dubbo的服务和消费者双方两端都存在</span><br><span class="line"></span><br><span class="line">3. 服务端配置序列化方式</span><br><span class="line"></span><br><span class="line">application.properties：</span><br></pre></td></tr></table></figure></p>
+<p>dubbo.provider.serialization=MyHessian2<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">4. 加入反序列化黑名单类</span><br><span class="line"></span><br><span class="line">只要给com.threedr3am.learn.server.boot.serialize.MyHessian2Input#blackList集合添加黑名单类即可，我这里列出一些已存在的gadget</span><br></pre></td></tr></table></figure></p>
+<p>org.apache.xbean.naming.context.ContextUtil.ReadOnlyBinding<br>org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor<br>com.rometools.rome.feed.impl.EqualsBean<br>com.caucho.naming.QName<br><code>`</code></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java反序列化/" rel="tag"># Java反序列化</a>
+          
+            <a href="/tags/安全加固、修复/" rel="tag"># 安全加固、修复</a>
+          
+            <a href="/tags/dubbo/" rel="tag"># dubbo</a>
+          
+            <a href="/tags/RCE/" rel="tag"># RCE</a>
+          
+            <a href="/tags/hessian/" rel="tag"># hessian</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/02/25/marshalsec改造篇-加入dubbo-hessian2 exploit/" rel="next" title="marshalsec改造篇-加入dubbo-hessian2 exploit">
+                <i class="fa fa-chevron-left"></i> marshalsec改造篇-加入dubbo-hessian2 exploit
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/9999/12/31/学习与生活/" rel="prev" title="学习与生活">
+                学习与生活 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">20</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://rui0.cn/" title="ruilin" target="_blank">ruilin</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://www.leadroyal.cn/" title="leadroyal(卓卓师傅)" target="_blank">leadroyal(卓卓师傅)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.kingkk.com/" title="kingkk" target="_blank">kingkk</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-前言"><span class="nav-number">1.</span> <span class="nav-text">0x01 前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-Java-SPI和Spring-SPI"><span class="nav-number">2.</span> <span class="nav-text">0x02 Java SPI和Spring SPI</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Java-SPI"><span class="nav-number">2.1.</span> <span class="nav-text">Java SPI</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Spring-SPI"><span class="nav-number">2.2.</span> <span class="nav-text">Spring SPI</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

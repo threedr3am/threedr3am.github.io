@@ -365,14 +365,167 @@
 
       
         
-          <h3 id="2020-02-25"><a href="#2020-02-25" class="headerlink" title="2020-02-25"></a>2020-02-25</h3><p>这几天沉沦在挖gadget的海洋中，挖到个十几年前jar包的gadget…继续努力</p>
+          <h3 id="2020-02-26"><a href="#2020-02-26" class="headerlink" title="2020-02-26"></a>2020-02-26</h3><p>把前几天挖的fastjson的鸡肋gadget提交到src了，混点积分吧，发现挖gadget投入产出比真低，浪费时间…</p>
+<h3 id="2020-02-25"><a href="#2020-02-25" class="headerlink" title="2020-02-25"></a>2020-02-25</h3><p>这几天沉沦在挖gadget的海洋中，挖到个十几年前jar包的gadget…继续努力</p>
 <p>空闲时间，也整理了一下CAS-4.x相关漏洞和源码可部署debug的环境放到learnjavabug，还有rmi相关的也添加了点注释说明</p>
 <p>昨天联系dubbo开发了，不过修洞的哥们微信还没加上…</p>
-<h3 id="2020-02-21"><a href="#2020-02-21" class="headerlink" title="2020-02-21"></a>2020-02-21</h3><p>今天整理了下dubbo，把http和dubbo协议下的多种反序列化利用工程化，唉，感觉自己代码能力还是不到家，很多地方写得不优雅，白干这么久。</p>
-<h3 id="2020-02-20"><a href="#2020-02-20" class="headerlink" title="2020-02-20"></a>2020-02-20</h3><p>这几天梳理了一下RMI相关的东西，没事干，就写了篇《搞懂RMI、JRMP、JNDI-终结篇》总结一下，也投先知去了。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/9999/12/31/学习与生活/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/" itemprop="url">dubbo反序列化问题-Hessian2安全加固和修复</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-26T15:54:00+08:00">
+                2020-02-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/安全开发/" itemprop="url" rel="index">
+                    <span itemprop="name">安全开发</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238】</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间在安全客发了篇Dubbo的反序列化利用文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。</p>
+<p>大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构，或对业务进行划分，做成分布式，那么分布式环境下，多个系统间的协作通讯一般使用RPC、HTTP、MQ等，而我相信大部分中小公司、阿里系公司、阿里输送人才的公司..一般都使用到了Dubbo，据我对Dubbo源码的微末了解，其Dubbo协议默认的Hessian2反序列化，并没有什么所谓的安全保护机制（有个瓜，ruilin湿敷一堆gadget，官方不给CVE）。</p>
+<p>在我写那篇文章前，我发现国内貌似也没人写过Dubbo相关的漏洞利用，这几天，应该很多用到Dubbo的公司，都在排查其安全受影响情况，因此，我打算写这篇文章，讲讲如何去对Dubbo进行反序列化安全加固，一般情况下，大概有这几种安全加固方案：</p>
+<ol>
+<li>修改反序列化类型（不推荐，就算你改成原生Java、Fastjson等等反序列化，依然存在问题，与其不熟悉的情况下对dubbo进行修改可能会导致业务受损风险，还不如不改）</li>
+<li>RPC改成HTTP API（业务开发量太大了）</li>
+<li>加固Hessian2（推荐，也是这篇文章主要讲的）</li>
+</ol>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -874,157 +1027,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/" itemprop="url">Fastjson反序列化RCE核心-四个关键点分析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-29T11:05:00+08:00">
-                2020-01-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
-                    <span itemprop="name">java框架源码分析</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7107" target="_blank" rel="noopener">https://xz.aliyun.com/t/7107</a></p>
-<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>A fast JSON parser/generator for Java.一个Java语言实现的JSON快速解析/生成器。</p>
-<p>官方描述：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Fastjson is a Java library that can be used to convert Java Objects into their JSON representation. </span><br><span class="line">It can also be used to convert a JSON string to an equivalent Java object. </span><br><span class="line">Fastjson can work with arbitrary Java objects including pre-existing objects that you do not have source-code of.</span><br><span class="line"></span><br><span class="line">Fastjson Goals:</span><br><span class="line">- Provide best performance in server side and android client</span><br><span class="line">- Provide simple toJSONString() and parseObject() methods to convert Java objects to JSON and vice-versa</span><br><span class="line">- Allow pre-existing unmodifiable objects to be converted to and from JSON</span><br><span class="line">- Extensive support of Java Generics</span><br><span class="line">- Allow custom representations for objects</span><br><span class="line">- Support arbitrarily complex objects (with deep inheritance hierarchies and extensive use of generic types)</span><br></pre></td></tr></table></figure></p>
-<p>Fastjson是阿里巴巴开源的Apache顶级项目，在国内开发圈子中被使用广泛，由于它假定有序的解析特性，其相对于Jackson，性能会有一定的优势，不过个人觉得，相对于磁盘、网络IO等时间损耗，这样的提升对于大部分企业来讲，意义并不大。</p>
-<p>因为Fastjson在国内被广泛使用，也就是说受众广，影响范围大，那么一但出现安全漏洞，被不法分子利用，将会对企业、用户造成极大损失。对于我们研究安全的人员来讲，研究分析Fastjson的源码，跟踪Fastjson安全漏洞，可以更好的挖掘出潜在的安全隐患，提前消灭它。</p>
-<p>我曾经从网络上看到过很多对Fastjson分析的文章，但大部分都是对于新漏洞gadget chain触发的源码debug跟踪，缺少对于一些关键点代码的分析描述，也就是说，我看完之后，该不懂还是不懂，最后时间花出去了，得到的只是一个证明可用的exp…因此，我这篇文章，将针对Fastjson反序列化部分涉及到的关键点代码进行详细的讲解，其中一共四个关键点“词法解析、构造方法选择、缓存绕过、反射调用”，希望大家看完之后，将能完全搞懂Fastjson漏洞触发的一些条件以及原理。</p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1077,7 +1079,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-count">20</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1099,7 +1101,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-count">22</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>

@@ -273,6 +273,157 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/" itemprop="url">Fastjson反序列化RCE核心-四个关键点分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-29T11:05:00+08:00">
+                2020-01-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java框架源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7107" target="_blank" rel="noopener">https://xz.aliyun.com/t/7107</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>A fast JSON parser/generator for Java.一个Java语言实现的JSON快速解析/生成器。</p>
+<p>官方描述：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Fastjson is a Java library that can be used to convert Java Objects into their JSON representation. </span><br><span class="line">It can also be used to convert a JSON string to an equivalent Java object. </span><br><span class="line">Fastjson can work with arbitrary Java objects including pre-existing objects that you do not have source-code of.</span><br><span class="line"></span><br><span class="line">Fastjson Goals:</span><br><span class="line">- Provide best performance in server side and android client</span><br><span class="line">- Provide simple toJSONString() and parseObject() methods to convert Java objects to JSON and vice-versa</span><br><span class="line">- Allow pre-existing unmodifiable objects to be converted to and from JSON</span><br><span class="line">- Extensive support of Java Generics</span><br><span class="line">- Allow custom representations for objects</span><br><span class="line">- Support arbitrarily complex objects (with deep inheritance hierarchies and extensive use of generic types)</span><br></pre></td></tr></table></figure></p>
+<p>Fastjson是阿里巴巴开源的Apache顶级项目，在国内开发圈子中被使用广泛，由于它假定有序的解析特性，其相对于Jackson，性能会有一定的优势，不过个人觉得，相对于磁盘、网络IO等时间损耗，这样的提升对于大部分企业来讲，意义并不大。</p>
+<p>因为Fastjson在国内被广泛使用，也就是说受众广，影响范围大，那么一但出现安全漏洞，被不法分子利用，将会对企业、用户造成极大损失。对于我们研究安全的人员来讲，研究分析Fastjson的源码，跟踪Fastjson安全漏洞，可以更好的挖掘出潜在的安全隐患，提前消灭它。</p>
+<p>我曾经从网络上看到过很多对Fastjson分析的文章，但大部分都是对于新漏洞gadget chain触发的源码debug跟踪，缺少对于一些关键点代码的分析描述，也就是说，我看完之后，该不懂还是不懂，最后时间花出去了，得到的只是一个证明可用的exp…因此，我这篇文章，将针对Fastjson反序列化部分涉及到的关键点代码进行详细的讲解，其中一共四个关键点“词法解析、构造方法选择、缓存绕过、反射调用”，希望大家看完之后，将能完全搞懂Fastjson漏洞触发的一些条件以及原理。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2020/01/29/Fastjson反序列化RCE核心-四个关键点分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/15/基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -894,152 +1045,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/25/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/12/25/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/" itemprop="url">dubbo框架-默认dubbo协议和hessian2反序列化的简单总结</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-25T18:22:41+08:00">
-                2019-12-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
-                    <span itemprop="name">java框架源码分析</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="dubbo协议"><a href="#dubbo协议" class="headerlink" title="dubbo协议"></a>dubbo协议</h3><p>header：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">0-7位和8-15位：Magic High和Magic Low，类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包，就是一个固定的数字</span><br><span class="line">16位：Req/Res：请求还是响应标识。</span><br><span class="line">17位：2way：单向还是双向</span><br><span class="line">18位：Event：是否是事件</span><br><span class="line">19-23位：Serialization 编号</span><br><span class="line">24-31位：status状态</span><br><span class="line">32-95位：id编号</span><br><span class="line">96-127位：body数据长度</span><br><span class="line">128-…位：body</span><br></pre></td></tr></table></figure></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2019/12/25/dubbo框架-默认dubbo协议和hessian2反序列化的简单总结/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1092,7 +1097,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-count">20</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1114,7 +1119,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-count">22</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
