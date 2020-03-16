@@ -273,6 +273,169 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/21/Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/02/21/Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC/" itemprop="url">Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-21T21:38:00+08:00">
+                2020-02-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java框架源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java框架源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7207】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7207】</a></p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>Apache Shiro is a powerful and easy-to-use Java security framework that performs authentication, authorization, cryptography, and session management. With Shiro’s easy-to-understand API, you can quickly and easily secure any application – from the smallest mobile applications to the largest web and enterprise applications.</p>
+<p>Apache Shiro是一个功能强大且易于使用的Java安全框架，它执行身份验证、授权、加密和会话管理。通过Shiro易于理解的API，您可以快速、轻松地保护任何应用程序——从最小的移动应用程序到最大的web和企业应用程序。</p>
+<p>Apache Shiro框架功能主要由以下几个部分组成：</p>
+<ul>
+<li>Authentication：身份认证-登录</li>
+<li>Authorization：授权-权限验证</li>
+<li>Session Manager：会话管理</li>
+<li>Cryptography：加密</li>
+<li>Web Support：Web 支持</li>
+<li>Caching：缓存</li>
+<li>Concurrency：多线程</li>
+<li>Testing：测试模块</li>
+<li>Run As：允许一个用户假装为另一个用户</li>
+<li>Remember Me：记住我-Session过期后再次登录无需再次登录</li>
+</ul>
+<p>一个包含如此多功能模块的框架，我一向认为其必然存在着我们发现和未发现的安全漏洞，而事实也是如此，早在Shiro 1.2.4版本前，就被暴露了Cryptography模块因为默认AES加密key导致Remember Me模块的反序列化漏洞，在其被修复（每次启动都生成一个新的AES加密key）的几年后，依然是这个地方，出现了令我万万没想到的Padding Oracle漏洞，我一直以为这样的漏洞也就CTF会出现，这个洞也警醒了我，CTF每一个知识点，在真实漏洞挖掘中，都非常重要。</p>
+<p>而本篇文章，我将会用我一贯的源码浅析方式，对Apache Shiro的核心部分代码进行讲解，并且最后会以1.2.4版本的远古洞的触发原理，对源码进行深入的讲解，接着引出最新的Padding Oracle CBC Attack，从而让我们在看完这篇文章后，能熟悉的写出Shiro exploit，并对Shiro框架的主要原理聊熟于胸，还有最重要的一点是，现在网络上很多讲解漏洞的文章，都是简单的讲解漏洞，对这些框架的使用方法以及使用场景等都缺乏描述，对新手极度不友好，</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2020/02/21/Apache Shiro源码浅析之从远古洞到最新PaddingOracle CBC/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/14/dubbo源码浅析-默认dubbo协议反序列化利用之hessian2/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -863,175 +1026,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/" itemprop="url">java反序列化利用链自动挖掘工具gadgetinspector源码浅析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-09T10:32:41+08:00">
-                2020-01-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/安全开发/" itemprop="url" rel="index">
-                    <span itemprop="name">安全开发</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7058" target="_blank" rel="noopener">https://xz.aliyun.com/t/7058</a></p>
-<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。</p>
-<p>这些gadget chain有长有短，大部分可以通过类似Intellij idea这类工具去根据slink，查找调用者，以及各种调用者的实现，一路反向的跟踪，对于一些比较简单比较短的链，通常通过人工查找也能快速的找到，但是对于一些比较长的链，人工查找会耗费巨大的精力和时间，并且不一定能挖掘到gadget chain。</p>
-<p>而有段时间，我苦恼于人工查找浪费巨大精力得不偿失时，忽然发现这样一款自动化挖掘gadget chain的工具，通过阅读分析它的源码，它给我带来了非常多的知识以及自动化挖掘的思路，其中就包括类似污点分析，如何去分析方法调用中，参数是否可以影响返回值，从而跟踪数据流动是否可以从source最终流动至slink，并影响至最终的slink点。</p>
-<p><strong>gadgetinspector</strong>：</p>
-<p><a href="https://github.com/JackOfMostTrades/gadgetinspector" target="_blank" rel="noopener">https://github.com/JackOfMostTrades/gadgetinspector</a></p>
-<p><strong>slink</strong>：</p>
-<ul>
-<li>Runtime.exec()：这种利用最为简单，但是实际生产情况基本不会遇到</li>
-<li>Method.invoke()：这种方式通过反射执行方法，需要方法以及参数可控</li>
-<li>RMI/JRMP：通过反序列化使用RMI或者JRMP链接到我们的exp服务器，通过发送序列化payload至靶机实现</li>
-<li>URL.openStream：这种利用方式需要参数可控，实现SSRF</li>
-<li>Context.lookup：这种利用方式也是需要参数可控，最终通过rmi或ldap的server实现攻击</li>
-<li>…等等</li>
-</ul>
-<p>在分析gadgetinspector源码的时候，大概会在以下几方面去讲解，并核心分析ASM部分，详细讲解如何进行污点分析：</p>
-<ol>
-<li>GadgetInspector：main方法，程序的入口，做一些配置以及数据的准备工作</li>
-<li>MethodDiscovery：类、方法数据以及父子类、超类关系数据的搜索</li>
-<li>PassthroughDiscovery：分析参数能影响到返回值的方法，并收集存储</li>
-<li>CallGraphDiscovery：记录调用者caller方法和被调用者target方法的参数关联</li>
-<li>SourceDiscovery：入口方法的搜索，只有具备某种特征的入口才会被标记收集</li>
-<li>GadgetChainDiscovery：整合以上数据，并通过判断调用链的最末端slink特征，从而判断出可利用的gadget chain</li>
-</ol>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1084,7 +1078,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-count">22</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1095,7 +1089,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-count">6</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -1106,7 +1100,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">26</span>
+                  <span class="site-state-item-count">28</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
