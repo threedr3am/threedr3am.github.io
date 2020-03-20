@@ -273,6 +273,159 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/" itemprop="url">改造gadgetinspector篇-自动化挖掘Fastjson gadget chain</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-13T22:48:41+08:00">
+                2020-01-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/安全开发/" itemprop="url" rel="index">
+                    <span itemprop="name">安全开发</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7063" target="_blank" rel="noopener">https://xz.aliyun.com/t/7063</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><h4 id="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"><a href="#《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》" class="headerlink" title="《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》"></a>《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》</h4><p>我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：</p>
+<ol>
+<li>对于运行时确定的实现，也就是多态性，没办法做到污点分析：</li>
+</ol>
+<p>gadgetinspector.PassthroughDiscovery.PassthroughDataflowMethodVisitor#visitMethodInsn<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Set&lt;Integer&gt; passthrough = passthroughDataflow.get(<span class="keyword">new</span> MethodReference.Handle(<span class="keyword">new</span> ClassReference.Handle(owner), name, desc));</span><br><span class="line"><span class="keyword">if</span> (passthrough != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (Integer passthroughDataflowArg : passthrough) &#123;</span><br><span class="line">        <span class="comment">//判断是否和同一方法体内的其它方法返回值关联，有关联则添加到栈底，等待执行return时保存</span></span><br><span class="line">        resultTaint.addAll(argTaint.get(passthroughDataflowArg));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以想到，如果调用的是一个接口interface中定义的方法，那么，在gadgetinspector对其扫描期间，并不在被扫描程序的Runtime，那么，就没办法取确定实际上的实现method。</p>
+<p>我看过有文章分析，可以通过查找该方法method的实现（接口的实现类中的方法）进行污染判断，不过，这种方式还是具有缺陷性，例如，这个接口存在着两个实现类，那么，从上述代码就可以看到，只能选择其中一个实现方法的污染结果进行判断。</p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2020/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -893,154 +1046,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/20/ARTS打卡-第二周/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="threedr3am">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="大彩笔threedr3am">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/05/20/ARTS打卡-第二周/" itemprop="url">ARTS打卡-第二周</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-20T11:04:20+08:00">
-                2019-05-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/ARTS打卡/" itemprop="url" rel="index">
-                    <span itemprop="name">ARTS打卡</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h2 id="Algorithm：每周至少做一个-leetcode-的算法题"><a href="#Algorithm：每周至少做一个-leetcode-的算法题" class="headerlink" title="Algorithm：每周至少做一个 leetcode 的算法题"></a>Algorithm：每周至少做一个 leetcode 的算法题</h2><p><a href="https://leetcode-cn.com/problems/coin-change-2/" target="_blank" rel="noopener">518. 零钱兑换 II</a></p>
-<p>该题目是一道非常经典的动态规划算法题，一种<strong>完全背包</strong>的解法，每一种零钱能凑出来的金额的方式数，都从小金额一直统计到大金额，例：要凑5块钱，有1、2、5块三种零钱，那么可以创建一个大小为比5块数值大1的数组，即new int[amount+1]，然后统计1块至5块，每一个金额，1块钱零钱能凑出来的方式数量，得到的结果为[1,1,1,1,1,1]（第一个元素默认为1，因为要凑得金额如果为0，则肯定也只有一种方式，也就是什么零钱都不用），然后第二步是统计2块钱零钱能凑出来的方式数量，循环至索引为2的时候，也就是统计金额2的凑成方式数，那么数量则为<strong>原有1块钱凑成金额2的1种方式</strong> 加上 <strong>当前2块钱凑成的1种方式</strong> 等于<strong>2种</strong>方式，这时候结果是[1,1,2,1,1,1]，然后循环至3的时候，也就是统计金额3的凑成方式数，那么数量则<strong>为原有1块钱凑成金额3的1种方式</strong> 加上 <strong>金额1凑成的方式数量</strong>（因为3-2之后得到的1，也就是说1有多少种凑成方式，那么相应的3就有多少种（和零钱2凑成金额3）的方式），这时候结果是[1,1,2,2,1,1]，周而复始，到4的时候结果是[1,1,2,2,3,1]，到5的时候结果是[1,1,2,2,3,3]，然后统计下一个零钱5块的时候，得到的结果就是[1,1,2,2,3,4]</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">change</span><span class="params">(<span class="keyword">int</span> amount, <span class="keyword">int</span>[] coins)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> bb[] = <span class="keyword">new</span> <span class="keyword">int</span>[amount+<span class="number">1</span>];</span><br><span class="line">    bb[<span class="number">0</span>] = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> coin : coins)</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i=coin;i &lt; bb.length;i++)</span><br><span class="line">            bb[i] = bb[i] + bb[i - coin];</span><br><span class="line">    <span class="keyword">return</span> bb[amount];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2019/05/20/ARTS打卡-第二周/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1093,7 +1098,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-count">23</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1115,7 +1120,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">28</span>
+                  <span class="site-state-item-count">31</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
