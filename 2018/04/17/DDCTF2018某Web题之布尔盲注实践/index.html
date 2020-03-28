@@ -87,13 +87,13 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png">
-<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png">
-<meta property="og:updated_time" content="2019-12-31T07:17:38.830Z">
+<meta property="og:image" content="http://yoursite.com/images/ddctf2018-web-writeup/ddctf_web1.1.png">
+<meta property="og:image" content="http://yoursite.com/images/ddctf2018-web-writeup/ddctf_web1.2.png">
+<meta property="og:updated_time" content="2020-03-28T11:24:58.744Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DDCTF2018某Web题之布尔盲注实践">
 <meta name="twitter:description" content="0x01 web1 数据库的秘密访问题目给出的页面，tis -&amp;gt; 非法链接，只允许来自 123.232.23.245 的访问 修改请求头，伪造请求源ip 1X-Forwarded-For:123.232.23.245 再次请求页面，可以看到已经通过，成功加载页面">
-<meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png">
+<meta name="twitter:image" content="http://yoursite.com/images/ddctf2018-web-writeup/ddctf_web1.1.png">
 
 
 
@@ -281,7 +281,7 @@
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="threedr3am">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+      <meta itemprop="image" content="/images/avator/duolaAmeng.jpg">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
@@ -370,9 +370,9 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-Forwarded-For:123.232.23.245</span><br></pre></td></tr></table></figure>
 <p>再次请求页面，可以看到已经通过，成功加载页面</p>
 <a id="more"></a>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.1.png" alt="首页"></p>
+<p><img src="/images/ddctf2018-web-writeup/ddctf_web1.1.png" alt="首页"></p>
 <p>查看源码，看到有个input的项author被设置hidden了，一般看到这种题，非常有可能是sql注入，试了下存在sql注入</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/ddctf2018-web-writeup/ddctf_web1.2.png" alt="waf"></p>
+<p><img src="/images/ddctf2018-web-writeup/ddctf_web1.2.png" alt="waf"></p>
 <p>经过尝试发现可以使用布尔盲注，最后发现使用以下这种布尔盲注的方式，可以畅通无阻，直通罗马</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">author=&apos;&apos;=((select (某返回数字的函数) from xxx)=变量)=&apos;&apos;</span><br></pre></td></tr></table></figure>
 <p>上面这种方式，基本可以绕过了and、or等等拦截，并且可以闭合前面的单引号和后面的单引号</p>
@@ -506,7 +506,7 @@
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+              <img class="site-author-image" itemprop="image" src="/images/avator/duolaAmeng.jpg" alt="threedr3am">
             
               <p class="site-author-name" itemprop="name">threedr3am</p>
               <p class="site-description motion-element" itemprop="description">菜到如此</p>

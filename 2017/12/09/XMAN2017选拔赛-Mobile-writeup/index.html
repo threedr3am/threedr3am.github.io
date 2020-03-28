@@ -87,13 +87,13 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="0x01 mobile1（First_Mobile） 提取dex 这里推荐使用Androidlxzs ，这个工具集成得很好，基本把Java层的逆向工具都集成了   Dex2jar把dex文件转jar文件">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-1.JPG">
-<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-2.JPG">
-<meta property="og:updated_time" content="2019-12-31T07:20:29.410Z">
+<meta property="og:image" content="http://yoursite.com/images/xman2017-mobile-writeup/xman2017mobile1-1.JPG">
+<meta property="og:image" content="http://yoursite.com/images/xman2017-mobile-writeup/xman2017mobile1-2.JPG">
+<meta property="og:updated_time" content="2020-03-28T11:26:32.544Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="XMAN2017选拔赛(Mobile)writeup">
 <meta name="twitter:description" content="0x01 mobile1（First_Mobile） 提取dex 这里推荐使用Androidlxzs ，这个工具集成得很好，基本把Java层的逆向工具都集成了   Dex2jar把dex文件转jar文件">
-<meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-1.JPG">
+<meta name="twitter:image" content="http://yoursite.com/images/xman2017-mobile-writeup/xman2017mobile1-1.JPG">
 
 
 
@@ -281,7 +281,7 @@
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="threedr3am">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+      <meta itemprop="image" content="/images/avator/duolaAmeng.jpg">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
@@ -374,7 +374,7 @@
 </ol>
 <a id="more"></a>
 <ol start="3">
-<li><p>jd-gui查看源码<br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-1.JPG" alt="image"><br>看程序主入口onCreate方法代码逻辑，可以清晰地看到输入内容作为参数调用encode的check方法，返回true时输出current，然后再看看encode类<br><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/xman2017-mobile-writeup/xman2017mobile1-2.JPG" alt="image"><br>此处分析check逻辑可以得到一条公式((input[i]+b[i])%61)*2-i=input[i]</p>
+<li><p>jd-gui查看源码<br><img src="/images/xman2017-mobile-writeup/xman2017mobile1-1.JPG" alt="image"><br>看程序主入口onCreate方法代码逻辑，可以清晰地看到输入内容作为参数调用encode的check方法，返回true时输出current，然后再看看encode类<br><img src="/images/xman2017-mobile-writeup/xman2017mobile1-2.JPG" alt="image"><br>此处分析check逻辑可以得到一条公式((input[i]+b[i])%61)*2-i=input[i]</p>
 </li>
 <li><p>那么我们使用爆破泡一下就行了</p>
 </li>
@@ -512,7 +512,7 @@
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+              <img class="site-author-image" itemprop="image" src="/images/avator/duolaAmeng.jpg" alt="threedr3am">
             
               <p class="site-author-name" itemprop="name">threedr3am</p>
               <p class="site-description motion-element" itemprop="description">菜到如此</p>

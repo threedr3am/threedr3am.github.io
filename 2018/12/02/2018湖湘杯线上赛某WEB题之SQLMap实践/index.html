@@ -87,12 +87,12 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl 这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/hxb2018/list.jpg">
-<meta property="og:updated_time" content="2019-12-31T07:18:09.410Z">
+<meta property="og:image" content="http://yoursite.com/images/hxb2018/list.jpg">
+<meta property="og:updated_time" content="2020-03-28T11:24:02.463Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="2018湖湘杯线上赛某WEB题之SQLMap实践">
 <meta name="twitter:description" content="这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl 这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为">
-<meta name="twitter:image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/hxb2018/list.jpg">
+<meta name="twitter:image" content="http://yoursite.com/images/hxb2018/list.jpg">
 
 
 
@@ -280,7 +280,7 @@
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="threedr3am">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg">
+      <meta itemprop="image" content="/images/avator/duolaAmeng.jpg">
     </span>
 
     <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
@@ -371,7 +371,7 @@
 <p>这道WEB题名为 <strong>WEB Code Check</strong> ，在题目开放后，大彩笔第一时间进入题目站点，表面一眼看去，看不到什么利用的地方，估尝试着登录进去，随意填写帐号密码，直接就报错了。</p>
 <p><strong>Fatal error: Call to a member function fetch_assoc() on a non-object in /usr/share/nginx/html/login.php on line 15</strong></p>
 <p>眼看并没有明显的点，点开首页查看源码，突然发现了一个奇怪的地方，首页有一个公告相关的链接，参数是一串奇怪的的id，以多年的经验猜测，此处可能存在着注入，直接拿出了御剑配了100个线程扫了一波</p>
-<p><img src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/hxb2018/list.jpg" alt="image"></p>
+<p><img src="/images/hxb2018/list.jpg" alt="image"></p>
 <p>在news目录底下发现了源码list.zip文件，下载打开，源码内容：</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">// header('content-type:text/html;charset=utf-8');</span></span><br><span class="line"><span class="comment">// require_once '../config.php';</span></span><br><span class="line"><span class="comment">//解密过程</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">decode</span><span class="params">($data)</span></span>&#123;</span><br><span class="line">    $td = mcrypt_module_open(MCRYPT_RIJNDAEL_128,<span class="string">''</span>,MCRYPT_MODE_CBC,<span class="string">''</span>);</span><br><span class="line">    mcrypt_generic_init($td,<span class="string">'ydhaqPQnexoaDuW3'</span>,<span class="string">'2018201920202021'</span>);</span><br><span class="line">    $data = mdecrypt_generic($td,base64_decode(base64_decode($data)));</span><br><span class="line">    mcrypt_generic_deinit($td);</span><br><span class="line">    mcrypt_module_close($td);</span><br><span class="line">    <span class="keyword">if</span>(substr(trim($data),<span class="number">-7</span>)!==<span class="string">'hxb2018'</span>)&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">'&lt;script&gt;window.location.href="/index.php";&lt;/script&gt;'</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> substr(trim($data),<span class="number">0</span>,strlen(trim($data))<span class="number">-7</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$id=decode(<span class="string">"b3FCRU5iOU9IemZYc1JQSkY0WG5JZz09"</span>);</span><br><span class="line"><span class="keyword">echo</span> $id;</span><br><span class="line"><span class="comment">// $sql="select id,title,content,time from notice where id=$id";</span></span><br><span class="line"><span class="comment">// $info=$link-&gt;query($sql);</span></span><br><span class="line"><span class="comment">// $arr=$info-&gt;fetch_assoc();</span></span><br><span class="line"><span class="comment">// <span class="meta">?&gt;</span></span></span><br><span class="line"><span class="comment">// &lt;!DOCTYPE html&gt;</span></span><br><span class="line"><span class="comment">// &lt;html lang="en"&gt;</span></span><br><span class="line"><span class="comment">// &lt;head&gt;</span></span><br><span class="line"><span class="comment">// &lt;meta charset="UTF-8"&gt;</span></span><br><span class="line"><span class="comment">// &lt;title&gt;X公司HR系统V1.0&lt;/title&gt;</span></span><br><span class="line"><span class="comment">// &lt;style&gt;.body&#123;width:600px;height:500px;margin:0 auto&#125;.title&#123;color:red;height:60px;line-height:60px;font-size:30px;font-weight:700;margin-top:75pt;border-bottom:2px solid red;text-align:center&#125;.content,.title&#123;margin:0 auto;width:600px;display:block&#125;.content&#123;height:30px;line-height:30px;font-size:18px;margin-top:40px;text-align:left;color:#828282&#125;&lt;/style&gt;</span></span><br><span class="line"><span class="comment">// &lt;/head&gt;</span></span><br><span class="line"><span class="comment">// &lt;body&gt;</span></span><br><span class="line"><span class="comment">// &lt;div class="body"&gt;</span></span><br><span class="line"><span class="comment">// &lt;div class="title"&gt;<span class="meta">&lt;?php</span> echo $arr['title']<span class="meta">?&gt;</span>&lt;/div&gt;</span></span><br><span class="line"><span class="comment">// &lt;div class="content"&gt;<span class="meta">&lt;?php</span> echo $arr['content']<span class="meta">?&gt;</span>&lt;/div&gt;</span></span><br><span class="line"><span class="comment">// &lt;/body&gt;</span></span><br><span class="line"><span class="comment">// &lt;/html&gt;</span></span><br></pre></td></tr></table></figure>
 <p>看源码注释部分，明显应该就是SQL注入了，但是由于公告url参数部分使用了加密（看源码可知，应该是AES加密），从源码拿到key和iv向量后，拿出了前几天git clone下来的SQLMap。</p>
@@ -511,7 +511,7 @@
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
-              <img class="site-author-image" itemprop="image" src="http://threedr3am.oss-cn-hangzhou.aliyuncs.com/avator/duolaAmeng.jpg" alt="threedr3am">
+              <img class="site-author-image" itemprop="image" src="/images/avator/duolaAmeng.jpg" alt="threedr3am">
             
               <p class="site-author-name" itemprop="name">threedr3am</p>
               <p class="site-description motion-element" itemprop="description">菜到如此</p>
