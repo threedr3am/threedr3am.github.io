@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7005 0x01 介绍https://github.com/baidu/openrasp IntroductionUnlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the app">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-01-29T03:01:59.920Z">
+<meta property="og:updated_time" content="2020-04-04T14:30:24.258Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="OpenRASP核心源码浅析">
 <meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7005 0x01 介绍https://github.com/baidu/openrasp IntroductionUnlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the app">
@@ -365,6 +365,7 @@
         <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7005" target="_blank" rel="noopener">https://xz.aliyun.com/t/7005</a></p>
 <h3 id="0x01-介绍"><a href="#0x01-介绍" class="headerlink" title="0x01 介绍"></a>0x01 介绍</h3><p><a href="https://github.com/baidu/openrasp" target="_blank" rel="noopener">https://github.com/baidu/openrasp</a></p>
 <h4 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h4><p>Unlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the application server by instrumentation. It can monitor various events including database queries, file operations and network requests etc.</p>
+<a id="more"></a>
 <p>When an attack happens, WAF matches the malicious request with its signatures and blocks it. OpenRASP takes a different approach by hooking sensitive functions and examines/blocks the inputs fed into them. As a result, this examination is context-aware and in-place. It brings in the following benefits:</p>
 <ol>
 <li>Only successful attacks can trigger alarms, resulting in lower false positive and higher detection rate;</li>
@@ -381,7 +382,6 @@
 <ol>
 <li>因为侵入到代码层面，导致必然会造成一定的性能损耗，并且一个不合格的rasp更容易影响到业务代码</li>
 </ol>
-<a id="more"></a>
 <h4 id="重点阅读部分"><a href="#重点阅读部分" class="headerlink" title="重点阅读部分"></a>重点阅读部分</h4><p>从github clone下来项目之后，我们可以看到具体的目录大致构成是这样的：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LICENSE           build-cloud.sh    build-php7.sh     docker            plugins           rasp-vue          travis</span><br><span class="line">README.md         build-java.sh     cloud             openrasp-v8       rasp-2019-12-12   readme-zh_CN.md</span><br><span class="line">agent             build-php5.sh     contributors.md   package-lock.json rasp-install      siem</span><br></pre></td></tr></table></figure>
 <p>而我主要关心的是：</p>
@@ -660,6 +660,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

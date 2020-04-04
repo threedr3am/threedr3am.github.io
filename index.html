@@ -365,11 +365,8 @@
 
       
         
-          <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7388】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7388】</a></p>
+          <p>文章转载自先知社区： <a href="https://xz.aliyun.com/t/7388" target="_blank" rel="noopener">https://xz.aliyun.com/t/7388</a></p>
 <h2 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h2><p>前段时间，看到安全客有观星实验室的师傅写了篇<a href="https://www.anquanke.com/post/id/198886" target="_blank" rel="noopener">《基于内存 Webshell 的无文件攻击技术研究》</a>的文章，他的办法是动态的注册一个自定义的Controller，从而实现一个内存级的Webshell。文章也针对Spring不同的版本做了不同的实践，达到通杀Spring。虽然看起来达到通杀Spring了，但是对于一些非Spring的web框架，是不是就没办法了？这算是其局限吧。</p>
-<p>而，最近一段时间，相继看到多个师傅写了一些关于RCE回显的文章，但他们的方法，大多数也是存在着一些局限，当然，我这篇文章要讲的也是局限在tomcat下，不过，我会集各位师傅回显的思路，最后做到tomcat下的通杀Webshell。</p>
-<p><a href="https://www.00theway.org/2020/01/17/java-god-s-eye/" target="_blank" rel="noopener">《通杀漏洞利用回显方法-linux平台》</a>和<a href="https://xz.aliyun.com/t/7307" target="_blank" rel="noopener">《linux下java反序列化通杀回显方法的低配版实现》</a>这两篇文章，都描述了在linux环境下，通过文件描述符”/proc/self/fd/i”获取到网络连接，从而输出数据实现回显，这种方式，个人也不太喜欢，毕竟正如作者说的 “我这种低配版指令ifconfig后效果实现效果如下，服务端会直接返回数据并断掉连接，所以没有了后面http响应包，requests库无法识别返回的内容报错。”，而且局限于linux系统下。</p>
-<p>最近kingkk师傅的一篇文章<a href="https://xz.aliyun.com/t/7348" target="_blank" rel="noopener">《Tomcat中一种半通用回显方法》</a>，让我重新拾起了tomcat通杀Webshell的想法，他的方法跨平台，只要是tomcat就能做到回显，也不局限于spring版本。不过，还是有点小局限，就是类似shiro这种，filter chain处理逻辑的地方出现的漏洞点，没办法获取到Request和Response对象进行回显，因为kingkk师傅所利用的代码点恰恰在其之后。不过，这里还是非常感谢kingkk师傅的研究成果。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2020/03/20/基于tomcat的内存Webshell无文件攻击技术/#more" rel="contents">
@@ -515,7 +512,8 @@
 
       
         
-          <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…</p>
+          <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7354" target="_blank" rel="noopener">https://xz.aliyun.com/t/7354</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2020/03/16/Dubbo反序列化RCE利用之新拓展面 - Dubbo Rouge/#more" rel="contents">
@@ -807,10 +805,8 @@
 
       
         
-          <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7264】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7264】</a></p>
+          <p>文章转载自先知社区： <a href="https://xz.aliyun.com/t/7264" target="_blank" rel="noopener">https://xz.aliyun.com/t/7264</a></p>
 <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间，发了一篇文章<a href="https://xz.aliyun.com/t/7079" target="_blank" rel="noopener">《基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI》</a>，以概念和例子，粗略的讲解了什么是RMI，什么是JRMP、以及什么是JNDI，本来，我的初衷是为了照顾初学者，还有没多少Java基础的学习者，让他们能初步了解RMI\JRMP\JNDI，而不被很多讲得不清不楚的文章搞得迷迷糊糊，浪费了大量的时间。</p>
-<p>但是，最近我发现，虽说文章大部分人也看懂了，而有小部分准备深入研究Java安全的人，对于稍微深入一点的部分会有点迷惑，因此，我准备新开这篇文章，以简单的源码浅析，去把它搞清楚。</p>
-<p>在阅读这篇文章之前，我希望你能简单的看看这篇文章<a href="https://xz.aliyun.com/t/7079" target="_blank" rel="noopener">《基于Java反序列化RCE - 搞懂RMI、JRMP、JNDI》</a>，先搞清楚什么是RMI、JRMP、JNDI，以及什么是RMI Registry等等概念。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2020/03/03/搞懂RMI、JRMP、JNDI-终结篇/#more" rel="contents">
@@ -956,15 +952,8 @@
 
       
         
-          <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238】</a></p>
+          <p>文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238</a></p>
 <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间在安全客发了篇Dubbo的反序列化利用文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。</p>
-<p>大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构，或对业务进行划分，做成分布式，那么分布式环境下，多个系统间的协作通讯一般使用RPC、HTTP、MQ等，而我相信大部分中小公司、阿里系公司、阿里输送人才的公司..一般都使用到了Dubbo，据我对Dubbo源码的微末了解，其Dubbo协议默认的Hessian2反序列化，并没有什么所谓的安全保护机制（有个瓜，ruilin湿敷一堆gadget，官方不给CVE）。</p>
-<p>在我写那篇文章前，我发现国内貌似也没人写过Dubbo相关的漏洞利用，这几天，应该很多用到Dubbo的公司，都在排查其安全受影响情况，因此，我打算写这篇文章，讲讲如何去对Dubbo进行反序列化安全加固，一般情况下，大概有这几种安全加固方案：</p>
-<ol>
-<li>修改反序列化类型（不推荐，就算你改成原生Java、Fastjson等等反序列化，依然存在问题，与其不熟悉的情况下对dubbo进行修改可能会导致业务受损风险，还不如不改）</li>
-<li>RPC改成HTTP API（业务开发量太大了）</li>
-<li>加固Hessian2（推荐，也是这篇文章主要讲的）</li>
-</ol>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/#more" rel="contents">
@@ -1096,6 +1085,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

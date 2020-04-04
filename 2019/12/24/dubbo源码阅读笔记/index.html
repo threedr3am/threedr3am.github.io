@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy 123org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactoryo">
+<meta name="description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy">
 <meta name="keywords" content="dubbo">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dubbo源码阅读笔记">
 <meta property="og:url" content="http://yoursite.com/2019/12/24/dubbo源码阅读笔记/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy 123org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactoryo">
+<meta property="og:description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-12-31T07:19:32.070Z">
+<meta property="og:updated_time" content="2020-04-04T14:23:30.204Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="dubbo源码阅读笔记">
-<meta name="twitter:description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy 123org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactoryo">
+<meta name="twitter:description" content="前言不得不说一下自己对dubbo源码的感想：著名的框架，其内在架构设计都非常漂亮并具有工程性 从调试的角度去看待源码 代理工厂  无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy">
 
 
 
@@ -367,11 +367,11 @@
 <li>代理工厂</li>
 </ul>
 <p>无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy</p>
+<a id="more"></a>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactory</span><br><span class="line"></span><br><span class="line">org.apache.dubbo.rpc.proxy.jdk.JdkProxyFactory</span><br></pre></td></tr></table></figure>
 <p>其中它们都具有<strong>getProxy、getInvoker</strong>方法实现</p>
 <p><strong>getProxy</strong>：主要用于服务消费者对interface进行代理，生成实例提供程序调用。而InvokerInvocationHandler是实际调用对象，其对上层程序代码隐藏了远程调用的细节<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public &lt;T&gt; T getProxy(Invoker&lt;T&gt; invoker, Class&lt;?&gt;[] interfaces) &#123;</span><br><span class="line">    return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces, new InvokerInvocationHandler(invoker));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p><strong>getInvoker</strong>：主要用于服务提供者对实际被调用实例进行代理包装，以实现实际对象方法被调用后，进行结果、异常的CompletableFuture的封装</p>
-<a id="more"></a>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public &lt;T&gt; Invoker&lt;T&gt; getInvoker(T proxy, Class&lt;T&gt; type, URL url) &#123;</span><br><span class="line">    return new AbstractProxyInvoker&lt;T&gt;(proxy, type, url) &#123;</span><br><span class="line">        @Override</span><br><span class="line">        protected Object doInvoke(T proxy, String methodName,</span><br><span class="line">                                  Class&lt;?&gt;[] parameterTypes,</span><br><span class="line">                                  Object[] arguments) throws Throwable &#123;</span><br><span class="line">            Method method = proxy.getClass().getMethod(methodName, parameterTypes);</span><br><span class="line">            return method.invoke(proxy, arguments);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>InvokerInvocationHandler：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">    String methodName = method.getName();</span><br><span class="line">    Class&lt;?&gt;[] parameterTypes = method.getParameterTypes();</span><br><span class="line">    if (method.getDeclaringClass() == Object.class) &#123;</span><br><span class="line">        return method.invoke(invoker, args);</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;toString&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 0) &#123;</span><br><span class="line">        return invoker.toString();</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;hashCode&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 0) &#123;</span><br><span class="line">        return invoker.hashCode();</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;equals&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 1) &#123;</span><br><span class="line">        return invoker.equals(args[0]);</span><br><span class="line">    &#125;</span><br><span class="line">    if (&quot;$destroy&quot;.equals(methodName) &amp;&amp; parameterTypes.length == 0) &#123;</span><br><span class="line">        invoker.destroy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    RpcInvocation rpcInvocation = new RpcInvocation(method, invoker.getInterface().getName(), args);</span><br><span class="line">    rpcInvocation.setTargetServiceUniqueName(invoker.getUrl().getServiceKey());</span><br><span class="line"></span><br><span class="line">    return invoker.invoke(rpcInvocation).recreate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -580,6 +580,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

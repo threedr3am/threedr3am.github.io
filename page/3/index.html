@@ -370,9 +370,6 @@
 <ol>
 <li>对于运行时确定的实现，也就是多态性，没办法做到污点分析：</li>
 </ol>
-<p>gadgetinspector.PassthroughDiscovery.PassthroughDataflowMethodVisitor#visitMethodInsn<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Set&lt;Integer&gt; passthrough = passthroughDataflow.get(<span class="keyword">new</span> MethodReference.Handle(<span class="keyword">new</span> ClassReference.Handle(owner), name, desc));</span><br><span class="line"><span class="keyword">if</span> (passthrough != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (Integer passthroughDataflowArg : passthrough) &#123;</span><br><span class="line">        <span class="comment">//判断是否和同一方法体内的其它方法返回值关联，有关联则添加到栈底，等待执行return时保存</span></span><br><span class="line">        resultTaint.addAll(argTaint.get(passthroughDataflowArg));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>可以想到，如果调用的是一个接口interface中定义的方法，那么，在gadgetinspector对其扫描期间，并不在被扫描程序的Runtime，那么，就没办法取确定实际上的实现method。</p>
-<p>我看过有文章分析，可以通过查找该方法method的实现（接口的实现类中的方法）进行污染判断，不过，这种方式还是具有缺陷性，例如，这个接口存在着两个实现类，那么，从上述代码就可以看到，只能选择其中一个实现方法的污染结果进行判断。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2020/01/13/改造gadgetinspector篇-自动化挖掘Fastjson gadget chain/#more" rel="contents">
@@ -520,28 +517,6 @@
         
           <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7058" target="_blank" rel="noopener">https://xz.aliyun.com/t/7058</a></p>
 <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。</p>
-<p>这些gadget chain有长有短，大部分可以通过类似Intellij idea这类工具去根据slink，查找调用者，以及各种调用者的实现，一路反向的跟踪，对于一些比较简单比较短的链，通常通过人工查找也能快速的找到，但是对于一些比较长的链，人工查找会耗费巨大的精力和时间，并且不一定能挖掘到gadget chain。</p>
-<p>而有段时间，我苦恼于人工查找浪费巨大精力得不偿失时，忽然发现这样一款自动化挖掘gadget chain的工具，通过阅读分析它的源码，它给我带来了非常多的知识以及自动化挖掘的思路，其中就包括类似污点分析，如何去分析方法调用中，参数是否可以影响返回值，从而跟踪数据流动是否可以从source最终流动至slink，并影响至最终的slink点。</p>
-<p><strong>gadgetinspector</strong>：</p>
-<p><a href="https://github.com/JackOfMostTrades/gadgetinspector" target="_blank" rel="noopener">https://github.com/JackOfMostTrades/gadgetinspector</a></p>
-<p><strong>slink</strong>：</p>
-<ul>
-<li>Runtime.exec()：这种利用最为简单，但是实际生产情况基本不会遇到</li>
-<li>Method.invoke()：这种方式通过反射执行方法，需要方法以及参数可控</li>
-<li>RMI/JRMP：通过反序列化使用RMI或者JRMP链接到我们的exp服务器，通过发送序列化payload至靶机实现</li>
-<li>URL.openStream：这种利用方式需要参数可控，实现SSRF</li>
-<li>Context.lookup：这种利用方式也是需要参数可控，最终通过rmi或ldap的server实现攻击</li>
-<li>…等等</li>
-</ul>
-<p>在分析gadgetinspector源码的时候，大概会在以下几方面去讲解，并核心分析ASM部分，详细讲解如何进行污点分析：</p>
-<ol>
-<li>GadgetInspector：main方法，程序的入口，做一些配置以及数据的准备工作</li>
-<li>MethodDiscovery：类、方法数据以及父子类、超类关系数据的搜索</li>
-<li>PassthroughDiscovery：分析参数能影响到返回值的方法，并收集存储</li>
-<li>CallGraphDiscovery：记录调用者caller方法和被调用者target方法的参数关联</li>
-<li>SourceDiscovery：入口方法的搜索，只有具备某种特征的入口才会被标记收集</li>
-<li>GadgetChainDiscovery：整合以上数据，并通过判断调用链的最末端slink特征，从而判断出可利用的gadget chain</li>
-</ol>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/#more" rel="contents">
@@ -690,22 +665,6 @@
           <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7005" target="_blank" rel="noopener">https://xz.aliyun.com/t/7005</a></p>
 <h3 id="0x01-介绍"><a href="#0x01-介绍" class="headerlink" title="0x01 介绍"></a>0x01 介绍</h3><p><a href="https://github.com/baidu/openrasp" target="_blank" rel="noopener">https://github.com/baidu/openrasp</a></p>
 <h4 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h4><p>Unlike perimeter control solutions like WAF, OpenRASP directly integrates its protection engine into the application server by instrumentation. It can monitor various events including database queries, file operations and network requests etc.</p>
-<p>When an attack happens, WAF matches the malicious request with its signatures and blocks it. OpenRASP takes a different approach by hooking sensitive functions and examines/blocks the inputs fed into them. As a result, this examination is context-aware and in-place. It brings in the following benefits:</p>
-<ol>
-<li>Only successful attacks can trigger alarms, resulting in lower false positive and higher detection rate;</li>
-<li>Detailed stack trace is logged, which makes the forensic analysis easier;</li>
-<li>Insusceptible to malformed protocol.</li>
-</ol>
-<h4 id="我的理解"><a href="#我的理解" class="headerlink" title="我的理解"></a>我的理解</h4><p>在我阅读了OpenRASP的源码后，再次解读官方对其的介绍，我认为OpenRASP就是一个不同于WAF，它是通过JavaAgent，然后利用Instrumentation在class加载时，通过javassist的方式hook目标class的method，在其method插桩，以进行一系列的安全基准测试或运行时的安全检查，它相对于WAF来说，具有非常大的优势，但这是相对的，它的优点的存在恰恰也造成了一定的缺点。</p>
-<p>优点：</p>
-<ol>
-<li>WAF依靠特征检测攻击，但会造成一定的误报率，而OpenRASP不一样，必须是成功的攻击才会触发报警</li>
-<li>OpenRASP插桩到代码层面，可以记录详细的栈堆跟踪信息</li>
-</ol>
-<p>缺点：</p>
-<ol>
-<li>因为侵入到代码层面，导致必然会造成一定的性能损耗，并且一个不合格的rasp更容易影响到业务代码</li>
-</ol>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2019/12/31/OpenRASP核心源码浅析/#more" rel="contents">
@@ -1002,10 +961,6 @@
 <li>代理工厂</li>
 </ul>
 <p>无论是服务消费者还是服务提供者，都得对调用服务的interface进行proxy，代理工厂具有两个，分别为javassist和jdk proxy</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">org.apache.dubbo.rpc.proxy.javassist.JavassistProxyFactory</span><br><span class="line"></span><br><span class="line">org.apache.dubbo.rpc.proxy.jdk.JdkProxyFactory</span><br></pre></td></tr></table></figure>
-<p>其中它们都具有<strong>getProxy、getInvoker</strong>方法实现</p>
-<p><strong>getProxy</strong>：主要用于服务消费者对interface进行代理，生成实例提供程序调用。而InvokerInvocationHandler是实际调用对象，其对上层程序代码隐藏了远程调用的细节<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public &lt;T&gt; T getProxy(Invoker&lt;T&gt; invoker, Class&lt;?&gt;[] interfaces) &#123;</span><br><span class="line">    return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces, new InvokerInvocationHandler(invoker));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><strong>getInvoker</strong>：主要用于服务提供者对实际被调用实例进行代理包装，以实现实际对象方法被调用后，进行结果、异常的CompletableFuture的封装</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2019/12/24/dubbo源码阅读笔记/#more" rel="contents">
@@ -1137,6 +1092,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

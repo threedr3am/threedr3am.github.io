@@ -79,13 +79,13 @@
 
 
 
-<meta name="description" content="众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。 说起Struts2的安全问题，到目前为止，已经被爆出两位数以上的RCE（远程命令执行）漏洞了。而很多国企、政府、小企业部署的web系统，一般出于缺乏技术研发人员，很多项目都是外包">
+<meta name="description" content="众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。">
 <meta name="keywords" content="struts2">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Struts2 RCE漏洞分析系列 - 0x01基础篇">
 <meta property="og:url" content="http://yoursite.com/2018/12/12/Struts2 RCE漏洞分析系列 - 0x01基础篇/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。 说起Struts2的安全问题，到目前为止，已经被爆出两位数以上的RCE（远程命令执行）漏洞了。而很多国企、政府、小企业部署的web系统，一般出于缺乏技术研发人员，很多项目都是外包">
+<meta property="og:description" content="众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/struts2/struts-web-xml.png">
 <meta property="og:image" content="http://yoursite.com/images/struts2/struts-dofilter.png">
@@ -107,10 +107,10 @@
 <meta property="og:image" content="http://yoursite.com/images/struts2/struts-ognlutil3.png">
 <meta property="og:image" content="http://yoursite.com/images/struts2/struts-ognlutil4.png">
 <meta property="og:image" content="http://yoursite.com/images/struts2/struts-ognlutil5.png">
-<meta property="og:updated_time" content="2020-03-28T11:26:15.515Z">
+<meta property="og:updated_time" content="2020-04-04T14:31:52.048Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Struts2 RCE漏洞分析系列 - 0x01基础篇">
-<meta name="twitter:description" content="众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。 说起Struts2的安全问题，到目前为止，已经被爆出两位数以上的RCE（远程命令执行）漏洞了。而很多国企、政府、小企业部署的web系统，一般出于缺乏技术研发人员，很多项目都是外包">
+<meta name="twitter:description" content="众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。">
 <meta name="twitter:image" content="http://yoursite.com/images/struts2/struts-web-xml.png">
 
 
@@ -384,8 +384,8 @@
 
       
         <p>众所周知，Java Web中使用最广泛的两个mvc框架，一是Spring MVC，一是Struts2。<br>但Struts由于安全性、性能、内存消耗等短板，已经越来越少新项目使用它了，更多的开发人员钟爱于Spring MVC。</p>
-<p>说起Struts2的安全问题，到目前为止，已经被爆出两位数以上的RCE（远程命令执行）漏洞了。而很多国企、政府、小企业部署的web系统，一般出于缺乏技术研发人员，很多项目都是外包到外包企业，因此大量的旧项目采用了Struts2框架，并由于缺少资金投入，年久失修，经常性一个漏洞被爆出后，三五个月都没有去修复，使得黑客乘虚而入，盗取大量用户信息。</p>
 <a id="more"></a>
+<p>说起Struts2的安全问题，到目前为止，已经被爆出两位数以上的RCE（远程命令执行）漏洞了。而很多国企、政府、小企业部署的web系统，一般出于缺乏技术研发人员，很多项目都是外包到外包企业，因此大量的旧项目采用了Struts2框架，并由于缺少资金投入，年久失修，经常性一个漏洞被爆出后，三五个月都没有去修复，使得黑客乘虚而入，盗取大量用户信息。</p>
 <p>目前为止已经公布的Struts2 RCE漏洞以及影响版本列表：</p>
 <h4 id="Struts2-S2-001"><a href="#Struts2-S2-001" class="headerlink" title="Struts2 S2-001"></a>Struts2 S2-001</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">影响版本：2.0.0 - 2.0.8</span><br><span class="line">具体详情：https://struts.apache.org/docs/s2-001.html</span><br></pre></td></tr></table></figure>
 <h4 id="Struts2-S2-005"><a href="#Struts2-S2-005" class="headerlink" title="Struts2 S2-005"></a>Struts2 S2-005</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">影响版本: 2.0.0 - 2.1.8.1</span><br><span class="line">漏洞详情: http://struts.apache.org/docs/s2-005.html</span><br></pre></td></tr></table></figure>
@@ -615,6 +615,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

@@ -79,19 +79,19 @@
 
 
 
-<meta name="description" content="这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl 这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为">
+<meta name="description" content="这次线上赛中，web题目难度偏低，很好做，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl">
 <meta name="keywords" content="writeup">
 <meta property="og:type" content="article">
 <meta property="og:title" content="2018湖湘杯线上赛某WEB题之SQLMap实践">
 <meta property="og:url" content="http://yoursite.com/2018/12/02/2018湖湘杯线上赛某WEB题之SQLMap实践/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl 这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为">
+<meta property="og:description" content="这次线上赛中，web题目难度偏低，很好做，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/hxb2018/list.jpg">
-<meta property="og:updated_time" content="2020-03-28T11:24:02.463Z">
+<meta property="og:updated_time" content="2020-04-04T14:21:31.821Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="2018湖湘杯线上赛某WEB题之SQLMap实践">
-<meta name="twitter:description" content="这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl 这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为">
+<meta name="twitter:description" content="这次线上赛中，web题目难度偏低，很好做，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333 赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl">
 <meta name="twitter:image" content="http://yoursite.com/images/hxb2018/list.jpg">
 
 
@@ -364,10 +364,10 @@
       
 
       
-        <p>这次线上赛中，web题目难度偏低，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333</p>
+        <p>这次线上赛中，web题目难度偏低，很好做，但体验极差，不知出题人是如何思考的，居然题目直接部署，docker都不起，最尴尬的还是，跑web服务的居然是root用户，23333</p>
 <p>赛后听说某大佬已经打到内网，官方wp都拿到了。。。xswl</p>
-<p>这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为零，所以在用SQLMap解题时，还是极为艰难地查了一翻资料。</p>
 <a id="more"></a>
+<p>这次比赛中，某道WEB题存在着SQL注入，并且SQLMap一把梭，对于我等新手来讲，体验极爽，充分提高了日题积极性。但因为以前没怎么用过SQLMap，对SQLMap的理解为零，所以在用SQLMap解题时，还是极为艰难地查了一翻资料。</p>
 <p>这道WEB题名为 <strong>WEB Code Check</strong> ，在题目开放后，大彩笔第一时间进入题目站点，表面一眼看去，看不到什么利用的地方，估尝试着登录进去，随意填写帐号密码，直接就报错了。</p>
 <p><strong>Fatal error: Call to a member function fetch_assoc() on a non-object in /usr/share/nginx/html/login.php on line 15</strong></p>
 <p>眼看并没有明显的点，点开首页查看源码，突然发现了一个奇怪的地方，首页有一个公告相关的链接，参数是一串奇怪的的id，以多年的经验猜测，此处可能存在着注入，直接拿出了御剑配了100个线程扫了一波</p>
@@ -563,6 +563,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

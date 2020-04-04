@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Java反序列化,RCE,安全加固、修复,dubbo,hessian,">
+  <meta name="keywords" content="Java反序列化,RCE,dubbo,安全加固、修复,hessian,">
 
 
 
@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7238】 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。 大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构">
-<meta name="keywords" content="Java反序列化,RCE,安全加固、修复,dubbo,hessian">
+<meta name="description" content="文章转载自先知社区： https://xz.aliyun.com/t/7238 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
+<meta name="keywords" content="Java反序列化,RCE,dubbo,安全加固、修复,hessian">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dubbo反序列化问题-Hessian2安全加固和修复">
 <meta property="og:url" content="http://yoursite.com/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7238】 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。 大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构">
+<meta property="og:description" content="文章转载自先知社区： https://xz.aliyun.com/t/7238 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-02-26T07:56:26.029Z">
+<meta property="og:updated_time" content="2020-04-04T14:21:46.641Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="dubbo反序列化问题-Hessian2安全加固和修复">
-<meta name="twitter:description" content="【文章转载自先知社区： https://xz.aliyun.com/t/7238】 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。 大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构">
+<meta name="twitter:description" content="文章转载自先知社区： https://xz.aliyun.com/t/7238 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
 
 
 
@@ -362,8 +362,9 @@
       
 
       
-        <p>【文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238】" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238】</a></p>
+        <p>文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238</a></p>
 <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间在安全客发了篇Dubbo的反序列化利用文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。</p>
+<a id="more"></a>
 <p>大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构，或对业务进行划分，做成分布式，那么分布式环境下，多个系统间的协作通讯一般使用RPC、HTTP、MQ等，而我相信大部分中小公司、阿里系公司、阿里输送人才的公司..一般都使用到了Dubbo，据我对Dubbo源码的微末了解，其Dubbo协议默认的Hessian2反序列化，并没有什么所谓的安全保护机制（有个瓜，ruilin湿敷一堆gadget，官方不给CVE）。</p>
 <p>在我写那篇文章前，我发现国内貌似也没人写过Dubbo相关的漏洞利用，这几天，应该很多用到Dubbo的公司，都在排查其安全受影响情况，因此，我打算写这篇文章，讲讲如何去对Dubbo进行反序列化安全加固，一般情况下，大概有这几种安全加固方案：</p>
 <ol>
@@ -371,7 +372,6 @@
 <li>RPC改成HTTP API（业务开发量太大了）</li>
 <li>加固Hessian2（推荐，也是这篇文章主要讲的）</li>
 </ol>
-<a id="more"></a>
 <h3 id="0x02-Java-SPI和Spring-SPI"><a href="#0x02-Java-SPI和Spring-SPI" class="headerlink" title="0x02 Java SPI和Spring SPI"></a>0x02 Java SPI和Spring SPI</h3><p>SPI全称Service Provider Interface，是Java提供的一套用来被第三方实现或者扩展的API，它可以用来启用框架扩展和替换组件。</p>
 <p>经常使用Java语言开发一些框架的人都清楚，SPI的机制带来了很大的便利，使用SPI，我们就可以开发多种实现，分别打包到不同的jar包中去，用户根据所需选择实现的jar包，我们得核心程序就能根据用户引入的jar包，使用SPI去加载其实现。也就是说，如果我提供一个序列化工具，然后把每种序列化实现都分别打包到不同的jar包中去，用户就可以根据引入的jar包选择序列化实现。</p>
 <h4 id="Java-SPI"><a href="#Java-SPI" class="headerlink" title="Java SPI"></a>Java SPI</h4><p>下面以一个例子讲解Java SPI使用原理：</p>
@@ -552,9 +552,9 @@ public &lt;T&gt; T readObject(Class&lt;T&gt; cls, Type type) throws IOException,
           
             <a href="/tags/RCE/" rel="tag"># RCE</a>
           
-            <a href="/tags/安全加固、修复/" rel="tag"># 安全加固、修复</a>
-          
             <a href="/tags/dubbo/" rel="tag"># dubbo</a>
+          
+            <a href="/tags/安全加固、修复/" rel="tag"># 安全加固、修复</a>
           
             <a href="/tags/hessian/" rel="tag"># hessian</a>
           
@@ -699,6 +699,12 @@ public &lt;T&gt; T readObject(Class&lt;T&gt; cls, Type type) throws IOException,
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

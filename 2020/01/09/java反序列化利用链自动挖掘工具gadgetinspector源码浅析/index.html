@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="文章转载自先知社区：https://xz.aliyun.com/t/7058 0x01 前言我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。 这些gadg">
+<meta name="description" content="文章转载自先知社区：https://xz.aliyun.com/t/7058 0x01 前言我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。">
 <meta name="keywords" content="自动化工具,gadgetinspector,java反序列化">
 <meta property="og:type" content="article">
 <meta property="og:title" content="java反序列化利用链自动挖掘工具gadgetinspector源码浅析">
 <meta property="og:url" content="http://yoursite.com/2020/01/09/java反序列化利用链自动挖掘工具gadgetinspector源码浅析/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7058 0x01 前言我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。 这些gadg">
+<meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7058 0x01 前言我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-01-29T03:02:31.299Z">
+<meta property="og:updated_time" content="2020-04-04T14:27:34.586Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="java反序列化利用链自动挖掘工具gadgetinspector源码浅析">
-<meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7058 0x01 前言我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。 这些gadg">
+<meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7058 0x01 前言我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。">
 
 
 
@@ -364,6 +364,7 @@
       
         <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7058" target="_blank" rel="noopener">https://xz.aliyun.com/t/7058</a></p>
 <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>我们在使用ysoserial的时候，经常会用它生成序列化的payload，用于攻击具有反序列化功能的endpoint，而这些payload大部分都是比较长的一条执行链，在反序列化期间，由执行程序执行攻击者可控的source，然后通过依赖中存在的执行链，最终触发至slink，从而达到攻击的效果。</p>
+<a id="more"></a>
 <p>这些gadget chain有长有短，大部分可以通过类似Intellij idea这类工具去根据slink，查找调用者，以及各种调用者的实现，一路反向的跟踪，对于一些比较简单比较短的链，通常通过人工查找也能快速的找到，但是对于一些比较长的链，人工查找会耗费巨大的精力和时间，并且不一定能挖掘到gadget chain。</p>
 <p>而有段时间，我苦恼于人工查找浪费巨大精力得不偿失时，忽然发现这样一款自动化挖掘gadget chain的工具，通过阅读分析它的源码，它给我带来了非常多的知识以及自动化挖掘的思路，其中就包括类似污点分析，如何去分析方法调用中，参数是否可以影响返回值，从而跟踪数据流动是否可以从source最终流动至slink，并影响至最终的slink点。</p>
 <p><strong>gadgetinspector</strong>：</p>
@@ -386,7 +387,6 @@
 <li>SourceDiscovery：入口方法的搜索，只有具备某种特征的入口才会被标记收集</li>
 <li>GadgetChainDiscovery：整合以上数据，并通过判断调用链的最末端slink特征，从而判断出可利用的gadget chain</li>
 </ol>
-<a id="more"></a>
 <h3 id="0x02-GadgetInspector：入口代码的分析"><a href="#0x02-GadgetInspector：入口代码的分析" class="headerlink" title="0x02 GadgetInspector：入口代码的分析"></a>0x02 GadgetInspector：入口代码的分析</h3><p>程序启动的入口，在该方法中，会做一些数据的准备工作，并一步步调用MethodDiscovery、PassthroughDiscovery、CallGraphDiscovery、SourceDiscovery、GadgetChainDiscovery，最终实现gadget chain的挖掘</p>
 <p>参数合法判断：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (args.length == 0) &#123;</span><br><span class="line">    printUsage();</span><br><span class="line">    System.exit(1);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>在程序的入口处，会先判断启动参数是否为空，若是空，则直接退出，因为程序对挖掘的gadget chain会有类型的区分，以及class所在位置的配置</p>
@@ -857,6 +857,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

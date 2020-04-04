@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7063 0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-01-29T03:03:35.526Z">
+<meta property="og:updated_time" content="2020-04-04T14:32:07.359Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="改造gadgetinspector篇-自动化挖掘Fastjson gadget chain">
 <meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7063 0x01 前言《java反序列化利用链自动挖掘工具gadgetinspector源码浅析》我的上一篇文章，详细地讲述了gadgetinspector挖掘java反序列化利用链的原理，在明白了gadgetinspector的原理细节后，我们其实会发现它还存在着一部分的缺点：  对于运行时确定的实现，也就是多态性，没办法做到">
@@ -367,10 +367,10 @@
 <ol>
 <li>对于运行时确定的实现，也就是多态性，没办法做到污点分析：</li>
 </ol>
+<a id="more"></a>
 <p>gadgetinspector.PassthroughDiscovery.PassthroughDataflowMethodVisitor#visitMethodInsn<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Set&lt;Integer&gt; passthrough = passthroughDataflow.get(<span class="keyword">new</span> MethodReference.Handle(<span class="keyword">new</span> ClassReference.Handle(owner), name, desc));</span><br><span class="line"><span class="keyword">if</span> (passthrough != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (Integer passthroughDataflowArg : passthrough) &#123;</span><br><span class="line">        <span class="comment">//判断是否和同一方法体内的其它方法返回值关联，有关联则添加到栈底，等待执行return时保存</span></span><br><span class="line">        resultTaint.addAll(argTaint.get(passthroughDataflowArg));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>可以想到，如果调用的是一个接口interface中定义的方法，那么，在gadgetinspector对其扫描期间，并不在被扫描程序的Runtime，那么，就没办法取确定实际上的实现method。</p>
 <p>我看过有文章分析，可以通过查找该方法method的实现（接口的实现类中的方法）进行污染判断，不过，这种方式还是具有缺陷性，例如，这个接口存在着两个实现类，那么，从上述代码就可以看到，只能选择其中一个实现方法的污染结果进行判断。</p>
-<a id="more"></a>
 <ol start="2">
 <li>调用链搜索不完整，还是因为多态性的原因，做不到完整的调用链搜索：</li>
 </ol>
@@ -642,6 +642,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>

@@ -79,19 +79,19 @@
 
 
 
-<meta name="description" content="0x01 前言前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章《dubbo源码浅析：默认反序列化利用之hessian2》，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…">
+<meta name="description" content="文章转载自先知社区：https://xz.aliyun.com/t/7354 0x01 前言前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章《dubbo源码浅析：默认反序列化利用之hessian2》，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…">
 <meta name="keywords" content="Java反序列化,RCE,Dubbo,Dubbo Rouge,0day">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Dubbo反序列化RCE利用之新拓展面 - Dubbo Rouge">
 <meta property="og:url" content="http://yoursite.com/2020/03/16/Dubbo反序列化RCE利用之新拓展面 - Dubbo Rouge/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="0x01 前言前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章《dubbo源码浅析：默认反序列化利用之hessian2》，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…">
+<meta property="og:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7354 0x01 前言前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章《dubbo源码浅析：默认反序列化利用之hessian2》，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/dubbo%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86%E5%9B%BE.png">
-<meta property="og:updated_time" content="2020-03-28T11:42:40.060Z">
+<meta property="og:updated_time" content="2020-04-04T14:29:00.634Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Dubbo反序列化RCE利用之新拓展面 - Dubbo Rouge">
-<meta name="twitter:description" content="0x01 前言前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章《dubbo源码浅析：默认反序列化利用之hessian2》，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…">
+<meta name="twitter:description" content="文章转载自先知社区：https://xz.aliyun.com/t/7354 0x01 前言前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章《dubbo源码浅析：默认反序列化利用之hessian2》，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…">
 <meta name="twitter:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/dubbo%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86%E5%9B%BE.png">
 
 
@@ -364,7 +364,8 @@
       
 
       
-        <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…</p>
+        <p>文章转载自先知社区：<a href="https://xz.aliyun.com/t/7354" target="_blank" rel="noopener">https://xz.aliyun.com/t/7354</a></p>
+<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间写了篇关于Dubbo在默认dubbo协议下，使用hessian2序列化方式的利用讲解文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，我发现网络上并没有存在过讲解这方面利用的文章，其实这么简单，想必很多大佬在这之前已经知道了…</p>
 <a id="more"></a>
 <p>文章发了之后，我觉得应该很多公司都对其Dubbo服务的安全隐患进行了排查，对于一些没有安全审查能力的公司，可能会留下了比较大的安全隐患，故而，我又写了篇关于Hessian2反序列化安全加固的文章<a href="https://note.youdao.com/" target="_blank" rel="noopener">《dubbo反序列化问题-Hessian2安全加固和修复》</a> ，原理也非常之简单，其实就是加入黑名单，相对于原生Java反序列化原理差不多，只不过原生Java反序列化已经有实现了，只要配置系统环境变量java.serialization去配置Filter就好了。</p>
 <p>前面，所讲解的都是Dubbo服务端的攻击手法，那么，我们有没有办法去攻击Dubbo客户端呢？既然Dubbo服务端能接收客户端发来的序列化数据进行反序列化，造成RCE，那么对于服务端的恶意序列化数据响应，必然也会造成客户端反序列化RCE吧？</p>
@@ -582,6 +583,12 @@
                     <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
                       
                         <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
                   </span>
                 
             </div>
