@@ -87,15 +87,15 @@
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="文章转载自先知社区： https://xz.aliyun.com/t/7388 0x00 前言前段时间，看到安全客有观星实验室的师傅写了篇《基于内存 Webshell 的无文件攻击技术研究》的文章，他的办法是动态的注册一个自定义的Controller，从而实现一个内存级的Webshell。文章也针对Spring不同的版本做了不同的实践，达到通杀Spring。虽然看起来达到通杀Spring了，但是对">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/tomcat-echo.png">
-<meta property="og:image" content="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/tomcat-shell.png">
-<meta property="og:image" content="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/whoami.png">
-<meta property="og:image" content="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/ls.png">
-<meta property="og:updated_time" content="2020-04-04T14:30:46.114Z">
+<meta property="og:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/tomcat-echo.png">
+<meta property="og:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/tomcat-shell.png">
+<meta property="og:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/whoami.png">
+<meta property="og:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/ls.png">
+<meta property="og:updated_time" content="2020-04-10T17:28:38.249Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于tomcat的内存Webshell无文件攻击技术">
 <meta name="twitter:description" content="文章转载自先知社区： https://xz.aliyun.com/t/7388 0x00 前言前段时间，看到安全客有观星实验室的师傅写了篇《基于内存 Webshell 的无文件攻击技术研究》的文章，他的办法是动态的注册一个自定义的Controller，从而实现一个内存级的Webshell。文章也针对Spring不同的版本做了不同的实践，达到通杀Spring。虽然看起来达到通杀Spring了，但是对">
-<meta name="twitter:image" content="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/tomcat-echo.png">
+<meta name="twitter:image" content="http://yoursite.com/images/%E5%85%88%E7%9F%A5/tomcat-echo.png">
 
 
 
@@ -416,11 +416,11 @@
 <hr>
 <h2 id="0x03-测试"><a href="#0x03-测试" class="headerlink" title="0x03 测试"></a>0x03 测试</h2><p>上一节中，我们生成了两个payload，接下来，我们启动一个具有<code>commons-collections:commons-collections:3.2.1</code>依赖的服务端，并且存在反序列化的接口。</p>
 <p>然后我们把步骤一和步骤二生成的payload依次打过去</p>
-<p><img src="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/tomcat-echo.png" alt="image"></p>
-<p><img src="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/tomcat-shell.png" alt="image"></p>
+<p><img src="/images/%E5%85%88%E7%9F%A5/tomcat-echo.png" alt="image"></p>
+<p><img src="/images/%E5%85%88%E7%9F%A5/tomcat-shell.png" alt="image"></p>
 <p>可以依次看到，两个步骤都返回500异常，相关信息证明已经执行反序列化成功了，接下来我们试试这个内存Webshell</p>
-<p><img src="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/whoami.png" alt="image"></p>
-<p><img src="https://threedr3am.oss-cn-hangzhou.aliyuncs.com/%E5%85%88%E7%9F%A5/ls.png" alt="image"></p>
+<p><img src="/images/%E5%85%88%E7%9F%A5/whoami.png" alt="image"></p>
+<p><img src="/images/%E5%85%88%E7%9F%A5/ls.png" alt="image"></p>
 <p>完美，具体ysoserial改造后的代码，我已经上传到github，有兴趣可以看看 <a href="https://github.com/threedr3am/ysoserial" target="_blank" rel="noopener">threedr3am/ysoserial</a></p>
 <hr>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
