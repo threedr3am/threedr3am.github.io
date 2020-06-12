@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="文章转载自先知社区： https://xz.aliyun.com/t/7238 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
+<meta name="description" content="0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
 <meta name="keywords" content="Java反序列化,RCE,安全加固、修复,dubbo,hessian">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dubbo反序列化问题-Hessian2安全加固和修复">
 <meta property="og:url" content="http://yoursite.com/2020/02/26/dubbo反序列化问题-Hessian2安全加固和修复/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="文章转载自先知社区： https://xz.aliyun.com/t/7238 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
+<meta property="og:description" content="0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-04T14:21:46.641Z">
+<meta property="og:updated_time" content="2020-06-12T14:25:21.756Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="dubbo反序列化问题-Hessian2安全加固和修复">
-<meta name="twitter:description" content="文章转载自先知社区： https://xz.aliyun.com/t/7238 0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
+<meta name="twitter:description" content="0x01 前言前段时间在安全客发了篇Dubbo的反序列化利用文章《dubbo源码浅析：默认反序列化利用之hessian2》，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。">
 
 
 
@@ -362,8 +362,7 @@
       
 
       
-        <p>文章转载自先知社区： <a href="https://xz.aliyun.com/t/7238" target="_blank" rel="noopener">https://xz.aliyun.com/t/7238</a></p>
-<h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间在安全客发了篇Dubbo的反序列化利用文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。</p>
+        <h3 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h3><p>前段时间在安全客发了篇Dubbo的反序列化利用文章<a href="https://www.anquanke.com/post/id/197658" target="_blank" rel="noopener">《dubbo源码浅析：默认反序列化利用之hessian2》</a>，讲述了其部分源码并着重分析了其反序列化部分，最后以一个Remo依赖的反序列化gadget结尾。</p>
 <a id="more"></a>
 <p>大部分公司，在业务扩张的情况下，为了缓解数据库压力、服务器压力等，采取了分库分表、多级缓存等架构，或对业务进行划分，做成分布式，那么分布式环境下，多个系统间的协作通讯一般使用RPC、HTTP、MQ等，而我相信大部分中小公司、阿里系公司、阿里输送人才的公司..一般都使用到了Dubbo，据我对Dubbo源码的微末了解，其Dubbo协议默认的Hessian2反序列化，并没有什么所谓的安全保护机制（有个瓜，ruilin湿敷一堆gadget，官方不给CVE）。</p>
 <p>在我写那篇文章前，我发现国内貌似也没人写过Dubbo相关的漏洞利用，这几天，应该很多用到Dubbo的公司，都在排查其安全受影响情况，因此，我打算写这篇文章，讲讲如何去对Dubbo进行反序列化安全加固，一般情况下，大概有这几种安全加固方案：</p>
@@ -660,7 +659,7 @@ public &lt;T&gt; T readObject(Class&lt;T&gt; cls, Type type) throws IOException,
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-count">28</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -671,7 +670,7 @@ public &lt;T&gt; T readObject(Class&lt;T&gt; cls, Type type) throws IOException,
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">8</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -682,7 +681,7 @@ public &lt;T&gt; T readObject(Class&lt;T&gt; cls, Type type) throws IOException,
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">31</span>
+                  <span class="site-state-item-count">35</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
