@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT">
+  <meta name="keywords" content="Thymeleaf,RCE,Spring,若依ruoyi,">
 
 
 
@@ -79,17 +79,18 @@
 
 
 
-<meta name="description" content="菜到如此">
-<meta name="keywords" content="ctf,java,渗透,安全,网络">
-<meta property="og:type" content="website">
-<meta property="og:title" content="大彩笔threedr3am">
-<meta property="og:url" content="http://yoursite.com/archives/2021/index.html">
+<meta name="description" content="0x01 骚话 前段时间写了个EL表达式简单解析的程序，打算用来增强WAF，解决一些包含EL表达式的payload对WAF的绕过（利用字符串拼接、java语法trick等），刚看到Thymeleaf在3.0.12添加了Restricted mode用于限制一些静态方法和实例化的调用，好像跟我做的东西有一点点相似。所以，本着工匠精神，还是想研究了一下老外是怎么做的，所以打开了Thymeleaf的源码">
+<meta name="keywords" content="Thymeleaf,RCE,Spring,若依ruoyi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）">
+<meta property="og:url" content="http://yoursite.com/2021/04/26/3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）/index.html">
 <meta property="og:site_name" content="大彩笔threedr3am">
-<meta property="og:description" content="菜到如此">
+<meta property="og:description" content="0x01 骚话 前段时间写了个EL表达式简单解析的程序，打算用来增强WAF，解决一些包含EL表达式的payload对WAF的绕过（利用字符串拼接、java语法trick等），刚看到Thymeleaf在3.0.12添加了Restricted mode用于限制一些静态方法和实例化的调用，好像跟我做的东西有一点点相似。所以，本着工匠精神，还是想研究了一下老外是怎么做的，所以打开了Thymeleaf的源码">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-07-16T06:31:26.064Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="大彩笔threedr3am">
-<meta name="twitter:description" content="菜到如此">
+<meta name="twitter:title" content="3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）">
+<meta name="twitter:description" content="0x01 骚话 前段时间写了个EL表达式简单解析的程序，打算用来增强WAF，解决一些包含EL表达式的payload对WAF的绕过（利用字符串拼接、java语法trick等），刚看到Thymeleaf在3.0.12添加了Restricted mode用于限制一些静态方法和实例化的调用，好像跟我做的东西有一点点相似。所以，本着工匠精神，还是想研究了一下老外是怎么做的，所以打开了Thymeleaf的源码">
 
 
 
@@ -119,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/archives/2021/">
+  <link rel="canonical" href="http://yoursite.com/2021/04/26/3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）/">
 
 
 
 
 
-  <title>归档 | 大彩笔threedr3am</title>
+  <title>3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE） | 大彩笔threedr3am</title>
   
 
 
@@ -154,7 +155,7 @@
     
   
 
-  <div class="container sidebar-position-left page-archive">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
@@ -258,215 +259,193 @@
           <div id="content" class="content">
             
 
+  <div id="posts" class="posts-expand">
+    
+
+  
+
   
   
   
-  <div class="post-block archive">
-    <div id="posts" class="posts-collapse">
-      <span class="archive-move-on"></span>
 
-      <span class="archive-page-counter">
-        
-        
-         
-        
-        OK! 目前共计 35 篇日志。 继续努力。
-      </span>
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/04/26/3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）/">
 
-      
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="threedr3am">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avator/duolaAmeng.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="大彩笔threedr3am">
+    </span>
+
+    
+      <header class="post-header">
 
         
         
+          <h1 class="post-title" itemprop="name headline">3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）</h1>
         
 
-        
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-26T19:04:00+08:00">
+                2021-04-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
           
-          <div class="collection-title">
-            <h1 class="archive-year" id="archive-year-2021">2021</h1>
-          </div>
-        
-        
-
-        
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2021/06/01/CVE-2021-30179 - Dubbo Pre-auth RCE via Java deserialization in the Generic filter/" itemprop="url">
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
               
-                <span itemprop="name">CVE-2021-30179 - Dubbo Pre-auth RCE via Java deserialization in the Generic filter</span>
+                <span class="post-meta-item-text">分类于</span>
               
-            </a>
-        
-      </h2>
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/java漏洞分析/" itemprop="url" rel="index">
+                    <span itemprop="name">java漏洞分析</span>
+                  </a>
+                </span>
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2021-06-01T14:42:20+08:00" content="2021-06-01">
-          06-01
-        </time>
-      </div>
+                
+                
+              
+            </span>
+          
 
-    </header>
-  </article>
+          
+            
+          
 
+          
+          
 
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-
-        
-        
-        
-
-        
-        
-
-        
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2021/05/30/Dubbo Consumer脚本注入RCE - CVE-2021-30181/" itemprop="url">
-              
-                <span itemprop="name">Dubbo Consumer脚本注入RCE - CVE-2021-30181</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2021-05-30T23:29:20+08:00" content="2021-05-30">
-          05-30
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
       
 
-        
-        
-        
-
-        
-        
-
-        
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2021/04/26/3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）/" itemprop="url">
-              
-                <span itemprop="name">3.0.12 Thymeleaf RCE Bypass（若依ruoyi最新版本后台RCE）</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2021-04-26T19:04:00+08:00" content="2021-04-26">
-          04-26
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
+      
+        <p>0x01 骚话</p>
+<p>前段时间写了个EL表达式简单解析的程序，打算用来增强WAF，解决一些包含EL表达式的payload对WAF的绕过（利用字符串拼接、java语法trick等），刚看到Thymeleaf在3.0.12添加了Restricted mode用于限制一些静态方法和实例化的调用，好像跟我做的东西有一点点相似。所以，本着工匠精神，还是想研究了一下老外是怎么做的，所以打开了Thymeleaf的源码。</p>
+<a id="more"></a>
+<p>0x02 细节</p>
+<p>重点源码在：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">（thymeleaf）</span><br><span class="line"></span><br><span class="line">org.thymeleaf.spring5.util.SpringStandardExpressionUtils#containsSpELInstantiationOrStatic</span><br></pre></td></tr></table></figure>
+<p>和<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">（thymeleaf-spring）</span><br><span class="line"></span><br><span class="line">org.thymeleaf.standard.util.StandardExpressionUtils#containsOGNLInstantiationOrStatic</span><br></pre></td></tr></table></figure></p>
+<p>分别在两个类里面，这里简单的说说，thymeleaf工程内自带的是OGNL解析的实现，而thymeleaf-spring的工程，引入了SPEL解析的实现。</p>
+<p>看了下两个方法的源码，竟如此雷同</p>
+<p>本以为3.0.12是Thymeleaf RCE的终结，然而，仔细一看代码，发现很简单就可以绕过。。。</p>
+<p>只要在T和(之间添加若干个空格字符，就能绕过检测了</p>
+<p>所以，RCE的payload只是简单的多加几个空格:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$&#123;T (java.lang.Runtime).getRuntime().exec(&quot;whoami&quot;)&#125;</span><br></pre></td></tr></table></figure>
+<p>0x03 其它</p>
+<p>已经给官方提交issue了：<a href="https://github.com/thymeleaf/thymeleaf/issues/828" target="_blank" rel="noopener">https://github.com/thymeleaf/thymeleaf/issues/828</a></p>
 
       
-
-        
-        
-        
-
-        
-        
-
-        
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2021/04/25/3.0.12版本 Tmymeleaf RCE的终结？（若依ruoyi最新版本后台RCE）/" itemprop="url">
-              
-                <span itemprop="name">3.0.12版本 Tmymeleaf RCE的终结？（若依ruoyi最新版本后台RCE）</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2021-04-25T19:04:00+08:00" content="2021-04-25">
-          04-25
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-      
-
-        
-        
-        
-
-        
-        
-
-        
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2021/04/14/JDK8任意文件写场景下的SpringBoot RCE/" itemprop="url">
-              
-                <span itemprop="name">JDK8任意文件写场景下的SpringBoot RCE</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2021-04-14T14:19:00+08:00" content="2021-04-14">
-          04-14
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-      
-
     </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Thymeleaf/" rel="tag"># Thymeleaf</a>
+          
+            <a href="/tags/RCE/" rel="tag"># RCE</a>
+          
+            <a href="/tags/Spring/" rel="tag"># Spring</a>
+          
+            <a href="/tags/若依ruoyi/" rel="tag"># 若依ruoyi</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/04/25/3.0.12版本 Tmymeleaf RCE的终结？（若依ruoyi最新版本后台RCE）/" rel="next" title="3.0.12版本 Tmymeleaf RCE的终结？（若依ruoyi最新版本后台RCE）">
+                <i class="fa fa-chevron-left"></i> 3.0.12版本 Tmymeleaf RCE的终结？（若依ruoyi最新版本后台RCE）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/05/30/Dubbo Consumer脚本注入RCE - CVE-2021-30181/" rel="prev" title="Dubbo Consumer脚本注入RCE - CVE-2021-30181">
+                Dubbo Consumer脚本注入RCE - CVE-2021-30181 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
-
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/archives/2021/page/2/">2</a><a class="extend next" rel="next" href="/archives/2021/page/2/"><i class="fa fa-angle-right"></i></a>
-  </nav>
+  </article>
 
 
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -474,6 +453,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -763,6 +746,10 @@
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
