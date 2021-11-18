@@ -292,7 +292,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2021/11/18/一种普遍存在于java系统的缺陷-Memory DoS/" itemprop="url">一种普遍存在于java系统的缺陷-Memory DoS(include CVE-2021-2344, CVE-2021-2371, CVE-2021-2376, CVE-2021-2378)</a></h1>
+                <a class="post-title-link" href="/2021/11/18/一种普遍存在于java系统的缺陷-Memory DoS/" itemprop="url">一种普遍存在于java系统的缺陷 - Memory DoS (include CVE-2021-2344, CVE-2021-2371, CVE-2021-2376, CVE-2021-2378)</a></h1>
         
 
         <div class="post-meta">
@@ -365,8 +365,8 @@
 
       
         
-          <h3 id="一、什么是DoS？"><a href="#一、什么是DoS？" class="headerlink" title="一、什么是DoS？"></a>一、什么是DoS？</h3><p>DoS是Denial of Service的简称，即拒绝服务，造成DoS的攻击行为被称为DoS攻击，其目的是使计算机或网络无法提供正常的服务。拒绝服务存在于各种网络服务上，这个网络服务可以是c、c++实现的，也可以是go、java、php、python等等语言实现。</p>
-<h3 id="二、Java-DoS的现状"><a href="#二、Java-DoS的现状" class="headerlink" title="二、Java DoS的现状"></a>二、Java DoS的现状</h3><p>在各种开源和闭源的java系统产品中，我们经常能看到有关DoS的缺陷公告，其中大都是耗尽CPU类型或者业务卸载的DoS。耗尽CPU类型的DoS大体上主要包括正则回溯耗尽CPU的DoS，以及代码大量重复执行耗尽CPU的DoS。而业务卸载DoS这一类DoS攻击则和系统业务强耦合，不具有通用性。下面会用几个简单例子对其进行简单描述。</p>
+          <h2 id="一、什么是DoS？"><a href="#一、什么是DoS？" class="headerlink" title="一、什么是DoS？"></a>一、什么是DoS？</h2><p>DoS是Denial of Service的简称，即拒绝服务，造成DoS的攻击行为被称为DoS攻击，其目的是使计算机或网络无法提供正常的服务。拒绝服务存在于各种网络服务上，这个网络服务可以是c、c++实现的，也可以是go、java、php、python等等语言实现。</p>
+<h2 id="二、Java-DoS的现状"><a href="#二、Java-DoS的现状" class="headerlink" title="二、Java DoS的现状"></a>二、Java DoS的现状</h2><p>在各种开源和闭源的java系统产品中，我们经常能看到有关DoS的缺陷公告，其中大部分都是耗尽CPU类型或者业务卸载类型的DoS。耗尽CPU类型的DoS大体上主要包括“正则回溯耗尽CPU、代码大量重复执行耗尽CPU、死循环代码耗尽CPU”等。而业务卸载DoS这一类型的DoS则和系统业务强耦合，一般情况下并不具备通用性。下面用几个简单例子对其进行简单描述。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2021/11/18/一种普遍存在于java系统的缺陷-Memory DoS/#more" rel="contents">
