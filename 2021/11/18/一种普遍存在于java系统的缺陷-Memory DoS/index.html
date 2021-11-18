@@ -93,7 +93,7 @@
 <meta property="og:image" content="http://yoursite.com/images/zsxq/oracle2.png">
 <meta property="og:image" content="http://yoursite.com/images/zsxq/spring1.png">
 <meta property="og:image" content="http://yoursite.com/images/zsxq/spring2.png">
-<meta property="og:updated_time" content="2021-11-18T06:02:32.439Z">
+<meta property="og:updated_time" content="2021-11-18T08:49:36.168Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一种普遍存在于java系统的缺陷-Memory DoS(include CVE-2021-2344, CVE-2021-2371, CVE-2021-2376, CVE-2021-2378)">
 <meta name="twitter:description" content="一、什么是DoS？DoS是Denial of Service的简称，即拒绝服务，造成DoS的攻击行为被称为DoS攻击，其目的是使计算机或网络无法提供正常的服务。拒绝服务存在于各种网络服务上，这个网络服务可以是c、c++实现的，也可以是go、java、php、python等等语言实现。 二、Java DoS的现状在各种开源和闭源的java系统产品中，我们经常能看到有关DoS的缺陷公告，其中大都是耗尽">
@@ -379,10 +379,10 @@
 <li><p>代码大量重复执行耗尽CPU</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">for(int i = 0; i &lt; controllableVariable; i++) &#123;</span><br><span class="line">    //do something，e.g. consume cpu</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>业务卸载DoS</p>
+<li><p>业务卸载DoS（当任意用户可访问到uninstall方法的情况下，业务就可能会被恶意卸载，导致正常用户的服务被拒绝）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">private final Set&lt;String&gt; availables = new HashSet();</span><br><span class="line"></span><br><span class="line">public void service(String type, String name) &#123;</span><br><span class="line">    if (availables.contains(type)) &#123;</span><br><span class="line">        //do service</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        //reject service</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public void uninstall(String type) &#123;</span><br><span class="line">    availables.remove(type)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
-<p>当任意用户可访问到uninstall方法的情况下，业务就可能会被恶意卸载，导致正常用户的服务被拒绝<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">private final Set&lt;String&gt; availables = new HashSet();</span><br><span class="line"></span><br><span class="line">public void service(String type, String name) &#123;</span><br><span class="line">    if (availables.contains(type)) &#123;</span><br><span class="line">        //do service</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        //reject service</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public void uninstall(String type) &#123;</span><br><span class="line">    availables.remove(type)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h3 id="三、Java异常机制"><a href="#三、Java异常机制" class="headerlink" title="三、Java异常机制"></a>三、Java异常机制</h3><p>在c、c++等语言实现的网络服务中，可能存在空指针DoS、CPU耗尽DoS等等各种各样类型的DoS，为什么在Java中，DoS的类型却少得可怜？这又不得不说起Java中的异常机制了。</p>
 <p>Java异常在JRE源码实现中，主要分为了java.lang.Exception和java.lang.Error，它们都有一个共同的实现java.lang.Throwable。经常写Java代码的程序员，可能最不喜欢就是遇到这样的麻烦了。</p>
 <hr>
