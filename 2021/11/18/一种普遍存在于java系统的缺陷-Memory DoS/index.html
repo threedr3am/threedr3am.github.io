@@ -92,7 +92,7 @@
 <meta property="og:image" content="https://threedr3am.github.io/images/zsxq/oracle3.png">
 <meta property="og:image" content="https://threedr3am.github.io/images/zsxq/spring1.png">
 <meta property="og:image" content="https://threedr3am.github.io/images/zsxq/spring2.png">
-<meta property="og:updated_time" content="2021-11-19T05:21:12.085Z">
+<meta property="og:updated_time" content="2021-11-19T06:11:15.200Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一种普遍存在于java系统的缺陷 - Memory DoS (include CVE-2021-2344, CVE-2021-2371, CVE-2021-2376, CVE-2021-2378)">
 <meta name="twitter:description" content="一、什么是DoS？DoS是Denial of Service的简称，即拒绝服务，造成DoS的攻击行为被称为DoS攻击，其目的是使计算机或网络无法提供正常的服务。拒绝服务存在于各种网络服务上，这个网络服务可以是c、c++实现的，也可以是go、java、php、python等等语言实现。 二、Java DoS的现状在各种开源和闭源的java系统产品中，我们经常能看到有关DoS的缺陷公告，其中大部分都是">
@@ -470,6 +470,7 @@
 </ul>
 <p>在看完这三个例子之后，我相信大部分熟悉JVM gc机制的人都能立马懂了，其实这就是共享变量引用对象和局部变量引用对象之间的区别。</p>
 <p>因为JVM的gc机制是根据对象引用来确定对象内存是否需要被回收的，而这里，我们初始化的数组对象如果是局部变量引用，并且仅有局部变量引用，那么，这就意味着，当这个线程栈执行完成之后，如果引用已经不存在了，那么JVM在执行gc的时候就会回收这一块内存，所以，单独这样我们只能得到短暂时间内的Memory DoS，可能是5秒（已经比较优质了），也可能只有0.1秒，没办法完全实现Memory DoS，而只有让这个对象生命周期足够长，或者引用一直存在，那么，在其生命周期内，我们才能长时间占用JVM堆足够多的内存，让JVM无法回收这部分内存，从而实现Memory DoS。</p>
+<p>还有一个最重要的点，JVM对应数组初始化的大小是有限制的，最大数组长度是2147483645，约等于2047.999997138977051MBytes，所以，如果遇到可控共享变量引用对象的场景，我们只能控制一个对象数组大小，一旦JVM最大可用堆内存远比其数组大的话，对于实现Memory DoS也是比较难的。</p>
 <h2 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h2><ul>
 <li>java中只要能产生Error，大概率就能造成DoS</li>
 <li>通过控制数组Array、集合Collection初始化容量参数，可以实现Memory DoS</li>
